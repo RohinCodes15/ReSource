@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Condition {
+  FAIR
+  GOOD
+  NEW
+}
+enum Role {
+  TEACHER
+  PROVIDER
+  COORDINATOR
+  MANAGER
+  ADMIN
+}
+enum RequestStatus {
+  OPEN
+  CLOSED
+  FULFILLED
+}
+enum InventoryStatus {
+  ACTIVE
+  WITHDRAWN
+}
+enum TransferStatus {
+  PROPOSED
+  APPROVED
+  IN_TRANSIT
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+model Organization {
+  id String @id @default(cuid())
+  name String
+  latitude Float
+  longitude Float
+  users User[]
+  requests ResourceRequest[]
+  inventory InventoryItem[]
+  outgoing Transfer[] @relation("Sender")
+  incoming Transfer[] @relation("Receiver")
+}
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  name String
+  authSubject String? @unique
+  role Role @default(TEACHER)
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  requests ResourceRequest[]
+  proposedTransfers Transfer[] @relation("Proposer")
+  savingsVerifications SavingsVerification[]
+  auditEvents AuditEvent[]
+}
+model ResourceRequest {
+  id String @id @default(cuid())
+  title String
+  resourceType String
+  quantity Int
+  quantityFulfilled Int @default(0)
+  quantityReserved Int @default(0)
+  minimumCondition Condition
+  replacementCostCents Int
+  urgency Int
+  neededBy DateTime
+  status RequestStatus @default(OPEN)
+  version Int @default(0)
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  requesterId String
+  requester User @relation(fields: [requesterId], references: [id], onDelete: Restrict)
+  items TransferItem[]
+  createdAt DateTime @default(now())
+  @@index([organizationId, status])
+  @@index([resourceType, status])
+}
+model InventoryItem {
+  id String @id @default(cuid())
+  title String
+  resourceType String
+  quantity Int
+  quantityReserved Int @default(0)
+  condition Condition
+  status InventoryStatus @default(ACTIVE)
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  items TransferItem[]
+  version Int @default(0)
+  updatedAt DateTime @updatedAt
+  @@index([resourceType, status])
+}
+model Transfer {
+  id String @id @default(cuid())
+  status TransferStatus @default(PROPOSED)
+  proposerId String
+  proposer User @relation("Proposer", fields: [proposerId], references: [id], onDelete: Restrict)
+  idempotencyKey String @unique
+  senderId String
+  sender Organization @relation("Sender", fields: [senderId], references: [id], onDelete: Restrict)
+  receiverId String
+  receiver Organization @relation("Receiver", fields: [receiverId], references: [id], onDelete: Restrict)
+  handlingCostCents Int @default(0)
+  confirmedSavingsCents Int?
+  confirmationNote String?
+  completedAt DateTime?
+  approvedAt DateTime?
+  createdAt DateTime @default(now())
+  items TransferItem[]
+  events AuditEvent[]
+  verification SavingsVerification?
+  @@index([senderId, status])
+  @@index([receiverId, status])
+}
+model TransferItem {
+  id String @id @default(cuid())
+  transferId String
+  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Restrict)
+  inventoryId String
+  inventory InventoryItem @relation(fields: [inventoryId], references: [id], onDelete: Restrict)
+  requestId String
+  request ResourceRequest @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  quantity Int
+  replacementCostCents Int
+  @@unique([transferId, inventoryId, requestId])
+}
+model AuditEvent {
+  id String @id @default(cuid())
+  actorId String?
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  transferId String?
+  transfer Transfer? @relation(fields: [transferId], references: [id], onDelete: Restrict)
+  action String
+  details Json
+  createdAt DateTime @default(now())
+  @@index([transferId, createdAt])
+}
+model SavingsVerification {
+  id String @id @default(cuid())
+  transferId String @unique
+  transfer Transfer @relation(fields: [transferId], references: [id], onDelete: Restrict)
+  verifierId String
+  verifier User @relation(fields: [verifierId], references: [id], onDelete: Restrict)
+  verifiedQuantity Int
+  avoidedCostCents Int
+  explanation String?
+  verifiedAt DateTime @default(now())
+}

@@ -1,0 +1,11 @@
+node_modules/
+.next/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+dist/
+coverage/
+prisma/*.db
+.serena/
