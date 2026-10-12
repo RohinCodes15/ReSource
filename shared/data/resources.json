@@ -1,0 +1,74 @@
+[
+  {
+    "id": "r1",
+    "name": "Tri-City Volunteers Food Bank",
+    "category": "Food",
+    "address": "37350 Joseph St, Fremont, CA 94536",
+    "latitude": 37.5585,
+    "longitude": -122.0002,
+    "phone": "(510) 793-4583",
+    "hours": "Contact the organization to confirm current hours.",
+    "description": "Community food bank with walk-up, drive-through, and mobile pantry services. Call or check the website for current distribution hours.",
+    "website": "https://tcvfoodbank.org/"
+  },
+  {
+    "id": "r2",
+    "name": "Fremont Family Resource Center",
+    "category": "Nonprofit",
+    "address": "39155 Liberty St, Suite A110, Fremont, CA 94538",
+    "latitude": 37.5496,
+    "longitude": -121.9768,
+    "phone": "(510) 574-2021",
+    "hours": "Contact the organization to confirm current hours.",
+    "description": "Connects families with city, county, state, and nonprofit support. Call ahead to check which agencies offer walk-in help.",
+    "website": "https://www.fremont.gov/government/departments/human-services"
+  },
+  {
+    "id": "r3",
+    "name": "Bay Area Community Health \u2014 Liberty Clinic",
+    "category": "Health",
+    "address": "39500 Liberty St, Fremont, CA 94538",
+    "latitude": 37.549,
+    "longitude": -121.978,
+    "phone": "(510) 770-8040",
+    "hours": "Contact the organization to confirm current hours.",
+    "description": "Community health center offering medical, behavioral health, vision, and other services. Ask about eligibility and sliding-scale fees.",
+    "website": "https://bach.health/alameda-county-locations"
+  },
+  {
+    "id": "r4",
+    "name": "League of Volunteers",
+    "category": "Nonprofit",
+    "address": "PO Box 1170, Newark, CA 94560 (serves Fremont)",
+    "latitude": 37.5485,
+    "longitude": -121.9886,
+    "phone": "(510) 793-5683",
+    "hours": "Contact the organization to confirm current hours.",
+    "description": "Tri-City nonprofit supporting youth, seniors, and neighbors in need. Contact the organization to ask about current programs.",
+    "website": "https://www.lov.org/contact-lov"
+  },
+  {
+    "id": "r5",
+    "name": "Abode Services",
+    "category": "Nonprofit",
+    "address": "40849 Fremont Blvd, Fremont, CA 94538",
+    "latitude": 37.5346,
+    "longitude": -121.9579,
+    "phone": "(510) 657-7409",
+    "hours": "Contact the organization to confirm current hours.",
+    "description": "Housing and support services for people experiencing homelessness in the Bay Area. Call to ask about intake and current availability.",
+    "website": "https://abode.org/"
+  },
+  {
+    "id": "r6",
+    "name": "Fremont Human Services \u2014 Aging & Family Services",
+    "category": "Nonprofit",
+    "address": "3300 Capitol Ave, Building B, Fremont, CA 94538",
+    "latitude": 37.5485,
+    "longitude": -121.9886,
+    "phone": "(510) 574-2050",
+    "hours": "Contact the organization to confirm current hours.",
+    "description": "City information and referrals for older adults, caregivers, and families. Call to confirm eligibility and program details.",
+    "website": "https://www.fremont.gov/government/departments/human-services"
+  }
+]

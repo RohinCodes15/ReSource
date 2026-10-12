@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.env
+# Downloaded source material and generated output: re-create with the scripts.
+data/pdfs/
+data/raw/
+data/found_pages.json
+data/budget_cuts.csv
+data/budget_cuts.json

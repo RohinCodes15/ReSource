@@ -1,0 +1,47 @@
+[
+  {
+    "id": "a1",
+    "title": "Senior lunch program pauses Dec 15",
+    "body": "Centerville Community Center will stop weekday senior lunches. Alternative meals are listed in Resource Finder.",
+    "date": "Today",
+    "area": "Centerville",
+    "severity": "critical",
+    "subscribed": true
+  },
+  {
+    "id": "a2",
+    "title": "Library hours reduced starting Jan 1",
+    "body": "Main Library closes Sundays and weeknights at 6 pm. Free Wi-Fi alternatives nearby.",
+    "date": "Yesterday",
+    "area": "Central Fremont",
+    "severity": "warning",
+    "subscribed": false
+  },
+  {
+    "id": "a3",
+    "title": "City Council budget hearing, Tuesday 7 pm",
+    "body": "Residents can give public comment on the second reading of the budget. Remote comment is available.",
+    "date": "2 days ago",
+    "area": "Citywide",
+    "severity": "info",
+    "subscribed": true
+  },
+  {
+    "id": "a4",
+    "title": "Bus Route 12 midday service ending Feb 1",
+    "body": "No service between 10 am and 3 pm or on weekends. Volunteer ride program can help seniors.",
+    "date": "4 days ago",
+    "area": "Warm Springs",
+    "severity": "warning",
+    "subscribed": false
+  },
+  {
+    "id": "a5",
+    "title": "Irvington pool closing for the season Oct 31",
+    "body": "Winter swim lessons and adaptive aquatics are cancelled. Scholarship options available.",
+    "date": "1 week ago",
+    "area": "Irvington",
+    "severity": "warning",
+    "subscribed": false
+  }
+]
