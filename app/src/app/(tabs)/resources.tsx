@@ -1,254 +1,182 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { Page } from '../../components/Page';
-import { EmptyState, IconAction, type IconName, SkeletonCard } from '../../components/ui';
-import { resources as bundledResources } from '../../data';
-import { useUserLocation } from '../../hooks/useUserLocation';
-import { fetchResources, type ApiResource } from '../../lib/api';
-import { cardSurface, colors, fonts, radius, SCREEN_PADDING, spacing, type } from '../../theme';
-import { distanceMiles, formatMiles, FREMONT_CENTER, type LatLng } from '../../utils/geo';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { memo, useMemo, useState } from 'react';
+import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import type { Resource } from '../../../../shared/types';
+import { LocationChip } from '../../components/LocationChip';
+import { Footer, Screen } from '../../components/Page';
+import { Icon, AppText, Banner, Chip, EmptyState, ErrorState, IconAction, LinkText, LoadingList, Pill, Segmented, SourceLine } from '../../components/ui';
+import { bundledResources, RESOURCE_ICONS } from '../../data';
+import { useApi } from '../../hooks/useData';
+import { getResources } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
+import { directionsUrl, shareText, telUrl } from '../../lib/platform';
+import { favoritesStore, toggleFavorite, useOrigin } from '../../state/stores';
+import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
+import { formatMiles, sortByDistance } from '../../utils/geo';
 
-// Always-shown filters; any other category found in the data is added after them.
-const BASE_FILTERS = ['All', 'Food', 'Health', 'Transit', 'Education'];
+type Row = Resource & { distance: number | null };
+const hasStreetAddress = (address: string) => /^\d+\s/.test(address);
 
-const CATEGORY_STYLE: Record<string, { color: string; icon: IconName }> = {
-  Food: { color: colors.gold, icon: 'food-apple' },
-  Health: { color: colors.success, icon: 'hospital-box' },
-  Transit: { color: colors.navy, icon: 'bus' },
-  Education: { color: '#6366F1', icon: 'school' },
-  Housing: { color: '#0EA5E9', icon: 'home-city' },
-};
-const categoryStyle = (category: string) => CATEGORY_STYLE[category] ?? { color: colors.muted, icon: 'hand-heart' as IconName };
-
-/** The resource list shipped with the app, used when the API cannot be reached. */
-function bundledList(origin: LatLng): ApiResource[] {
-  return bundledResources
-    .map((r) => ({
-      id: r.id,
-      name: r.name,
-      category: r.category as string,
-      address: r.address,
-      phone: r.phone,
-      website: (r as { website?: string }).website ?? '',
-      lat: r.latitude,
-      lng: r.longitude,
-      description: r.description,
-      languages: [] as string[],
-      distance_miles: distanceMiles(origin, r),
-    }))
-    .sort((a, b) => a.distance_miles - b.distance_miles);
-}
+/** One resource. Memoized so typing in the search box does not redraw every card. */
+const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { item: Row; saved: boolean; onShared: (message: string) => void }) {
+  const { t, tx } = useTranslation();
+  const share = async () => {
+    const text = [item.name, item.phone, hasStreetAddress(item.address) ? item.address : '', item.website].filter(Boolean).join('\n');
+    const outcome = await shareText(item.name, text);
+    onShared(t(outcome === 'copied' ? 'resources.copied' : outcome === 'failed' ? 'resources.shareFailed' : 'resources.shared', { name: item.name }));
+  };
+  return (
+    <View style={styles.card} testID={`resource-${item.id}`}>
+      <View style={styles.cardTop}>
+        <View style={styles.cardIcon}><Icon name={RESOURCE_ICONS[item.category] ?? 'hand-heart'} size={22} color={colors.navy} /></View>
+        <View style={styles.flex}>
+          <AppText variant="h4" heading={3}>{item.name}</AppText>
+          <AppText variant="caption">{tx('resourceCategory', item.category)}</AppText>
+        </View>
+        <Pill
+          label={item.distance == null ? t('resources.noLocation') : `${item.coords === 'approximate' ? '≈ ' : ''}${formatMiles(item.distance)}`}
+          color={colors.navy}
+          bg={colors.navyLight}
+          icon={item.distance == null ? 'phone' : 'map-marker-distance'}
+        />
+      </View>
+      <AppText variant="bodySmall" color={colors.text}>{item.description}</AppText>
+      <View style={styles.facts}>
+        <AppText variant="bodySmall" color={colors.text} selectable>{item.address}</AppText>
+        {!!item.hours && <AppText variant="bodySmall" color={colors.text}>{t('common.hours')}: {item.hours}</AppText>}
+        {item.languages.length > 0 && <AppText variant="bodySmall" color={colors.text}>{t('resources.languages')}: {item.languages.join(', ')}</AppText>}
+        {!!item.language_note && <AppText variant="caption">{item.language_note}</AppText>}
+      </View>
+      <View style={styles.actions}>
+        <LinkText variant="label" icon="phone" label={item.phone} href={telUrl(item.phone)} testID={`call-${item.id}`} />
+        <View style={styles.flex} />
+        {hasStreetAddress(item.address) && <IconAction icon="directions" label={t('resources.directionsTo', { name: item.name })} href={directionsUrl(item.address)} testID={`directions-${item.id}`} />}
+        {!!item.website && <IconAction icon="web" label={t('resources.websiteOf', { name: item.name })} href={item.website} testID={`website-${item.id}`} />}
+        <IconAction icon="share-variant" label={t('resources.share', { name: item.name })} onPress={share} testID={`share-${item.id}`} />
+        <IconAction
+          icon={saved ? 'bookmark' : 'bookmark-outline'}
+          tone="gold"
+          active={saved}
+          label={t(saved ? 'resources.unsave' : 'resources.save', { name: item.name })}
+          onPress={() => toggleFavorite(item.id)}
+          testID={`save-${item.id}`}
+        />
+      </View>
+      <SourceLine title={t('resources.sourceLabel')} url={item.source_url} retrieved={item.retrieved} />
+    </View>
+  );
+});
 
 export default function ResourcesScreen() {
+  const { t, tx } = useTranslation();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ categories?: string; from?: string }>();
+  const { data, loading, error, reload } = useApi(getResources, () => bundledResources);
+  const { origin } = useOrigin();
+  const favorites = favoritesStore.use();
   const [query, setQuery] = useState('');
-  const [filter, setFilter] = useState('All');
-  const [resources, setResources] = useState<ApiResource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [offline, setOffline] = useState(false);
-  const { location, status, request } = useUserLocation();
+  const [selected, setSelected] = useState<string[]>([]);
+  const [savedOnly, setSavedOnly] = useState(false);
+  const [sort, setSort] = useState<'near' | 'name'>('near');
+  const [notice, setNotice] = useState('');
 
-  useEffect(() => { void request(); }, [request]);
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    fetchResources(location?.latitude, location?.longitude)
-      .then((rows) => { if (active) { setResources(rows); setOffline(false); } })
-      .catch(() => {
-        if (active) { setResources(bundledList(location ?? FREMONT_CENTER)); setOffline(true); }
-      })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [location?.latitude, location?.longitude]);
+  // Arriving from "Find Alternative" on the map pre-selects that service's categories.
+  const [seenParam, setSeenParam] = useState<string | undefined>(undefined);
+  if (params.categories !== seenParam) {
+    setSeenParam(params.categories);
+    setSelected(params.categories ? params.categories.split(',').filter(Boolean) : []);
+  }
 
-  const filters = useMemo(
-    () => [...BASE_FILTERS, ...Array.from(new Set(resources.map((r) => r.category))).filter((c) => !BASE_FILTERS.includes(c))],
-    [resources],
-  );
+  const categories = useMemo(() => Array.from(new Set((data ?? []).map((r) => r.category))).sort(), [data]);
 
-  const data = useMemo(() => {
+  const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return resources
-      .filter((r) => filter === 'All' || r.category === filter)
-      .filter((r) => !q || [r.name, r.address, r.category, r.description, ...r.languages].some((v) => v.toLowerCase().includes(q)));
-  }, [query, filter, resources]);
+    const filtered = (data ?? []).filter((r) =>
+      (selected.length === 0 || selected.includes(r.category)) &&
+      (!savedOnly || favorites.includes(r.id)) &&
+      (!q || [r.name, r.description, r.address, tx('resourceCategory', r.category), ...r.languages].some((v) => v.toLowerCase().includes(q))));
+    const withDistance = sortByDistance(filtered, origin);
+    return sort === 'near' ? withDistance : [...withDistance].sort((a, b) => a.name.localeCompare(b.name));
+  }, [data, query, selected, savedOnly, favorites, origin, sort, tx]);
 
-  const locationNote =
-    status === 'granted'
-      ? 'Sorted by distance from you'
-      : status === 'denied'
-        ? 'Location off · sorted from Fremont City Hall'
-        : 'Sorted from Fremont City Hall';
+  const toggle = (category: string) => setSelected((current) => (current.includes(category) ? current.filter((c) => c !== category) : [...current, category]));
+  const clearFilters = () => { setQuery(''); setSelected([]); setSavedOnly(false); router.setParams({ categories: '', from: '' } as never); };
 
   const header = (
     <View style={styles.header}>
+      {!!params.from && (
+        <Banner tone="info" icon="compass" title={t('resources.alternativesFor', { name: params.from })} testID="alternatives-banner">
+          <LinkText label={t('resources.showAll')} onPress={clearFilters} testID="clear-alternatives" />
+        </Banner>
+      )}
       <View style={styles.search}>
-        <MaterialCommunityIcons name="magnify" size={22} color={colors.muted} />
+        <Icon name="magnify" size={22} color={colors.muted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search food, clinics, nonprofits…"
+          placeholder={t('resources.searchPlaceholder')}
           placeholderTextColor={colors.muted}
-          accessibilityLabel="Search resources"
-          style={styles.searchInput}
+          accessibilityLabel={t('resources.searchLabel')}
           returnKeyType="search"
+          testID="resource-search"
+          style={styles.searchInput}
         />
         {!!query && (
-          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel="Clear search" hitSlop={10}>
-            <MaterialCommunityIcons name="close-circle" size={20} color={colors.muted} />
+          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} style={styles.clear} testID="resource-search-clear">
+            <Icon name="close-circle" size={20} color={colors.muted} />
           </Pressable>
         )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {filters.map((f) => {
-          const active = filter === f;
-          return (
-            <Pressable
-              key={f}
-              onPress={() => setFilter(f)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: active }}
-              style={[styles.chip, active && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, active && styles.chipTextActive]}>{f}</Text>
-            </Pressable>
-          );
-        })}
+        <Chip label={t('common.all')} selected={selected.length === 0 && !savedOnly} onPress={() => { setSelected([]); setSavedOnly(false); }} testID="chip-all" />
+        <Chip label={t('resources.saved', { count: favorites.length })} icon="bookmark" selected={savedOnly} onPress={() => setSavedOnly(!savedOnly)} testID="chip-saved" />
+        {categories.map((category) => (
+          <Chip key={category} label={tx('resourceCategory', category)} icon={RESOURCE_ICONS[category]} selected={selected.includes(category)} onPress={() => toggle(category)} testID={`chip-${category}`} />
+        ))}
       </ScrollView>
-      <View style={styles.locationRow}>
-        <Text style={type.caption}>{offline ? 'Offline · showing the saved list' : locationNote}</Text>
-        <Pressable onPress={request} accessibilityRole="button" accessibilityLabel="Use my location" style={styles.locate} hitSlop={8}>
-          <MaterialCommunityIcons name="crosshairs-gps" size={14} color={colors.navy} />
-          <Text style={styles.locateText}>{status === 'loading' ? 'Locating…' : 'Use my location'}</Text>
-        </Pressable>
+      <LocationChip />
+      <View style={styles.sortRow}>
+        <Segmented label={t('resources.sortLabel')} value={sort} onChange={setSort} options={[{ value: 'near', label: t('resources.sortNear') }, { value: 'name', label: t('resources.sortName') }]} />
+        <AppText variant="caption" live="polite" style={styles.flex} testID="resource-count">{t('resources.count', { count: rows.length })}</AppText>
       </View>
+      {!!notice && <Banner tone="success" body={notice} live testID="resource-notice" />}
     </View>
   );
 
   return (
-    <Page>
+    <Screen title={t('titles.resources')} scroll={false} testID="resources-screen">
       <FlatList
-        data={loading ? [] : data}
+        data={loading || error ? [] : rows}
         keyExtractor={(r) => r.id}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.list}
         ListHeaderComponent={header}
-        // The search bar and filter chips stay pinned while the list scrolls.
-        stickyHeaderIndices={[0]}
         ListEmptyComponent={
-          loading ? (
-            <View style={styles.skeletons}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View>
-          ) : (
-            <EmptyState icon="map-search-outline" title="No resources found" body="Try a different search or filter, or clear them to see everything." />
-          )
+          loading ? <View style={styles.pad}><LoadingList /></View>
+            : error ? <ErrorState onRetry={reload} />
+              : <EmptyState icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
         }
-        renderItem={({ item }) => {
-          const style = categoryStyle(item.category);
-          return (
-            <View style={[styles.card, { borderLeftColor: style.color }]}>
-              <View style={styles.cardTop}>
-                <View style={[styles.cardIcon, { backgroundColor: `${style.color}22` }]}>
-                  <MaterialCommunityIcons name={style.icon} size={22} color={style.color} />
-                </View>
-                <View style={styles.cardTitle}>
-                  <Text style={styles.name}>{item.name}</Text>
-                  <Text style={type.caption}>{item.category}</Text>
-                </View>
-                <View style={styles.distance}>
-                  <Text style={styles.distanceText}>{formatMiles(item.distance_miles)}</Text>
-                </View>
-              </View>
-              <Text style={type.bodySmall}>{item.description}</Text>
-              <View style={styles.metaRow}>
-                <MaterialCommunityIcons name="map-marker-outline" size={16} color={colors.muted} />
-                <Text style={styles.meta}>{item.address}</Text>
-              </View>
-              {item.languages.length > 0 && (
-                <View style={styles.metaRow}>
-                  <MaterialCommunityIcons name="translate" size={16} color={colors.muted} />
-                  <Text style={styles.meta}>{item.languages.join(', ')}</Text>
-                </View>
-              )}
-              <View style={styles.actions}>
-                <Text style={styles.phone}>{item.phone}</Text>
-                {!!item.website && (
-                  <IconAction icon="web" label={`Open the website for ${item.name}`} onPress={() => Linking.openURL(item.website)} />
-                )}
-                <IconAction
-                  icon="directions"
-                  label={`Directions to ${item.name}`}
-                  onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${item.lat},${item.lng}`)}
-                />
-                <IconAction
-                  icon="phone"
-                  tone="gold"
-                  label={`Call ${item.name} at ${item.phone}`}
-                  onPress={() => Linking.openURL(`tel:${item.phone.replace(/\D/g, '')}`)}
-                />
-              </View>
-            </View>
-          );
-        }}
+        ListFooterComponent={<View style={styles.pad}><Footer /></View>}
+        renderItem={({ item }) => <ResourceCard item={item} saved={favorites.includes(item.id)} onShared={setNotice} />}
+        initialNumToRender={30}
       />
-    </Page>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { paddingBottom: spacing.xxxl },
-  header: { backgroundColor: colors.background, paddingTop: spacing.sm, paddingBottom: spacing.md, gap: spacing.md },
-  search: {
-    ...cardSurface,
-    marginHorizontal: SCREEN_PADDING,
-    height: 52,
-    paddingHorizontal: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  searchInput: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: colors.text, height: 48, outlineWidth: 0 } as never,
-  chips: { paddingHorizontal: SCREEN_PADDING, gap: spacing.sm },
-  chip: {
-    height: 36,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    justifyContent: 'center',
-  },
-  chipActive: { backgroundColor: colors.navy, borderColor: colors.navy },
-  chipText: { fontFamily: fonts.medium, fontSize: 14, color: colors.text },
-  chipTextActive: { color: colors.white },
-  locationRow: { paddingHorizontal: SCREEN_PADDING, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  locate: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locateText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.navy },
-  skeletons: { paddingHorizontal: SCREEN_PADDING, gap: spacing.md },
-  card: {
-    ...cardSurface,
-    marginHorizontal: SCREEN_PADDING,
-    marginBottom: spacing.md,
-    padding: spacing.lg,
-    gap: spacing.sm,
-    // Left edge takes the category color.
-    borderLeftWidth: 4,
-  },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
-  cardIcon: { width: 44, height: 44, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
-  cardTitle: { flex: 1, gap: 2 },
-  name: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.text },
-  distance: { backgroundColor: colors.navyLight, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
-  distanceText: { fontFamily: fonts.semibold, fontSize: 12, color: colors.navy },
-  metaRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
-  meta: { flex: 1, fontFamily: fonts.regular, fontSize: 13, lineHeight: 19, color: colors.muted },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  phone: { flex: 1, fontFamily: fonts.semibold, fontSize: 14, color: colors.text },
+  flex: { flex: 1 },
+  pad: { paddingHorizontal: spacing.lg },
+  list: { paddingBottom: spacing.xxl },
+  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md, gap: spacing.md },
+  search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },
+  searchInput: { flex: 1, minHeight: MIN_TOUCH, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
+  clear: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
+  chips: { gap: spacing.sm, paddingVertical: 2 },
+  sortRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md },
+  card: { ...cardSurface, marginHorizontal: spacing.lg, marginBottom: spacing.md, padding: spacing.lg, gap: spacing.sm },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, flexWrap: 'wrap' },
+  cardIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
+  facts: { gap: 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
 });

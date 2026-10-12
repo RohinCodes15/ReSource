@@ -1,0 +1,58 @@
+[
+  {
+    "id": "vote-tax-defer-2026",
+    "date": "2026-07",
+    "title": "Deferred a possible half-cent sales tax ballot measure",
+    "summary": "News reports say the Council voted to defer a half-cent sales tax measure instead of placing it on the November 2026 ballot. The measure was estimated to raise $30 million to $35 million a year.",
+    "outcome": "deferred",
+    "tally": "reported_unanimous",
+    "tally_note": "Reported as unanimous by Hoodline (July 24, 2026), citing The Mercury News. We have not checked the official minutes.",
+    "member_votes": {},
+    "source_title": "Hoodline, July 24, 2026",
+    "source_url": "https://hoodline.com/2026/07/fremont-council-slams-brakes-on-half-cent-tax-hike-before-november-vote-6944803/",
+    "minutes_url": "https://www.fremont.gov/government/agenda-center",
+    "retrieved": "2026-10-12"
+  },
+  {
+    "id": "vote-budget-2627",
+    "date": "2026-06-09",
+    "title": "Adopted the FY 2026/27 Operating Budget",
+    "summary": "The Council adopted the budget after public hearings on June 2 and June 9. The proposed budget totaled $427.1 million and kept staffing and services at current-year levels, including the FY 2025/26 reductions.",
+    "outcome": "adopted",
+    "tally": "unverified",
+    "tally_note": null,
+    "member_votes": {},
+    "source_title": "The Fremont Connection, June 12, 2026 (City of Fremont)",
+    "source_url": "https://content.govdelivery.com/accounts/CAFREMONT/bulletins/41b9e82",
+    "minutes_url": "https://www.fremont.gov/government/agenda-center",
+    "retrieved": "2026-10-12"
+  },
+  {
+    "id": "vote-rebalance-2026",
+    "date": "2026-02-10",
+    "title": "Approved the FY 2025/26 budget rebalancing plan",
+    "summary": "The plan covered $3.8 million in new labor costs with reductions in every department, including nine Police Department positions that are not sworn officers.",
+    "outcome": "approved",
+    "tally": "unverified",
+    "tally_note": null,
+    "member_votes": {},
+    "source_title": "City Council Approves Budget Rebalancing (City of Fremont, Feb 13, 2026)",
+    "source_url": "https://www.fremont.gov/Home/Components/News/News/1665/1067",
+    "minutes_url": "https://www.fremont.gov/government/agenda-center",
+    "retrieved": "2026-10-12"
+  },
+  {
+    "id": "vote-budget-2526",
+    "date": "2025-06-10",
+    "title": "Adopted the FY 2025/26 Operating Budget",
+    "summary": "The $392.4 million budget was balanced without using the Budget Uncertainty Reserve. Infrastructure maintenance spending was reduced by about $3 million.",
+    "outcome": "adopted",
+    "tally": "unverified",
+    "tally_note": null,
+    "member_votes": {},
+    "source_title": "Community Message from the City Manager on the FY 2025/26 Operating Budget",
+    "source_url": "https://www.fremont.gov/home/showpublisheddocument/18479/638868997000130000",
+    "minutes_url": "https://www.fremont.gov/government/agenda-center",
+    "retrieved": "2026-10-12"
+  }
+]

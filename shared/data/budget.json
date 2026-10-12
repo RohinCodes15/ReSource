@@ -1,0 +1,144 @@
+{
+  "retrieved": "2026-10-12",
+  "sources": {
+    "proposed2627": {
+      "title": "FY 2026/27 Proposed Budget presentation, May 12, 2026",
+      "publisher": "City of Fremont",
+      "url": "https://www.fremont.gov/home/showpublisheddocument/20494/639142770931900000"
+    },
+    "midyear2526": {
+      "title": "FY 2025/26 Mid-Year Budget Report, March 3, 2026",
+      "publisher": "City of Fremont",
+      "url": "https://www.fremont.gov/home/showpublisheddocument/20068/639100281365700000"
+    },
+    "rebalance": {
+      "title": "City Council Approves Budget Rebalancing, February 13, 2026",
+      "publisher": "City of Fremont",
+      "url": "https://www.fremont.gov/Home/Components/News/News/1665/1067"
+    },
+    "cmletter": {
+      "title": "City Manager letter to Sen. Wahab and Asm. Lee, March 30, 2026",
+      "publisher": "City of Fremont",
+      "url": "https://www.fremont.gov/home/showpublisheddocument/20676/639165034637630000"
+    },
+    "cmmessage2526": {
+      "title": "Community Message from the City Manager on the FY 2025/26 Operating Budget",
+      "publisher": "City of Fremont",
+      "url": "https://www.fremont.gov/home/showpublisheddocument/18479/638868997000130000"
+    },
+    "connection0612": {
+      "title": "The Fremont Connection, June 12, 2026",
+      "publisher": "City of Fremont",
+      "url": "https://content.govdelivery.com/accounts/CAFREMONT/bulletins/41b9e82"
+    },
+    "hoodline": {
+      "title": "Hoodline, July 24, 2026",
+      "publisher": "Hoodline",
+      "url": "https://hoodline.com/2026/07/fremont-council-slams-brakes-on-half-cent-tax-hike-before-november-vote-6944803/"
+    }
+  },
+  "headline": [
+    { "id": "total2627", "label": "FY 2026/27 proposed budget, all funds", "amount": 427100000, "source": "proposed2627", "page": 2 },
+    { "id": "gf2627", "label": "General Fund share of that budget", "amount": 289100000, "source": "proposed2627", "page": 2 },
+    { "id": "ops_cut", "label": "Operational reductions across all departments, FY 2025/26", "amount": 3800000, "source": "cmletter", "page": 1 },
+    { "id": "maint_cut", "label": "Removed from pavement, park and median upkeep, FY 2025/26", "amount": 3000000, "source": "cmletter", "page": 1 }
+  ],
+  "reductions": [
+    {
+      "id": "red-ops",
+      "label": "Department operations",
+      "detail": "Staffing, overtime, training and contract services in every department, to cover new labor costs. $3.1 million of the $3.8 million is in the General Fund.",
+      "amount": 3800000,
+      "fiscal_year": "FY 2025/26",
+      "source": "rebalance",
+      "page": null
+    },
+    {
+      "id": "red-maint",
+      "label": "Pavement, parks and medians",
+      "detail": "Pavement maintenance and park and street-median capital replacement removed from the General Fund to balance the budget.",
+      "amount": 3000000,
+      "fiscal_year": "FY 2025/26",
+      "source": "cmletter",
+      "page": 1
+    }
+  ],
+  "positions": [
+    { "id": "pos-police-admin", "label": "Police administrative positions", "count": 6, "source": "rebalance" },
+    { "id": "pos-detention-officers", "label": "Detention officers", "count": 2, "source": "rebalance" },
+    { "id": "pos-detention-supervisor", "label": "Detention supervisor", "count": 1, "source": "rebalance" },
+    { "id": "pos-human-services", "label": "Human Services positions (announced, from State and federal funding changes)", "count": 10, "source": "cmletter" }
+  ],
+  "general_fund_shares": {
+    "caption": "Share of the proposed FY 2026/27 General Fund budget by department",
+    "note": "Read from the chart on page 7 of the presentation. Police, Fire and Maintenance together are 87%.",
+    "source": "proposed2627",
+    "page": 7,
+    "items": [
+      { "label": "Police", "percent": 45 },
+      { "label": "Fire", "percent": 27 },
+      { "label": "Maintenance", "percent": 15 },
+      { "label": "Other", "percent": 13 }
+    ]
+  },
+  "revenue": {
+    "caption": "General Fund revenue by source, in millions of dollars",
+    "source": "proposed2627",
+    "page": 4,
+    "columns": ["FY 2024/25 actual", "FY 2025/26 estimate", "FY 2026/27 proposed"],
+    "rows": [
+      { "label": "Property tax", "values": [145.5, 152.5, 158.2] },
+      { "label": "Sales tax", "values": [58.1, 69.3, 71.2] },
+      { "label": "Business tax", "values": [13.1, 14.9, 15.1] },
+      { "label": "Franchise fees", "values": [13.4, 13.4, 14.0] },
+      { "label": "Hotel tax", "values": [6.2, 6.9, 7.3] },
+      { "label": "Charges for services", "values": [8.1, 7.3, 7.7] },
+      { "label": "Other", "values": [12.7, 11.6, 11.2] }
+    ],
+    "note": "FY 2024/25 sales tax reflects the State's recovery of about $11.9 million in earlier overpayments."
+  },
+  "staffing": {
+    "caption": "Budgeted positions (full-time equivalent) by function",
+    "source": "proposed2627",
+    "page": 9,
+    "columns": ["FY 2025/26 estimate", "FY 2026/27 proposed", "Change"],
+    "rows": [
+      { "label": "Police", "values": [320.0, 320.0, 0.0] },
+      { "label": "Fire", "values": [174.0, 174.0, 0.0] },
+      { "label": "Maintenance Operations", "values": [111.0, 111.0, 0.0] },
+      { "label": "Administrative Services", "values": [102.0, 103.0, 1.0] },
+      { "label": "Community Development", "values": [88.2, 88.2, 0.0] },
+      { "label": "Human Services", "values": [82.7, 79.9, -2.8] },
+      { "label": "Public Works", "values": [67.7, 67.7, 0.0] },
+      { "label": "Community Services", "values": [46.4, 46.4, 0.0] },
+      { "label": "Economic Development", "values": [4.0, 4.0, 0.0] },
+      { "label": "Total", "values": [996.0, 994.2, -1.8] }
+    ],
+    "note": "The FY 2025/26 estimate already reflects positions eliminated in the mid-year rebalancing."
+  },
+  "reserves": {
+    "caption": "General Fund reserves in the FY 2026/27 Proposed Budget",
+    "source": "proposed2627",
+    "page": 6,
+    "items": [
+      { "label": "Contingency Reserve", "amount": 48300000, "note": "16.7% of spending, for unforeseen events" },
+      { "label": "Budget Uncertainty Reserve", "amount": 4300000, "note": "Offsets revenue and spending risk in the forecast" }
+    ]
+  },
+  "context": [
+    { "id": "ctx-overpay", "text": "A 2022 State tax-agency error overpaid Fremont about $20 million in tax revenue; the City is paying it back from reserves.", "source": "cmletter", "page": 1 },
+    { "id": "ctx-reserve-used", "text": "In FY 2024/25 the City applied $19.9 million from its Budget Uncertainty Reserve to cover the one-time sales tax shortfall.", "source": "midyear2526", "page": 5 },
+    { "id": "ctx-no-capacity", "text": "The FY 2026/27 Proposed Budget says there is no capacity to restore eliminated positions or services.", "source": "proposed2627", "page": 10 },
+    { "id": "ctx-police-staffing", "text": "The City reports 0.9 sworn police officers per 1,000 residents, compared with a California average of 2.", "source": "cmletter", "page": 2 },
+    { "id": "ctx-population", "text": "Fremont has a population of 232,619 across 92 square miles.", "source": "cmletter", "page": 1 }
+  ],
+  "timeline": [
+    { "date": "2025-06-10", "title": "FY 2025/26 budget adopted", "text": "A $392.4 million Operating Budget, balanced without the Budget Uncertainty Reserve. Infrastructure maintenance is reduced by about $3 million.", "source": "cmmessage2526" },
+    { "date": "2026-02-10", "title": "Budget rebalancing approved", "text": "Reductions in every department cover $3.8 million in new labor costs. Nine Police Department positions that are not sworn officers are eliminated.", "source": "rebalance" },
+    { "date": "2026-03-03", "title": "Mid-year report", "text": "The FY 2025/26 estimate stays balanced, with the Budget Uncertainty Reserve projected to end the year at $4.3 million.", "source": "midyear2526" },
+    { "date": "2026-03-30", "title": "10 more Human Services positions", "text": "The City Manager writes that State and federal funding changes will require eliminating 10 more Human Services positions.", "source": "cmletter" },
+    { "date": "2026-05-12", "title": "FY 2026/27 budget proposed", "text": "A $427.1 million budget with staffing and services at current-year levels and no capacity to restore earlier cuts.", "source": "proposed2627" },
+    { "date": "2026-06-09", "title": "FY 2026/27 budget adopted", "text": "The Council adopts the Operating Budget after hearings on June 2 and June 9.", "source": "connection0612" },
+    { "date": "2026-07-24", "title": "Sales tax measure deferred", "text": "News reports say the Council voted unanimously to defer a half-cent sales tax measure estimated to raise $30 million to $35 million a year.", "source": "hoodline" }
+  ]
+}
