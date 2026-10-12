@@ -1,0 +1,62 @@
+[
+  {
+    "id": "s1",
+    "name": "Irvington Community Center",
+    "category": "library",
+    "address": "41800 Blacow Rd, Fremont, CA 94538",
+    "latitude": 37.5233,
+    "longitude": -121.9633,
+    "change": "Reduced evening hours (sample scenario)",
+    "effective": "Demo data",
+    "details": "Illustrative service change only. Check the City of Fremont website for current hours and budget decisions.",
+    "status": "reduced"
+  },
+  {
+    "id": "s2",
+    "name": "Niles Branch Library",
+    "category": "community",
+    "address": "150 I St, Fremont, CA 94536",
+    "latitude": 37.5785,
+    "longitude": -121.9721,
+    "change": "Closed (sample scenario)",
+    "effective": "Demo data",
+    "details": "Illustrative service change only. Check Alameda County Library for current hours and locations.",
+    "status": "suspended"
+  },
+  {
+    "id": "s3",
+    "name": "Mission Hills Pool",
+    "category": "pool",
+    "address": "Blacow Rd, Irvington",
+    "latitude": 37.5233,
+    "longitude": -121.9633,
+    "change": "Closed (sample scenario)",
+    "effective": "Demo data",
+    "details": "Illustrative service change only. Confirm current pool operations with the City of Fremont.",
+    "status": "closed"
+  },
+  {
+    "id": "s4",
+    "name": "Line 10 Bus Route",
+    "category": "transit",
+    "address": "Warm Springs BART Station",
+    "latitude": 37.5021,
+    "longitude": -121.9394,
+    "change": "Route cancelled (sample scenario)",
+    "effective": "Demo data",
+    "details": "Illustrative service change only. Check AC Transit for current route information.",
+    "status": "reduced"
+  },
+  {
+    "id": "s5",
+    "name": "Aqua Adventure Waterpark",
+    "category": "park",
+    "address": "40500 Paseo Padre Pkwy, Fremont, CA 94538",
+    "latitude": 37.5514,
+    "longitude": -121.9703,
+    "change": "Reduced hours (sample scenario)",
+    "effective": "Demo data",
+    "details": "Illustrative service change only. Check Aqua Adventure for current operating dates and hours.",
+    "status": "cancelled"
+  }
+]

@@ -1,0 +1,125 @@
+{
+  "language": {
+    "select": "选择语言"
+  },
+  "tabs": {
+    "home": "首页",
+    "map": "地图",
+    "resources": "资源",
+    "report": "报告",
+    "alerts": "提醒",
+    "reps": "议员",
+    "community": "社区",
+    "chat": "AI 问答"
+  },
+  "titles": {
+    "home": "ReSource",
+    "map": "服务地图",
+    "resources": "资源",
+    "report": "报告服务中断",
+    "alerts": "提醒",
+    "reps": "议员追踪",
+    "community": "社区",
+    "chat": "AI 问答"
+  },
+  "home": {
+    "tagline": "帮助弗里蒙特居民应对预算危机",
+    "reportsSubmitted": "已提交的报告",
+    "statsUnavailable": "暂无统计数据",
+    "whatDoYouNeed": "您需要什么帮助？",
+    "mapTitle": "服务地图",
+    "mapSubtitle": "查看哪些服务被削减",
+    "resourcesTitle": "查找资源",
+    "resourcesSubtitle": "食物、诊所、非营利机构",
+    "reportTitle": "报告服务中断",
+    "reportSubtitle": "告诉市政府和邻居",
+    "chatTitle": "问问 ReSource",
+    "chatSubtitle": "用简单的话提供 AI 帮助",
+    "footnote": "演示版本：服务变动和预算投票仅为示例。资源列表中是本地机构，前往之前请先确认最新信息。",
+    "crisisTitle": "紧急提醒",
+    "crisisView": "查看提醒"
+  },
+  "chat": {
+    "welcome": "您好！我是 ReSource 助手。您可以问我哪些市政服务被削减，以及附近哪里有免费的替代服务。",
+    "placeholder": "询问您附近的服务…",
+    "messageLabel": "消息",
+    "send": "发送消息",
+    "typing": "ReSource 正在输入…",
+    "shareLocation": "分享位置",
+    "usingLocation": "正在使用您的位置",
+    "s1": "我附近有哪些服务关闭了？",
+    "s2": "我的孩子可以去哪里？",
+    "s3": "怎样联系我的议员？"
+  },
+  "faq": {
+    "q1": "我附近还有哪些服务开放？",
+    "q2": "哪里可以领取免费食物？",
+    "q3": "图书馆要关闭吗？",
+    "q4": "我附近哪里有免费诊所？",
+    "q5": "怎样联系我的市议员？"
+  },
+  "common": {
+    "submit": "提交",
+    "cancel": "取消",
+    "close": "关闭",
+    "call": "拨打电话",
+    "email": "电子邮件",
+    "search": "搜索",
+    "post": "发布",
+    "contact": "联系",
+    "remove": "移除",
+    "useMyLocation": "使用我的位置"
+  },
+  "report": {
+    "intro": "发现设施关闭、线路取消或服务减少？请告诉我们，让邻居和官员都能看到。",
+    "serviceName": "服务名称",
+    "location": "地点",
+    "locationPlaceholder": "地址或社区",
+    "description": "发生了什么？",
+    "impactLevel": "这对您的影响有多大？",
+    "impactLow": "较小",
+    "impactMedium": "中等",
+    "impactHigh": "很大",
+    "uploadPhoto": "上传照片",
+    "removePhoto": "移除照片",
+    "submit": "提交报告",
+    "yourReports": "您的报告",
+    "sent": "谢谢！您的报告已发送。"
+  },
+  "resources": {
+    "searchPlaceholder": "搜索食物、诊所、非营利机构…",
+    "empty": "没有符合搜索条件的资源。",
+    "all": "全部",
+    "distanceFromYou": "距离按您的位置计算",
+    "distanceFromCityHall": "距离按弗里蒙特市政厅计算"
+  },
+  "alerts": {
+    "subscribeAll": "全部订阅",
+    "unsubscribeAll": "全部取消订阅",
+    "notifyMe": "有更新时通知我",
+    "notificationsOn": "通知已开启"
+  },
+  "reps": {
+    "budgetVote": "预算投票",
+    "voted": "投票",
+    "yes": "赞成",
+    "no": "反对",
+    "abstain": "弃权"
+  },
+  "community": {
+    "newPost": "发新帖",
+    "shareTip": "分享一条建议",
+    "tipLabel": "您的建议或问题",
+    "neighborhood": "社区（可选）",
+    "top": "热门",
+    "new": "最新"
+  },
+  "errors": {
+    "serviceRequired": "请输入服务名称。",
+    "descriptionRequired": "请描述服务中断的情况。",
+    "network": "现在无法连接 ReSource。请检查网络连接后再试。",
+    "reportFailed": "报告未能发送，请再试一次。",
+    "locationDenied": "位置权限被拒绝。",
+    "generic": "出了点问题，请再试一次。"
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "language": {
+    "select": "Chọn ngôn ngữ"
+  },
+  "tabs": {
+    "home": "Trang chủ",
+    "map": "Bản đồ",
+    "resources": "Hỗ trợ",
+    "report": "Báo cáo",
+    "alerts": "Thông báo",
+    "reps": "Nghị viên",
+    "community": "Cộng đồng",
+    "chat": "Hỏi AI"
+  },
+  "titles": {
+    "home": "ReSource",
+    "map": "Bản đồ dịch vụ",
+    "resources": "Nguồn hỗ trợ",
+    "report": "Báo cáo gián đoạn dịch vụ",
+    "alerts": "Thông báo",
+    "reps": "Theo dõi nghị viên",
+    "community": "Cộng đồng",
+    "chat": "Hỏi đáp với AI"
+  },
+  "home": {
+    "tagline": "Giúp cư dân Fremont vượt qua khủng hoảng ngân sách",
+    "reportsSubmitted": "Báo cáo đã gửi",
+    "statsUnavailable": "Chưa có số liệu",
+    "whatDoYouNeed": "Quý vị cần gì?",
+    "mapTitle": "Bản đồ dịch vụ",
+    "mapSubtitle": "Xem dịch vụ nào đang bị cắt giảm",
+    "resourcesTitle": "Tìm nguồn hỗ trợ",
+    "resourcesSubtitle": "Thực phẩm, phòng khám, tổ chức phi lợi nhuận",
+    "reportTitle": "Báo cáo gián đoạn",
+    "reportSubtitle": "Báo cho thành phố và hàng xóm",
+    "chatTitle": "Hỏi ReSource",
+    "chatSubtitle": "AI trợ giúp bằng lời lẽ dễ hiểu",
+    "footnote": "Bản thử nghiệm: các thay đổi dịch vụ và kết quả bỏ phiếu ngân sách chỉ là ví dụ. Danh sách hỗ trợ nêu tên các tổ chức địa phương; hãy xác nhận thông tin mới nhất trước khi đến.",
+    "crisisTitle": "Cảnh báo khẩn",
+    "crisisView": "Xem thông báo"
+  },
+  "chat": {
+    "welcome": "Xin chào! Tôi là trợ lý ReSource. Hãy hỏi tôi dịch vụ nào của thành phố đang bị cắt giảm và nơi nào gần quý vị có dịch vụ miễn phí thay thế.",
+    "placeholder": "Hỏi về dịch vụ gần quý vị…",
+    "messageLabel": "Tin nhắn",
+    "send": "Gửi tin nhắn",
+    "typing": "ReSource đang trả lời…",
+    "shareLocation": "Chia sẻ vị trí",
+    "usingLocation": "Đang dùng vị trí của quý vị",
+    "s1": "Gần tôi có nơi nào đóng cửa?",
+    "s2": "Con tôi có thể đi đâu?",
+    "s3": "Làm sao liên lạc với nghị viên của tôi?"
+  },
+  "faq": {
+    "q1": "Dịch vụ nào gần tôi vẫn còn mở cửa?",
+    "q2": "Tôi có thể nhận thực phẩm miễn phí ở đâu?",
+    "q3": "Thư viện có đóng cửa không?",
+    "q4": "Phòng khám miễn phí gần tôi ở đâu?",
+    "q5": "Làm sao liên lạc với nghị viên thành phố của tôi?"
+  },
+  "common": {
+    "submit": "Gửi",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "call": "Gọi",
+    "email": "Email",
+    "search": "Tìm kiếm",
+    "post": "Đăng",
+    "contact": "Liên hệ",
+    "remove": "Xóa",
+    "useMyLocation": "Dùng vị trí của tôi"
+  },
+  "report": {
+    "intro": "Quý vị thấy cơ sở đóng cửa, tuyến xe bị hủy hoặc dịch vụ bị cắt giảm? Hãy cho chúng tôi biết để hàng xóm và giới chức cùng thấy.",
+    "serviceName": "Tên dịch vụ",
+    "location": "Địa điểm",
+    "locationPlaceholder": "Địa chỉ hoặc khu phố",
+    "description": "Chuyện gì đã xảy ra?",
+    "impactLevel": "Việc này ảnh hưởng đến quý vị nhiều không?",
+    "impactLow": "Ít",
+    "impactMedium": "Vừa",
+    "impactHigh": "Nhiều",
+    "uploadPhoto": "Tải ảnh lên",
+    "removePhoto": "Xóa ảnh",
+    "submit": "Gửi báo cáo",
+    "yourReports": "Báo cáo của quý vị",
+    "sent": "Cảm ơn! Báo cáo của quý vị đã được gửi."
+  },
+  "resources": {
+    "searchPlaceholder": "Tìm thực phẩm, phòng khám, tổ chức phi lợi nhuận…",
+    "empty": "Không có nguồn hỗ trợ nào khớp với tìm kiếm.",
+    "all": "Tất cả",
+    "distanceFromYou": "Khoảng cách tính từ vị trí của quý vị",
+    "distanceFromCityHall": "Khoảng cách tính từ Tòa thị chính Fremont"
+  },
+  "alerts": {
+    "subscribeAll": "Đăng ký tất cả",
+    "unsubscribeAll": "Hủy tất cả",
+    "notifyMe": "Báo cho tôi khi có thay đổi",
+    "notificationsOn": "Đã bật thông báo"
+  },
+  "reps": {
+    "budgetVote": "Bỏ phiếu ngân sách",
+    "voted": "Đã bỏ phiếu",
+    "yes": "Thuận",
+    "no": "Chống",
+    "abstain": "Trắng"
+  },
+  "community": {
+    "newPost": "Bài mới",
+    "shareTip": "Chia sẻ một mẹo",
+    "tipLabel": "Mẹo hoặc câu hỏi của quý vị",
+    "neighborhood": "Khu phố (không bắt buộc)",
+    "top": "Nổi bật",
+    "new": "Mới nhất"
+  },
+  "errors": {
+    "serviceRequired": "Vui lòng nhập tên dịch vụ.",
+    "descriptionRequired": "Vui lòng mô tả sự gián đoạn.",
+    "network": "Hiện tôi không kết nối được với ReSource. Vui lòng kiểm tra kết nối mạng và thử lại.",
+    "reportFailed": "Không gửi được báo cáo. Vui lòng thử lại.",
+    "locationDenied": "Quyền truy cập vị trí bị từ chối.",
+    "generic": "Đã xảy ra lỗi. Vui lòng thử lại."
+  }
+}
