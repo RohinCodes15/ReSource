@@ -1,47 +1,29 @@
 [
   {
-    "id": "p1",
-    "author": "Sofia R.",
-    "neighborhood": "Niles",
-    "text": "Tip: The Open Door Free Clinic does walk-in flu shots on Saturdays and they do not ask for insurance.",
-    "votes": 42,
-    "time": "2h ago",
-    "upvoted": false
+    "id": "post-sample-1",
+    "body": "Starter tip: TCV Food Bank's Marketplace is open Monday to Thursday 10 am to 2 pm, and Friday is drive-thru only from 10 to 11:30 am. First-time shoppers need an ID.",
+    "area": "94536",
+    "created_at": "2026-10-12T16:00:00Z",
+    "upvotes": 0,
+    "status": "approved",
+    "is_sample": true
   },
   {
-    "id": "p2",
-    "author": "Daniel K.",
-    "neighborhood": "Centerville",
-    "text": "Anyone organizing rides for the Centerville seniors who lose lunches on Dec 15? I can drive Tuesdays and Thursdays.",
-    "votes": 31,
-    "time": "5h ago",
-    "upvoted": true
+    "id": "post-sample-2",
+    "body": "Starter tip: Dial 211 at any hour for free referrals to food, housing and health services in Alameda County.",
+    "area": "citywide",
+    "created_at": "2026-10-12T16:00:00Z",
+    "upvotes": 0,
+    "status": "approved",
+    "is_sample": true
   },
   {
-    "id": "p3",
-    "author": "Mei L.",
-    "neighborhood": "Irvington",
-    "text": "The Youth Alliance still has spots in their after-school tutoring. Call before Friday.",
-    "votes": 18,
-    "time": "Yesterday",
-    "upvoted": false
-  },
-  {
-    "id": "p4",
-    "author": "Rahul P.",
-    "neighborhood": "Warm Springs",
-    "text": "Reminder: you can give public comment by Zoom at Tuesday’s budget hearing. Takes 2 minutes to sign up.",
-    "votes": 27,
-    "time": "Yesterday",
-    "upvoted": false
-  },
-  {
-    "id": "p5",
-    "author": "Aisha B.",
-    "neighborhood": "Central Fremont",
-    "text": "Job Seekers Connect Lab is open until 8 pm. Great backup when the library closes early.",
-    "votes": 12,
-    "time": "2 days ago",
-    "upvoted": false
+    "id": "post-sample-3",
+    "body": "Starter tip: The City's Senior InfoLine is 510-574-2041. You can leave a message in English, Spanish, Farsi or Mandarin.",
+    "area": "citywide",
+    "created_at": "2026-10-12T16:00:00Z",
+    "upvotes": 0,
+    "status": "approved",
+    "is_sample": true
   }
 ]

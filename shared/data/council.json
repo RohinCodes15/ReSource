@@ -1,72 +1,23 @@
-[
-  {
-    "id": "c1",
-    "name": "Raj Salwan",
-    "role": "Mayor",
-    "district": "Citywide",
-    "party": "Nonpartisan",
-    "vote": "Yes",
-    "phone": "(510) 284-4082",
-    "email": "cclerk@fremont.gov"
+{
+  "source_title": "Mayor & City Council (City of Fremont)",
+  "source_url": "https://www.fremont.gov/government/mayor-city-council",
+  "retrieved": "2026-10-12",
+  "district_locator_url": "https://city.fremont.gov/locatedistrict",
+  "clerk": { "name": "City Clerk's Office", "phone": "(510) 284-4060", "email": "cclerk@fremont.gov" },
+  "meetings_url": "https://www.fremont.gov/government/agenda-center",
+  "election": {
+    "date": "2026-11-03",
+    "seats": ["District 2", "District 3", "District 4"],
+    "source_title": "Election Information (City of Fremont)",
+    "source_url": "https://www.fremont.gov/government/election-information"
   },
-  {
-    "id": "c2",
-    "name": "Raymond Liu",
-    "role": "Vice Mayor",
-    "district": "District 6",
-    "party": "Nonpartisan",
-    "vote": "Yes",
-    "phone": "(510) 284-4097",
-    "email": "cclerk@fremont.gov"
-  },
-  {
-    "id": "c3",
-    "name": "Teresa Keng",
-    "role": "Councilmember",
-    "district": "District 1",
-    "party": "Nonpartisan",
-    "vote": "No",
-    "phone": "(510) 284-4012",
-    "email": "cclerk@fremont.gov"
-  },
-  {
-    "id": "c4",
-    "name": "Desrie Campbell",
-    "role": "Councilmember",
-    "district": "District 2",
-    "party": "Nonpartisan",
-    "vote": "Yes",
-    "phone": "(510) 284-4008",
-    "email": "cclerk@fremont.gov"
-  },
-  {
-    "id": "c5",
-    "name": "Kathy Kimberlin",
-    "role": "Councilmember",
-    "district": "District 3",
-    "party": "Nonpartisan",
-    "vote": "No",
-    "phone": "(510) 284-4095",
-    "email": "cclerk@fremont.gov"
-  },
-  {
-    "id": "c6",
-    "name": "Yang Shao",
-    "role": "Councilmember",
-    "district": "District 4",
-    "party": "Nonpartisan",
-    "vote": "Yes",
-    "phone": "(510) 284-4019",
-    "email": "cclerk@fremont.gov"
-  },
-  {
-    "id": "c7",
-    "name": "Yajing Zhang",
-    "role": "Councilmember",
-    "district": "District 5",
-    "party": "Nonpartisan",
-    "vote": "Abstain",
-    "phone": "(510) 284-4083",
-    "email": "cclerk@fremont.gov"
-  }
-]
+  "members": [
+    { "id": "salwan", "name": "Raj Salwan", "role": "mayor", "district": null, "phone": "(510) 284-4082", "email": "rsalwan@fremont.gov", "term_ends": "November 2028" },
+    { "id": "liu", "name": "Raymond Liu", "role": "vice_mayor", "district": 6, "phone": "(510) 284-4097", "email": "rliu@fremont.gov", "term_ends": "November 2028" },
+    { "id": "keng", "name": "Teresa Keng", "role": "councilmember", "district": 1, "phone": "(510) 284-4012", "email": "tkeng@fremont.gov", "term_ends": "November 2028" },
+    { "id": "campbell", "name": "Desrie Campbell", "role": "councilmember", "district": 2, "phone": "(510) 284-4008", "email": "dcampbell@fremont.gov", "term_ends": "December 2026" },
+    { "id": "kimberlin", "name": "Kathy Kimberlin", "role": "councilmember", "district": 3, "phone": "(510) 284-4095", "email": "kkimberlin@fremont.gov", "term_ends": "December 2026" },
+    { "id": "shao", "name": "Yang Shao", "role": "councilmember", "district": 4, "phone": "(510) 284-4019", "email": "yshao@fremont.gov", "term_ends": "December 2026" },
+    { "id": "zhang", "name": "Yajing Zhang", "role": "councilmember", "district": 5, "phone": "(510) 284-4083", "email": "yazhang@fremont.gov", "term_ends": "November 2028" }
+  ]
+}
