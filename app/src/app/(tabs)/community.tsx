@@ -1,208 +1,163 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useMemo, useRef, useState } from 'react';
-import { Animated, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Dialog, Portal, TextInput } from 'react-native-paper';
-import type { Post } from '../../../../shared/types';
-import { Page } from '../../components/Page';
-import { AppButton, NATIVE_DRIVER, Pill } from '../../components/ui';
-import { initialPosts } from '../../data';
-import { cardSurface, colors, fonts, radius, SCREEN_PADDING, spacing, type } from '../../theme';
+import { useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { AREA_CODES } from '../../../../shared/constants';
+import type { AreaCode, Post } from '../../../../shared/types';
+import { BrowseOnly, ConsentFields, useConsent } from '../../components/ConsentFields';
+import { Screen } from '../../components/Page';
+import { Sheet } from '../../components/Sheet';
+import { Icon, a11yState, AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, Field, LinkText, LoadingList, Pill, Segmented } from '../../components/ui';
+import { bundledPosts } from '../../data';
+import { useApi } from '../../hooks/useData';
+import { ApiError, createPost, deletePost, flagPost, getPosts, votePost } from '../../lib/api';
+import { formatDate, useTranslation } from '../../lib/i18n';
+import { ageStore, locationStore } from '../../state/stores';
+import { colors, MIN_TOUCH, radius, spacing } from '../../theme';
 
 const MAX_POST = 280;
+type Notice = { tone: 'success' | 'warning' | 'info'; text: string };
 
-/** One post. The upvote button and its count bounce when tapped. */
-function PostCard({ post, onVote }: { post: Post; onVote: () => void }) {
-  const bounce = useRef(new Animated.Value(1)).current;
-
-  function vote() {
-    Animated.sequence([
-      Animated.timing(bounce, { toValue: 1.3, duration: 110, useNativeDriver: NATIVE_DRIVER }),
-      Animated.spring(bounce, { toValue: 1, friction: 3, useNativeDriver: NATIVE_DRIVER }),
-    ]).start();
-    onVote();
-  }
-
-  return (
-    <View style={styles.card}>
-      <Pressable
-        onPress={vote}
-        accessibilityRole="button"
-        accessibilityState={{ selected: post.upvoted }}
-        accessibilityLabel={`${post.upvoted ? 'Remove upvote' : 'Upvote'}. ${post.votes} votes`}
-        style={[styles.vote, post.upvoted && styles.voteActive]}
-      >
-        <Animated.View style={[styles.voteInner, { transform: [{ scale: bounce }] }]}>
-          <MaterialCommunityIcons name="arrow-up-bold" size={22} color={post.upvoted ? colors.goldDark : colors.muted} />
-          <Text style={[styles.voteCount, post.upvoted && styles.voteCountActive]}>{post.votes}</Text>
-        </Animated.View>
-      </Pressable>
-      <View style={styles.body}>
-        <View style={styles.meta}>
-          <Text style={type.label}>{post.author}</Text>
-          {/* Sample posts carry the badge; a post you write here does not. */}
-          {post.author !== 'You' && (
-            <Pill label="Verified Resident" icon="check-decagram" color={colors.successDark} bg={colors.successLight} />
-          )}
-        </View>
-        <Text style={styles.text}>{post.text}</Text>
-        <Text style={type.caption}>{post.neighborhood} · {post.time}</Text>
-      </View>
-    </View>
-  );
-}
-
+/** Community Board: short tips from neighbors, with one upvote each, abuse reports and moderation. */
 export default function CommunityScreen() {
-  const [posts, setPosts] = useState(initialPosts);
+  const { t, tx, locale } = useTranslation();
+  const age = ageStore.use();
   const [sort, setSort] = useState<'top' | 'new'>('top');
-  const [composing, setComposing] = useState(false);
-  const [text, setText] = useState('');
-  const [neighborhood, setNeighborhood] = useState('');
+  const { data, loading, error, reload, bundled } = useApi(() => getPosts(sort), () => bundledPosts.map((p) => ({ ...p, mine: false, voted: false })), [sort]);
+  const consent = useConsent();
+  const [body, setBody] = useState('');
+  const [area, setArea] = useState<AreaCode>(locationStore.get()?.area ?? 'citywide');
+  const [bodyError, setBodyError] = useState<string | null>(null);
+  const [posting, setPosting] = useState(false);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [local, setLocal] = useState<Record<string, Partial<Post>>>({});
+  const [confirm, setConfirm] = useState<{ kind: 'delete' | 'flag'; post: Post } | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
-  const data = useMemo(
-    () => (sort === 'top' ? [...posts].sort((a, b) => b.votes - a.votes) : posts),
-    [posts, sort],
-  );
+  const posts = (data ?? []).map((post) => ({ ...post, ...local[post.id] }));
+  const failed = (reason: unknown) => setNotice({ tone: 'warning', text: t(reason instanceof ApiError && reason.status === 429 ? 'errors.rateLimited' : reason instanceof ApiError && reason.isNetwork ? 'community.offline' : 'errors.generic') });
 
-  const toggleVote = (id: string) =>
-    setPosts((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, upvoted: !p.upvoted, votes: p.votes + (p.upvoted ? -1 : 1) } : p)),
-    );
+  async function publish() {
+    const text = body.trim();
+    setBodyError(text.length < 3 ? t('community.tooShort') : null);
+    if (!consent.check() || text.length < 3 || posting) return;
+    setPosting(true);
+    try {
+      const created = await createPost({ body: text, area, ...consent.flags() });
+      setBody('');
+      consent.reset();
+      setNotice({ tone: created.status === 'pending' ? 'info' : 'success', text: t(created.status === 'pending' ? 'community.held' : created.pii_removed.length ? 'community.postedScrubbed' : 'community.posted') });
+      reload();
+    } catch (reason) {
+      failed(reason);
+    } finally {
+      setPosting(false);
+    }
+  }
 
-  function publish() {
-    if (!text.trim()) return;
-    setPosts((prev) => [
-      {
-        id: `p${Date.now()}`,
-        author: 'You',
-        neighborhood: neighborhood.trim() || 'Fremont',
-        text: text.trim(),
-        votes: 1,
-        time: 'Just now',
-        upvoted: true,
-      },
-      ...prev,
-    ]);
-    setText('');
-    setNeighborhood('');
-    setComposing(false);
+  async function vote(post: Post) {
+    if (busyId) return; // one request at a time, so a fast double tap cannot count twice
+    setBusyId(post.id);
+    try {
+      const result = await votePost(post.id);
+      setLocal((current) => ({ ...current, [post.id]: { upvotes: result.upvotes, voted: result.voted } }));
+    } catch (reason) {
+      failed(reason);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function confirmAction() {
+    if (!confirm) return;
+    const { kind, post } = confirm;
+    setConfirm(null);
+    try {
+      if (kind === 'delete') {
+        await deletePost(post.id);
+        setNotice({ tone: 'success', text: t('community.deleted') });
+        reload();
+      } else {
+        await flagPost(post.id);
+        setNotice({ tone: 'success', text: t('community.flagged') });
+      }
+    } catch (reason) {
+      failed(reason);
+    }
   }
 
   return (
-    <Page>
-      <FlatList
-        data={data}
-        keyExtractor={(p) => p.id}
-        contentContainerStyle={styles.list}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            <Text style={type.bodySmall}>Tips and questions from Fremont neighbors.</Text>
-            <View style={styles.tabs}>
-              {(['top', 'new'] as const).map((key) => {
-                const active = sort === key;
-                return (
-                  <Pressable
-                    key={key}
-                    onPress={() => setSort(key)}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    style={[styles.tab, active && styles.tabActive]}
-                  >
-                    <Text style={[styles.tabText, active && styles.tabTextActive]}>{key === 'top' ? 'Top' : 'New'}</Text>
-                  </Pressable>
-                );
-              })}
+    <Screen title={t('titles.community')} testID="community-screen">
+      <AppText variant="bodySmall" color={colors.text}>{t('community.intro')}</AppText>
+      <Card style={styles.block} testID="post-form">
+        <AppText variant="h4" heading={2}>{t('community.shareTip')}</AppText>
+        {age === 'under13' ? <BrowseOnly /> : (
+          <>
+            <Field label={t('community.tipLabel')} hint={t('community.rules')} value={body} onChangeText={setBody} multiline maxLength={MAX_POST} error={bodyError} testID="post-body" />
+            <AppText variant="label">{t('community.areaLabel')}</AppText>
+            <View style={styles.chips} role="radiogroup" accessibilityLabel={t('community.areaLabel')}>
+              {AREA_CODES.map((code) => <Chip key={code} role="radio" label={tx('area', code)} selected={area === code} onPress={() => setArea(code)} testID={`post-area-${code}`} />)}
             </View>
+            <ConsentFields purpose={t('community.consent')} consent={consent} />
+            <AppButton variant="gold" icon="send" label={t('community.post')} loading={posting} onPress={publish} testID="post-submit" />
+          </>
+        )}
+      </Card>
+      {notice && <Banner tone={notice.tone} body={notice.text} live testID="community-notice" />}
+
+      <Segmented label={t('community.sortLabel')} value={sort} onChange={setSort} options={[{ value: 'top', label: t('community.top') }, { value: 'new', label: t('community.new') }]} />
+      {bundled && <AppText variant="caption">{t('community.offline')}</AppText>}
+
+      {loading ? <LoadingList /> : error ? <ErrorState onRetry={reload} /> : posts.length === 0 ? (
+        <EmptyState icon="forum-outline" title={t('community.emptyTitle')} body={t('community.emptyBody')} />
+      ) : posts.map((post) => (
+        <Card key={post.id} style={styles.post} testID={`post-${post.id}`}>
+          <Pressable
+            onPress={() => vote(post)}
+            disabled={bundled || busyId === post.id}
+            accessibilityRole="button"
+            aria-pressed={!!post.voted}
+            accessibilityState={a11yState({ selected: !!post.voted, disabled: bundled })}
+            accessibilityLabel={t(post.voted ? 'community.removeVote' : 'community.upvote', { count: post.upvotes })}
+            testID={`vote-${post.id}`}
+            style={[styles.vote, post.voted && styles.voteOn]}
+          >
+            <Icon name={post.voted ? 'arrow-up-bold' : 'arrow-up-bold-outline'} size={22} color={post.voted ? colors.white : colors.navy} />
+            <AppText variant="label" color={post.voted ? colors.white : colors.navy} testID={`votes-${post.id}`}>{post.upvotes}</AppText>
+          </Pressable>
+          <View style={styles.postBody}>
+            <View style={styles.meta}>
+              {post.is_sample && <Pill label={t('community.samplePost')} icon="flask-outline" color={colors.warningDark} bg={colors.warningLight} />}
+              {post.mine && <Pill label={t('community.yours')} icon="account" color={colors.navy} bg={colors.navyLight} />}
+            </View>
+            <AppText>{post.body}</AppText>
+            <AppText variant="caption">{tx('area', post.area)} · {formatDate(post.created_at, locale)}</AppText>
+            {!bundled && !post.is_sample && (
+              <View style={styles.meta}>
+                {post.mine
+                  ? <LinkText icon="delete-outline" color={colors.dangerDark} label={t('community.delete')} onPress={() => setConfirm({ kind: 'delete', post })} testID={`delete-${post.id}`} />
+                  : <LinkText icon="flag-outline" label={t('community.report')} onPress={() => setConfirm({ kind: 'flag', post })} testID={`flag-${post.id}`} />}
+              </View>
+            )}
           </View>
-        }
-        renderItem={({ item }) => <PostCard post={item} onVote={() => toggleVote(item.id)} />}
-      />
+        </Card>
+      ))}
 
-      <Pressable
-        onPress={() => setComposing(true)}
-        accessibilityRole="button"
-        accessibilityLabel="New post"
-        style={({ pressed }) => [styles.fab, pressed && styles.fabPressed]}
-      >
-        <MaterialCommunityIcons name="plus" size={30} color={colors.navyDark} />
-      </Pressable>
-
-      <Portal>
-        <Dialog visible={composing} onDismiss={() => setComposing(false)} style={styles.dialog}>
-          <Dialog.Title>Share a tip</Dialog.Title>
-          <Dialog.Content style={styles.dialogContent}>
-            <View>
-              <TextInput
-                mode="outlined"
-                label="Your tip or question"
-                value={text}
-                onChangeText={setText}
-                maxLength={MAX_POST}
-                multiline
-                numberOfLines={4}
-                outlineStyle={styles.outline}
-                style={styles.input}
-              />
-              <Text style={[styles.counter, text.length >= MAX_POST && styles.counterFull]}>{text.length}/{MAX_POST}</Text>
-            </View>
-            <TextInput
-              mode="outlined"
-              label="Neighborhood (optional)"
-              value={neighborhood}
-              onChangeText={setNeighborhood}
-              outlineStyle={styles.outline}
-              style={styles.input}
-            />
-            <View style={styles.dialogActions}>
-              <AppButton variant="outline" label="Cancel" onPress={() => setComposing(false)} style={styles.dialogButton} />
-              <AppButton variant="gold" icon="send" label="Post" disabled={!text.trim()} onPress={publish} style={styles.dialogButton} />
-            </View>
-          </Dialog.Content>
-        </Dialog>
-      </Portal>
-    </Page>
+      <Sheet visible={!!confirm} onClose={() => setConfirm(null)} title={t(confirm?.kind === 'delete' ? 'community.deleteTitle' : 'community.reportTitle')} testID="confirm-sheet">
+        <AppText color={colors.text}>{t(confirm?.kind === 'delete' ? 'community.deleteBody' : 'community.reportBody')}</AppText>
+        <View style={styles.block}>
+          <AppButton variant={confirm?.kind === 'delete' ? 'danger' : 'navy'} label={t(confirm?.kind === 'delete' ? 'community.delete' : 'community.report')} onPress={confirmAction} testID="confirm-yes" />
+          <AppButton variant="outline" label={t('common.cancel')} onPress={() => setConfirm(null)} testID="confirm-no" />
+        </View>
+      </Sheet>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: SCREEN_PADDING, gap: spacing.md, paddingBottom: 112 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.sm },
-  tabs: { flexDirection: 'row', backgroundColor: colors.border, borderRadius: radius.md, padding: 3 },
-  tab: { paddingHorizontal: spacing.xl, height: 36, borderRadius: 10, justifyContent: 'center' },
-  tabActive: { ...cardSurface, borderRadius: 10 },
-  tabText: { fontFamily: fonts.medium, fontSize: 14, color: colors.muted },
-  tabTextActive: { fontFamily: fonts.semibold, color: colors.text },
-  card: { ...cardSurface, flexDirection: 'row', gap: spacing.md, padding: spacing.lg },
-  vote: { width: 52, minHeight: 64, borderRadius: radius.md, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' },
-  voteActive: { backgroundColor: colors.goldLight },
-  voteInner: { alignItems: 'center' },
-  voteCount: { fontFamily: fonts.bold, fontSize: 14, color: colors.muted },
-  voteCountActive: { color: colors.goldDark },
-  body: { flex: 1, gap: spacing.sm },
-  meta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
-  text: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 23, color: colors.text },
-  fab: {
-    position: 'absolute',
-    right: SCREEN_PADDING,
-    bottom: SCREEN_PADDING,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.gold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: colors.goldDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  fabPressed: { transform: [{ scale: 0.94 }] },
-  dialog: { borderRadius: radius.xl, backgroundColor: colors.surface },
-  dialogContent: { gap: spacing.md },
-  input: { backgroundColor: colors.surface },
-  outline: { borderRadius: radius.md },
-  counter: { ...type.caption, textAlign: 'right', marginTop: spacing.xs },
-  counterFull: { color: colors.dangerDark },
-  dialogActions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  dialogButton: { flex: 1 },
+  block: { gap: spacing.md },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  post: { flexDirection: 'row', gap: spacing.md },
+  postBody: { flex: 1, gap: spacing.sm },
+  meta: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  vote: { width: 52, minHeight: MIN_TOUCH + 16, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.navy, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', gap: 2 },
+  voteOn: { backgroundColor: colors.navy },
 });

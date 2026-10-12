@@ -1,145 +1,122 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { FlatList, Linking, StyleSheet, Text, View } from 'react-native';
-import { Button, Dialog, Portal } from 'react-native-paper';
-import type { CouncilMember, Vote } from '../../../../shared/types';
-import { Page } from '../../components/Page';
-import { AppButton, Pill } from '../../components/ui';
-import { BUDGET_MEASURE, councilMembers } from '../../data';
-import { cardSurface, colors, fonts, radius, SCREEN_PADDING, spacing, type } from '../../theme';
+import { StyleSheet, View } from 'react-native';
+import type { CouncilMember, CouncilVote } from '../../../../shared/types';
+import { Screen } from '../../components/Page';
+import { Sheet } from '../../components/Sheet';
+import { AppButton, AppText, Banner, Card, ErrorState, Field, LinkText, LoadingList, Pill, SourceLine } from '../../components/ui';
+import { bundledCouncil } from '../../data';
+import { useApi } from '../../hooks/useData';
+import { getCouncil } from '../../lib/api';
+import { formatDate, useTranslation } from '../../lib/i18n';
+import { copyText, mailtoUrl, telUrl } from '../../lib/platform';
+import { colors, spacing } from '../../theme';
 
-// The measure is a package of service cuts, so a YES vote is shown in red and a NO vote in green.
-const VOTE_STYLE: Record<Vote, { label: string; color: string; bg: string }> = {
-  Yes: { label: 'Voted YES', color: colors.dangerDark, bg: colors.dangerLight },
-  No: { label: 'Voted NO', color: colors.successDark, bg: colors.successLight },
-  Abstain: { label: 'Abstained', color: colors.muted, bg: colors.border },
-};
+const initials = (name: string) => name.split(' ').map((part) => part[0]).join('').slice(0, 2);
 
-const initials = (name: string) =>
-  name
-    .split(' ')
-    .map((p) => p[0])
-    .join('')
-    .slice(0, 2);
+/** Editable letter to one council member. It is sent from the person's own email app, never by ReSource. */
+function LetterSheet({ member, onClose }: { member: CouncilMember | null; onClose: () => void }) {
+  const { t } = useTranslation();
+  const title = member ? t(`reps.role_${member.role}`) : '';
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-export default function RepsScreen() {
-  const [contact, setContact] = useState<CouncilMember | null>(null);
-  const tally = councilMembers.reduce(
-    (acc, m) => ({ ...acc, [m.vote]: acc[m.vote] + 1 }),
-    { Yes: 0, No: 0, Abstain: 0 } as Record<Vote, number>,
-  );
+  // Fill in the draft, in the selected language, each time a different member is opened.
+  if (member && loadedFor !== member.id) {
+    setLoadedFor(member.id);
+    setSubject(t('reps.letterSubject'));
+    setBody(t('reps.letterBody', { title, name: member.name }));
+    setCopied(false);
+  }
 
   return (
-    <Page>
-      <FlatList
-        data={councilMembers}
-        keyExtractor={(m) => m.id}
-        contentContainerStyle={styles.list}
-        ListHeaderComponent={
-          <LinearGradient colors={[colors.navy, colors.navyDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.summary}>
-            <Text style={styles.summaryLabel}>Budget vote</Text>
-            <Text style={styles.summaryTitle}>{BUDGET_MEASURE}</Text>
-            <View style={styles.tally}>
-              {(['Yes', 'No', 'Abstain'] as const).map((vote) => (
-                <View key={vote} style={styles.tallyItem}>
-                  <Text style={styles.tallyNumber}>{tally[vote]}</Text>
-                  <Text style={styles.tallyLabel}>{vote}</Text>
-                </View>
-              ))}
+    <Sheet visible={!!member} onClose={onClose} title={member ? t('reps.writeTo', { name: member.name }) : ''} testID="letter-sheet">
+      {member && (
+        <>
+          <AppText variant="bodySmall" color={colors.text}>{t('reps.letterHelp')}</AppText>
+          <Field label={t('reps.subjectLabel')} value={subject} onChangeText={setSubject} maxLength={150} testID="letter-subject" />
+          <Field label={t('reps.bodyLabel')} value={body} onChangeText={setBody} multiline maxLength={3000} testID="letter-body" />
+          <AppButton variant="gold" icon="email-fast" label={t('reps.openEmail')} href={mailtoUrl(member.email, subject, body)} testID="letter-email" />
+          <AppButton variant="outline" icon="content-copy" label={t(copied ? 'reps.copied' : 'reps.copyLetter')} onPress={async () => setCopied(await copyText(`${subject}\n\n${body}`))} testID="letter-copy" />
+          {copied && <AppText variant="caption" live="polite">{t('reps.copiedHelp', { email: member.email })}</AppText>}
+          <AppText variant="caption">{t('reps.letterPrivacy')}</AppText>
+        </>
+      )}
+    </Sheet>
+  );
+}
+
+function VoteCard({ vote }: { vote: CouncilVote }) {
+  const { t, tx, locale } = useTranslation();
+  return (
+    <Card style={styles.block} testID={`vote-${vote.id}`}>
+      <AppText variant="caption">{formatDate(vote.date, locale)}</AppText>
+      <AppText variant="h4" heading={3}>{vote.title}</AppText>
+      <Pill label={tx('outcome', vote.outcome)} icon="gavel" color={colors.navy} bg={colors.navyLight} />
+      <AppText variant="bodySmall" color={colors.text}>{vote.summary}</AppText>
+      <Banner tone={vote.tally === 'unverified' ? 'warning' : 'info'} icon="help-circle-outline" title={t(vote.tally === 'unverified' ? 'reps.voteUnverified' : 'reps.voteReported')} body={t(vote.tally === 'unverified' ? 'reps.voteUnverifiedBody' : 'reps.voteReportedBody')} testID="vote-record" />
+      <SourceLine title={vote.source_title} url={vote.source_url} retrieved={vote.retrieved} />
+      <LinkText icon="open-in-new" label={t('reps.minutes')} href={vote.minutes_url} />
+    </Card>
+  );
+}
+
+/** Rep Tracker: who represents Fremont, how to reach them, and what the Council did on the budget. */
+export default function RepsScreen() {
+  const { t, locale } = useTranslation();
+  const { data, loading, error, reload } = useApi(getCouncil, () => bundledCouncil);
+  const [writing, setWriting] = useState<CouncilMember | null>(null);
+
+  if (loading) return <Screen title={t('titles.reps')}><LoadingList /></Screen>;
+  if (error || !data) return <Screen title={t('titles.reps')}><ErrorState onRetry={reload} /></Screen>;
+
+  return (
+    <Screen title={t('titles.reps')} testID="reps-screen">
+      <AppText variant="bodySmall" color={colors.text}>{t('reps.intro')}</AppText>
+      <Banner tone="info" icon="map-search" title={t('reps.findDistrict')} body={t('reps.findDistrictBody')}>
+        <LinkText icon="open-in-new" label={t('reps.districtLocator')} href={data.district_locator_url} testID="district-locator" />
+      </Banner>
+      <Banner tone="info" icon="vote" title={t('reps.electionTitle', { date: formatDate(data.election.date, locale) })} body={t('reps.electionBody', { seats: data.election.seats.join(', ') })}>
+        <LinkText icon="open-in-new" label={data.election.source_title} href={data.election.source_url} />
+      </Banner>
+
+      <AppText variant="h3" heading={2}>{t('reps.members')}</AppText>
+      {data.members.map((member) => (
+        <Card key={member.id} style={styles.block} testID={`member-${member.id}`}>
+          <View style={styles.head}>
+            <View style={styles.avatar} aria-hidden><AppText variant="h4" color={colors.white}>{initials(member.name)}</AppText></View>
+            <View style={styles.flex}>
+              <AppText variant="h4" heading={3}>{member.name}</AppText>
+              <AppText variant="bodySmall" color={colors.text}>
+                {t(`reps.role_${member.role}`)} · {member.district ? t('reps.district', { number: member.district }) : t('reps.citywide')}
+              </AppText>
+              <AppText variant="caption">{t('reps.termEnds', { date: member.term_ends })}</AppText>
             </View>
-            <Text style={styles.disclaimer}>
-              Sample vote data for the demo only; not an official roll call. Fremont city council seats are nonpartisan.
-            </Text>
-          </LinearGradient>
-        }
-        renderItem={({ item }) => {
-          const v = VOTE_STYLE[item.vote];
-          return (
-            <View style={styles.card}>
-              <LinearGradient colors={[colors.navy, '#2C5AA0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cardHeader}>
-                <Pill label={item.district} color={colors.navyDark} bg={colors.gold} style={styles.district} />
-              </LinearGradient>
-              <View style={styles.cardBody}>
-                <View style={styles.avatar} accessibilityLabel="Photo placeholder">
-                  <Text style={styles.avatarText}>{initials(item.name)}</Text>
-                </View>
-                <View style={styles.identity}>
-                  <Text style={type.h4}>{item.name}</Text>
-                  <Text style={type.bodySmall}>{item.role} · {item.party ?? 'Nonpartisan'}</Text>
-                </View>
-                <View style={styles.footer}>
-                  <View style={styles.voteWrap}>
-                    <Pill label={v.label} color={v.color} bg={v.bg} />
-                    <Text style={type.caption}>Sample data</Text>
-                  </View>
-                  <AppButton
-                    variant="outline"
-                    icon="message-text-outline"
-                    label="Contact"
-                    accessibilityLabel={`Contact ${item.name}`}
-                    onPress={() => setContact(item)}
-                  />
-                </View>
-              </View>
-            </View>
-          );
-        }}
-      />
-      <Portal>
-        <Dialog visible={!!contact} onDismiss={() => setContact(null)} style={styles.dialog}>
-          <Dialog.Title>Contact {contact?.name}</Dialog.Title>
-          <Dialog.Content>
-            <Text style={type.body}>{contact?.role}, {contact?.district}</Text>
-            <Text style={[type.bodySmall, styles.hint]}>Tip: say your neighborhood and which service matters to you.</Text>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setContact(null)}>Close</Button>
-            <Button
-              icon="email"
-              onPress={() => contact && Linking.openURL(`mailto:${contact.email}?subject=Fremont%20budget%20and%20city%20services`)}
-            >
-              Email
-            </Button>
-            <Button icon="phone" onPress={() => contact && Linking.openURL(`tel:${contact.phone.replace(/\D/g, '')}`)}>
-              {contact?.phone}
-            </Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-    </Page>
+          </View>
+          <View style={styles.actions}>
+            <AppButton variant="gold" icon="pencil" label={t('reps.write')} accessibilityLabel={t('reps.writeTo', { name: member.name })} onPress={() => setWriting(member)} style={styles.action} testID={`write-${member.id}`} />
+            <AppButton variant="outline" icon="phone" label={member.phone} accessibilityLabel={t('common.callNumber', { phone: member.phone })} href={telUrl(member.phone)} style={styles.action} testID={`call-${member.id}`} />
+            <AppButton variant="outline" icon="email" label={member.email} accessibilityLabel={`${t('common.email')}: ${member.email}`} href={`mailto:${member.email}`} style={styles.action} testID={`email-${member.id}`} />
+          </View>
+        </Card>
+      ))}
+      <SourceLine title={data.source_title} url={data.source_url} retrieved={data.retrieved} />
+      <AppText variant="bodySmall">{t('reps.clerk', { phone: data.clerk.phone, email: data.clerk.email })}</AppText>
+
+      <AppText variant="h3" heading={2}>{t('reps.votesTitle')}</AppText>
+      <AppText variant="bodySmall" color={colors.text}>{t('reps.votesIntro')}</AppText>
+      {data.votes.map((vote) => <VoteCard key={vote.id} vote={vote} />)}
+      <LetterSheet member={writing} onClose={() => setWriting(null)} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  list: { padding: SCREEN_PADDING, gap: spacing.lg, paddingBottom: spacing.xxxl },
-  summary: { borderRadius: radius.xl, padding: spacing.xxl, gap: spacing.sm },
-  summaryLabel: { fontFamily: fonts.semibold, fontSize: 12, letterSpacing: 0.8, textTransform: 'uppercase', color: colors.gold },
-  summaryTitle: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 30, letterSpacing: -0.4, color: colors.white },
-  tally: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.sm },
-  tallyItem: { flex: 1, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: radius.md, paddingVertical: spacing.md, alignItems: 'center' },
-  tallyNumber: { fontFamily: fonts.bold, fontSize: 24, color: colors.white },
-  tallyLabel: { fontFamily: fonts.medium, fontSize: 12, color: '#C9D6EA' },
-  disclaimer: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 18, color: '#C9D6EA', marginTop: spacing.xs },
-  card: { ...cardSurface, overflow: 'hidden' },
-  cardHeader: { height: 64, alignItems: 'flex-end', padding: spacing.md },
-  district: { alignSelf: 'flex-end' },
-  cardBody: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, gap: spacing.md },
-  // The avatar overlaps the gradient header.
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginTop: -32,
-    backgroundColor: colors.navy,
-    borderWidth: 3,
-    borderColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: { fontFamily: fonts.bold, fontSize: 22, color: colors.white },
-  identity: { gap: 2 },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.md },
-  voteWrap: { gap: spacing.xs },
-  dialog: { borderRadius: radius.xl, backgroundColor: colors.surface },
-  hint: { marginTop: spacing.sm },
+  flex: { flex: 1 },
+  block: { gap: spacing.md },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  action: { flexGrow: 1, flexBasis: 220 },
 });

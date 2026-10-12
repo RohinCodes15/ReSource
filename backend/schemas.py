@@ -1,59 +1,132 @@
-from typing import Literal, Optional
+"""Request bodies accepted by the API. Every field is validated before it reaches the store."""
+from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-class Service(BaseModel):
-    id: str
-    name: str
-    category: str
-    address: str
-    latitude: float
-    longitude: float
-    change: str
-    effective: str
-    details: str
-    status: Literal["reduced", "suspended", "closed", "cancelled"]
+Area = Literal["citywide", "94536", "94538", "94539", "94555"]
+ImpactLevel = Literal["low", "medium", "high"]
+ServiceStatus = Literal["open", "reduced", "closed"]
+AlertCategory = Literal["budget", "public_safety", "human_services", "infrastructure", "civic"]
+LanguageCode = Literal["en", "es", "fa", "zh", "vi", "hi", "pa"]
+EMAIL_PATTERN = r"^[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}$"
 
 
-class Resource(BaseModel):
-    id: str
-    name: str
-    category: str
-    address: str
-    latitude: float
-    longitude: float
-    phone: str
-    hours: str
-    description: str
-    distance_miles: Optional[float] = None
+class Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
-class ReportIn(BaseModel):
-    service_name: str = Field(min_length=1, max_length=200)
-    location: str = Field(default="", max_length=300)
-    description: str = Field(min_length=1, max_length=2000)
-    photo_uri: Optional[str] = Field(default=None, max_length=2000)
+class Consented(Strict):
+    """Shared by every form that stores what a person wrote.
+
+    `consent` and `age_confirmed` must be ticked by the person. `website` is a honeypot: the
+    field is hidden from people, so only a bot fills it in.
+    """
+
+    consent: bool
+    age_confirmed: bool
+    website: str = Field(default="", max_length=200)
+
+    @model_validator(mode="after")
+    def check_consent(self) -> Consented:
+        if not self.consent:
+            raise ValueError("consent_required")
+        if not self.age_confirmed:
+            raise ValueError("age_confirmation_required")
+        return self
 
 
-class ReportOut(BaseModel):
-    id: str
-    status: Literal["received"]
-    stored_in: Literal["supabase", "memory"]
+class ReportIn(Consented):
+    service_id: str | None = Field(default=None, max_length=64)
+    service_name: str = Field(min_length=2, max_length=160)
+    area: Area = "citywide"
+    description: str = Field(min_length=10, max_length=1000)
+    impact_level: ImpactLevel
 
 
-class ChatTurn(BaseModel):
+class PostIn(Consented):
+    body: str = Field(min_length=3, max_length=280)
+    area: Area = "citywide"
+
+
+class FeedbackIn(Strict):
+    kind: Literal["problem", "idea", "data_error"] = "problem"
+    message: str = Field(min_length=5, max_length=1000)
+    website: str = Field(default="", max_length=200)
+
+
+class SubscriptionIn(Strict):
+    categories: list[AlertCategory] = Field(default_factory=list, max_length=5)
+    areas: list[Area] = Field(default_factory=list, max_length=5)
+    notifications: bool = False
+
+    @field_validator("categories", "areas")
+    @classmethod
+    def unique(cls, values: list[str]) -> list[str]:
+        return sorted(set(values))
+
+
+class EmailSubscribeIn(Consented):
+    email: str = Field(pattern=EMAIL_PATTERN, max_length=320)
+    categories: list[AlertCategory] = Field(default_factory=list, max_length=5)
+    areas: list[Area] = Field(default_factory=list, max_length=5)
+
+
+class DeletionRequestIn(Strict):
+    """Public form for people who have no install token (new phone, cleared browser, a parent)."""
+
+    contact_email: str = Field(pattern=EMAIL_PATTERN, max_length=320)
+    details: str = Field(min_length=10, max_length=1000)
+    relationship: Literal["self", "parent_or_guardian"] = "self"
+    consent: bool
+    website: str = Field(default="", max_length=200)
+
+    @model_validator(mode="after")
+    def check_consent(self) -> DeletionRequestIn:
+        if not self.consent:
+            raise ValueError("consent_required")
+        return self
+
+
+class ChatTurn(Strict):
     role: Literal["user", "assistant"]
-    content: str = Field(max_length=2000)
+    content: str = Field(min_length=1, max_length=2000)
 
 
-class ChatIn(BaseModel):
-    message: str = Field(min_length=1, max_length=1000)
-    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
-    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
-    history: list[ChatTurn] = Field(default_factory=list, max_length=20)
+class ChatIn(Strict):
+    messages: list[ChatTurn] = Field(min_length=1, max_length=21)
+    language: LanguageCode = "en"
+    latitude: float | None = Field(default=None, ge=-90, le=90)
+    longitude: float | None = Field(default=None, ge=-180, le=180)
+    area_label: str | None = Field(default=None, max_length=80)
+
+    @model_validator(mode="after")
+    def last_turn_is_the_user(self) -> ChatIn:
+        if self.messages[-1].role != "user":
+            raise ValueError("The last message must be from the user.")
+        return self
+
+    def conversation(self) -> list[dict[str, str]]:
+        """Turns to send to the model, oldest first; the API requires a user turn first."""
+        turns = [turn.model_dump() for turn in self.messages]
+        while turns and turns[0]["role"] != "user":
+            turns.pop(0)
+        return turns
 
 
-class ChatOut(BaseModel):
-    reply: str
-    source: Literal["openai", "fallback"]
+class ModerateReportIn(Strict):
+    status: Literal["verified", "rejected", "pending"]
+
+
+class ModeratePostIn(Strict):
+    status: Literal["approved", "rejected", "pending"]
+
+
+class ServiceStatusIn(Strict):
+    status: ServiceStatus
+    summary: str | None = Field(default=None, min_length=10, max_length=400)
+
+
+class DeletionRequestStatusIn(Strict):
+    status: Literal["open", "completed"]

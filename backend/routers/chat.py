@@ -1,218 +1,188 @@
-"""POST /chat: the ReSource AI assistant.
+"""The ReSource assistant: POST /chat (one JSON reply) and POST /chat/stream (server-sent events).
 
-What this module does:
-  1. Accepts the resident's message, the language they picked in the app, and the earlier
-     turns of the conversation (so Claude remembers context within a chat session).
-  2. Loads the current services and resources from Supabase and puts them in the system
-     prompt, so answers are grounded in real data instead of the model's guesses.
-  3. Tells Claude to answer in the resident's language.
-
-Mounted by main.py with `app.include_router(chat.router)`.
+Each request carries the conversation so far and the resident's language. The system prompt is
+rebuilt from the database on every request (see grounding.py), so the assistant can only state
+what is in the services, resources, budget and council data. With no ANTHROPIC_API_KEY the same
+routes answer in "basic" mode: a direct lookup of that data, clearly labeled.
 """
 from __future__ import annotations
 
 import json
 import logging
-import os
-from pathlib import Path
-from typing import Literal
+from collections.abc import Iterator
+from typing import Any, Literal
 
 import anthropic
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, model_validator
+from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
-from supabase_client import supabase
+import grounding
+from schemas import ChatIn
+from security import rate_limit
+from settings import get_settings
 
 logger = logging.getLogger("resource.chat")
 router = APIRouter(tags=["chat"])
 
-# Languages the app offers. Keys match the app's locale codes (app/locales/*.json).
-LANGUAGES: dict[str, str] = {
-    "en": "English",
-    "es": "Spanish",
-    "fa": "Dari (Afghan Persian, written in Persian script)",
-    "zh": "Mandarin Chinese (Simplified characters)",
-    "vi": "Vietnamese",
+# Models that accept the `effort` setting. Short factual answers do not need deep reasoning.
+EFFORT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1")
+# Models where a request declined by a safety check can be retried server-side on Anthropic's
+# recommended fallback model. Claude Haiku 5.5 has no server-side fallback.
+FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
+MAX_TOKENS = 16000
+
+REFUSAL_TEXT = {
+    "en": "I can't help with that. I can answer questions about Fremont city services, budget changes and places to get help.",
+    "es": "No puedo ayudar con eso. Puedo responder preguntas sobre los servicios de la ciudad de Fremont, los cambios del presupuesto y dónde conseguir ayuda.",
+    "fa": "در این مورد کمک کرده نمی‌توانم. می‌توانم به پرسش‌ها دربارهٔ خدمات شهر فریمانت، تغییرات بودجه و جاهای دریافت کمک پاسخ بدهم.",
+    "zh": "这个问题我帮不上忙。我可以回答有关弗里蒙特市政服务、预算变化和求助地点的问题。",
+    "vi": "Tôi không thể giúp việc đó. Tôi có thể trả lời câu hỏi về dịch vụ của thành phố Fremont, thay đổi ngân sách và nơi nhận trợ giúp.",
 }
-LanguageCode = Literal["en", "es", "fa", "zh", "vi"]
-
-DEFAULT_MODEL = "claude-opus-5-5"
-# Models that accept the `effort` setting and the automatic refusal fallback used below.
-CURRENT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
-MAX_HISTORY_TURNS = 20
-# Bundled sample data, used only when Supabase is not configured or the query fails.
-LOCAL_DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-
-BASE_PROMPT = """You are ReSource, an assistant for residents of Fremont, California during the \
-city's budget crisis. You help people understand which city services are being cut and find \
-alternative services nearby.
-
-Answer from the service and resource lists below. If the answer is not in them, say you are not \
-sure and suggest the resident call the organization or the City of Fremont to confirm. Never \
-invent addresses, phone numbers, hours, or budget figures.
-
-Keep answers short and in plain words, because many residents read on a phone and some are \
-reading in a second language. When you recommend a resource, include its phone number and \
-address. Be kind: people asking may be worried about losing a service they depend on."""
 
 
-class ChatTurn(BaseModel):
-    role: Literal["user", "assistant"]
-    content: str = Field(min_length=1, max_length=4000)
+class Refused(Exception):
+    """The model (and its fallback) declined to answer."""
 
 
-class ChatRequest(BaseModel):
-    """Send either `messages` (the whole conversation, ending with the new user turn) or the
-    older `message` + `history` pair. Both are accepted so existing clients keep working."""
-
-    messages: list[ChatTurn] = Field(default_factory=list, max_length=MAX_HISTORY_TURNS + 1)
-    message: str | None = Field(default=None, min_length=1, max_length=4000)
-    history: list[ChatTurn] = Field(default_factory=list, max_length=MAX_HISTORY_TURNS)
-    language: LanguageCode = "en"
-    latitude: float | None = Field(default=None, ge=-90, le=90)
-    longitude: float | None = Field(default=None, ge=-180, le=180)
-
-    @model_validator(mode="after")
-    def require_a_user_turn(self) -> "ChatRequest":
-        if not self.messages and not self.message:
-            raise ValueError("Provide `messages` or `message`.")
-        if self.messages and not self.message and self.messages[-1].role != "user":
-            raise ValueError("The last entry in `messages` must be from the user.")
-        return self
-
-    def conversation(self) -> list[dict[str, str]]:
-        """The turns to send to Claude, oldest first, ending with the new user message."""
-        turns = list(self.messages) if self.messages else list(self.history)
-        if self.message:
-            turns.append(ChatTurn(role="user", content=self.message))
-        turns = turns[-(MAX_HISTORY_TURNS + 1):]
-        # The API requires the first turn to come from the user.
-        while turns and turns[0].role != "user":
-            turns.pop(0)
-        return [turn.model_dump() for turn in turns]
-
-
-class ChatResponse(BaseModel):
+class ChatOut(BaseModel):
     reply: str
-    source: Literal["claude"]
-    language: LanguageCode
+    sources: list[str]
+    mode: Literal["ai", "basic"]
+    language: str
 
 
-def _load_local(name: str) -> list[dict]:
-    try:
-        return json.loads((LOCAL_DATA_DIR / f"{name}.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        logger.exception("Could not read bundled %s data", name)
-        return []
+class AnthropicLLM:
+    """Thin wrapper around the Anthropic SDK so tests can swap in a fake with the same methods."""
 
+    def __init__(self, api_key: str, model: str) -> None:
+        self.client = anthropic.Anthropic(api_key=api_key, timeout=60.0)
+        self.model = model
 
-def load_context_data() -> tuple[list[dict], list[dict], str]:
-    """Returns (services, resources, origin). `origin` says where the data came from."""
-    if supabase is not None:
-        try:
-            services = supabase.table("services").select("*").order("name").execute().data or []
-            resources = supabase.table("resources").select("*").order("name").execute().data or []
-            return services, resources, "supabase"
-        except Exception:
-            logger.exception("Supabase query failed; using bundled sample data for chat context")
-    return _load_local("services"), _load_local("resources"), "sample"
+    def _params(self, system: list[dict], messages: list[dict]) -> dict[str, Any]:
+        params: dict[str, Any] = {"model": self.model, "max_tokens": MAX_TOKENS, "system": system, "messages": messages}
+        if self.model in EFFORT_MODELS:
+            params["output_config"] = {"effort": "low"}
+        if self.model in FALLBACK_MODELS:
+            params["betas"] = ["server-side-fallback-2026-07-01"]
+            params["extra_body"] = {"fallbacks": "default"}
+        return params
 
-
-def _service_line(service: dict) -> str:
-    parts = [f"- {service.get('name', 'Unknown service')} ({service.get('category', 'service')})"]
-    parts.append(f"status: {service.get('status', 'unknown')}")
-    if service.get("cut_amount"):
-        parts.append(f"budget cut: ${int(service['cut_amount']):,}")
-    if service.get("effective_date"):
-        parts.append(f"effective: {service['effective_date']}")
-    if service.get("address"):
-        parts.append(f"address: {service['address']}")
-    if service.get("description"):
-        parts.append(str(service["description"]))
-    return "; ".join(parts)
-
-
-def _resource_line(resource: dict) -> str:
-    parts = [f"- {resource.get('name', 'Unknown resource')} ({resource.get('category', 'resource')})"]
-    for label, key in (("address", "address"), ("phone", "phone"), ("website", "website")):
-        if resource.get(key):
-            parts.append(f"{label}: {resource[key]}")
-    if resource.get("languages"):
-        parts.append("languages spoken: " + ", ".join(resource["languages"]))
-    if resource.get("description"):
-        parts.append(str(resource["description"]))
-    return "; ".join(parts)
-
-
-def build_system_prompt(request: ChatRequest) -> str:
-    services, resources, origin = load_context_data()
-    cut = [s for s in services if s.get("status") != "open"]
-    still_open = [s for s in services if s.get("status") == "open"]
-
-    sections = [BASE_PROMPT]
-    if origin == "sample":
-        sections.append(
-            "The lists below are sample data, not official city records. Tell the resident to "
-            "confirm details before relying on them."
-        )
-    sections.append("City services that are cut, reduced, or closed:\n" + ("\n".join(map(_service_line, cut)) or "- None listed."))
-    if still_open:
-        sections.append("City services that are still open:\n" + "\n".join(map(_service_line, still_open)))
-    sections.append("Alternative resources residents can use:\n" + ("\n".join(map(_resource_line, resources)) or "- None listed."))
-    if request.latitude is not None and request.longitude is not None:
-        sections.append(
-            f"The resident shared their location: latitude {request.latitude:.4f}, longitude "
-            f"{request.longitude:.4f}. Prefer services and resources in the part of Fremont closest to them."
-        )
-    sections.append(
-        f"Write your whole reply in {LANGUAGES[request.language]}, because that is the language the "
-        "resident chose in the app. Keep the names of organizations, street addresses, and phone "
-        "numbers exactly as they appear in the lists so the resident can search for or dial them."
-    )
-    return "\n\n".join(sections)
-
-
-@router.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> ChatResponse:
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise HTTPException(status_code=503, detail="Claude is not configured. Set ANTHROPIC_API_KEY on the API server.")
-
-    model = os.getenv("CLAUDE_MODEL", DEFAULT_MODEL)
-    params: dict = {
-        "model": model,
-        "max_tokens": 16000,
-        "system": build_system_prompt(request),
-        "messages": request.conversation(),
-    }
-    if model in CURRENT_MODELS:
-        # Short factual answers do not need deep reasoning; low effort keeps replies fast and cheap.
-        params["output_config"] = {"effort": "low"}
-        # If a safety check declines the request, the API retries it on Anthropic's recommended
-        # fallback model inside the same call. Sent through extra_body so it works on any SDK version.
-        params["betas"] = ["server-side-fallback-2026-07-01"]
-        params["extra_body"] = {"fallbacks": "default"}
-
-    client = anthropic.Anthropic(api_key=api_key, timeout=60.0)
-    try:
-        create = client.beta.messages.create if "betas" in params else client.messages.create
+    def complete(self, system: list[dict], messages: list[dict]) -> str:
+        params = self._params(system, messages)
+        create = self.client.beta.messages.create if "betas" in params else self.client.messages.create
         response = create(**params)
-    except anthropic.AuthenticationError as exc:
-        raise HTTPException(status_code=503, detail="The ANTHROPIC_API_KEY on the API server was rejected.") from exc
-    except anthropic.NotFoundError as exc:
-        raise HTTPException(status_code=503, detail=f"Claude model '{model}' was not found. Check CLAUDE_MODEL.") from exc
-    except anthropic.RateLimitError as exc:
-        raise HTTPException(status_code=429, detail="The assistant is busy. Please try again in a moment.") from exc
-    except anthropic.APIStatusError as exc:
-        logger.exception("Claude API error (status %s)", exc.status_code)
-        raise HTTPException(status_code=502, detail="Claude could not answer the request") from exc
-    except anthropic.APIConnectionError as exc:
-        raise HTTPException(status_code=502, detail="Could not reach Claude") from exc
+        # Check the stop reason before reading content: a declined request has no usable answer.
+        if response.stop_reason == "refusal":
+            raise Refused()
+        return "\n".join(block.text for block in response.content if block.type == "text").strip()
 
-    # Check the stop reason before reading content: a declined request has no usable answer.
-    if response.stop_reason == "refusal":
-        raise HTTPException(status_code=422, detail="The assistant could not answer that question.")
-    answer = "\n".join(block.text for block in response.content if block.type == "text").strip()
-    if not answer:
-        raise HTTPException(status_code=502, detail="Claude returned an empty response")
-    return ChatResponse(reply=answer, source="claude", language=request.language)
+    def stream(self, system: list[dict], messages: list[dict]) -> Iterator[str]:
+        params = self._params(system, messages)
+        open_stream = self.client.beta.messages.stream if "betas" in params else self.client.messages.stream
+        with open_stream(**params) as stream:
+            yield from stream.text_stream
+            if stream.get_final_message().stop_reason == "refusal":
+                raise Refused()
+
+
+def get_llm() -> AnthropicLLM | None:
+    settings = get_settings()
+    return AnthropicLLM(settings.anthropic_api_key, settings.claude_model) if settings.ai_enabled else None
+
+
+def _basic(request: ChatIn) -> ChatOut:
+    reply, sources = grounding.local_answer(request.messages[-1].content, request.language, request.latitude, request.longitude)
+    return ChatOut(reply=reply, sources=sources, mode="basic", language=request.language)
+
+
+def _refusal(request: ChatIn) -> ChatOut:
+    return ChatOut(reply=REFUSAL_TEXT.get(request.language, REFUSAL_TEXT["en"]), sources=[], mode="ai", language=request.language)
+
+
+def _log_failure(exc: Exception) -> None:
+    if isinstance(exc, anthropic.AuthenticationError):
+        logger.error("The ANTHROPIC_API_KEY on the server was rejected")
+    elif isinstance(exc, anthropic.NotFoundError):
+        logger.error("Claude model %r was not found; check CLAUDE_MODEL", get_settings().claude_model)
+    elif isinstance(exc, anthropic.RateLimitError):
+        logger.warning("Claude rate limit reached")
+    elif isinstance(exc, anthropic.APIStatusError):
+        logger.error("Claude API error (status %s)", exc.status_code)
+    elif isinstance(exc, anthropic.APIConnectionError):
+        logger.error("Could not reach the Claude API")
+    else:
+        logger.exception("Unexpected error while answering a chat message")
+
+
+chat_limits = [Depends(rate_limit("chat", 12, 60)), Depends(rate_limit("chat-day", 150, 86400))]
+
+
+@router.post("/chat", response_model=ChatOut, dependencies=chat_limits)
+def chat(request: ChatIn) -> ChatOut:
+    llm = get_llm()
+    if llm is None:
+        return _basic(request)
+    system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
+    try:
+        reply = llm.complete(system, request.conversation())
+    except Refused:
+        return _refusal(request)
+    except Exception as exc:  # the AI service is down or misconfigured: still give a grounded answer
+        _log_failure(exc)
+        return _basic(request)
+    if not reply:
+        return _basic(request)
+    return ChatOut(reply=reply, sources=grounding.detect_sources(reply, names), mode="ai", language=request.language)
+
+
+def _event(name: str, payload: dict) -> str:
+    return f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+@router.post("/chat/stream", dependencies=chat_limits)
+def chat_stream(request: ChatIn) -> StreamingResponse:
+    """Server-sent events: `delta` {text} repeated, then `done` {sources, mode}.
+
+    `reset` {text} replaces everything sent so far (used when an answer is withdrawn part-way).
+    """
+    llm = get_llm()
+
+    def events() -> Iterator[str]:
+        def finish(result: ChatOut, replace: bool) -> Iterator[str]:
+            yield _event("reset" if replace else "delta", {"text": result.reply})
+            yield _event("done", {"sources": result.sources, "mode": result.mode})
+
+        if llm is None:
+            yield from finish(_basic(request), replace=False)
+            return
+        try:
+            system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
+            parts: list[str] = []
+            for text in llm.stream(system, request.conversation()):
+                parts.append(text)
+                yield _event("delta", {"text": text})
+            reply = "".join(parts).strip()
+            if not reply:
+                yield from finish(_basic(request), replace=True)
+                return
+            yield _event("done", {"sources": grounding.detect_sources(reply, names), "mode": "ai"})
+        except Refused:
+            yield from finish(_refusal(request), replace=True)
+        except Exception as exc:
+            _log_failure(exc)
+            yield from finish(_basic(request), replace=True)
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
+    )
+
+
+@router.get("/chat/status")
+def chat_status() -> dict[str, Any]:
+    if not get_settings().ai_enabled:
+        return {"mode": "basic"}
+    return {"mode": "ai", "model": get_settings().claude_model}
+

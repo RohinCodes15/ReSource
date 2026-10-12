@@ -1,261 +1,191 @@
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useTranslation } from '../../../lib/i18n';
-import { Page } from '../../components/Page';
-import { NATIVE_DRIVER } from '../../components/ui';
-import { useUserLocation } from '../../hooks/useUserLocation';
-import { sendChat } from '../../lib/api';
-import { cardSurface, colors, fonts, radius, SCREEN_PADDING, spacing } from '../../theme';
+import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { BrowseOnly } from '../../components/ConsentFields';
+import { LocationChip } from '../../components/LocationChip';
+import { Screen } from '../../components/Page';
+import { Icon, AppButton, AppText, Banner, Chip, LinkText, Pill } from '../../components/ui';
+import { ApiError, sendChat } from '../../lib/api';
+import { useTranslation } from '../../lib/i18n';
+import { ageStore, type ChatMessage, chatStore, locationStore } from '../../state/stores';
+import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
 
-// `local` marks messages the app wrote itself (the greeting, connection errors). They are shown
-// in the chat but never sent to the AI as conversation history.
-type Message = { id: string; role: 'user' | 'assistant'; content: string; local?: boolean };
-
-// Starter questions shown before the first message, translated under "chat" in app/locales.
-const SUGGESTION_KEYS = ['chat.s1', 'chat.s2', 'chat.s3'];
+// Starter questions shown before the first message, translated under "chat" in the locale files.
+const SUGGESTIONS = ['chat.s1', 'chat.s2', 'chat.s3', 'chat.s4'];
 const MAX_HISTORY_TURNS = 20;
-
-// Its text comes from the translations at render time, so it follows the selected language.
-const WELCOME: Message = { id: 'welcome', role: 'assistant', content: '', local: true };
-
-/** Three dots that pulse in turn while the assistant is replying. */
-function TypingDots({ label }: { label: string }) {
-  const dots = useRef([0, 1, 2].map(() => new Animated.Value(0.3))).current;
-  useEffect(() => {
-    const loops = dots.map((dot, i) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(i * 160),
-          Animated.timing(dot, { toValue: 1, duration: 320, useNativeDriver: NATIVE_DRIVER }),
-          Animated.timing(dot, { toValue: 0.3, duration: 320, useNativeDriver: NATIVE_DRIVER }),
-          Animated.delay((2 - i) * 160),
-        ]),
-      ),
-    );
-    loops.forEach((loop) => loop.start());
-    return () => loops.forEach((loop) => loop.stop());
-  }, [dots]);
-  return (
-    <View style={[styles.bubble, styles.assistant, styles.typing]} accessible accessibilityLabel={label}>
-      {dots.map((dot, i) => (
-        <Animated.View
-          key={i}
-          style={[styles.typingDot, { opacity: dot, transform: [{ translateY: dot.interpolate({ inputRange: [0.3, 1], outputRange: [0, -4] }) }] }]}
-        />
-      ))}
-    </View>
-  );
-}
+const MAX_LENGTH = 1000;
+const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 export default function ChatScreen() {
-  const { t, language, setLanguage, languages, isRTL } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([WELCOME]);
+  const { t, language } = useTranslation();
+  const router = useRouter();
+  const messages = chatStore.use();
+  const location = locationStore.use();
+  const age = ageStore.use();
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const listRef = useRef<FlatList<Message>>(null);
-  const { location, status, request } = useUserLocation();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  // Keep the newest message in view.
+  // Keep the newest message in view as it grows.
+  const lastText = messages[messages.length - 1]?.content ?? '';
   useEffect(() => {
-    const timer = setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 60);
+    const timer = setTimeout(() => listRef.current?.scrollToEnd({ animated: false }), 50);
     return () => clearTimeout(timer);
-  }, [messages.length, loading]);
+  }, [messages.length, lastText.length]);
+  useEffect(() => () => abortRef.current?.abort(), []);
 
-  async function send(textArg?: string) {
-    const text = (textArg ?? input).trim();
-    if (!text || loading) return;
-    const userMsg: Message = { id: `u${Date.now()}`, role: 'user', content: text };
-    // Earlier turns of this chat session, so the AI remembers what was already said.
-    const history = messages
-      .filter((m) => !m.local)
-      .map(({ role, content }) => ({ role, content }))
-      .slice(-MAX_HISTORY_TURNS);
-    setMessages((prev) => [...prev, userMsg]);
+  /** Sends `text`, or when `retryOf` is given, asks again for the answer that failed. */
+  async function send(text: string, retryOf?: string) {
+    const question = text.trim().slice(0, MAX_LENGTH);
+    if (!question || busy) return;
+    setError(null);
     setInput('');
-    setLoading(true);
-
-    let reply: Message;
+    setBusy(true);
+    const answerId = newId();
+    const earlier = chatStore.get().filter((m) => !m.failed && m.id !== retryOf);
+    const base = retryOf ? earlier : [...earlier, { id: newId(), role: 'user' as const, content: question }];
+    chatStore.set([...base, { id: answerId, role: 'assistant', content: '' }]);
+    const update = (changes: Partial<ChatMessage>) => chatStore.set((all) => all.map((m) => (m.id === answerId ? { ...m, ...changes } : m)));
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      const res = await sendChat({
-        messages: [...history, { role: 'user', content: text }],
-        language, // the backend tells the AI to answer in this language
-        latitude: location?.latitude,
-        longitude: location?.longitude,
-      });
-      reply = { id: `a${Date.now()}`, role: 'assistant', content: res.reply };
-    } catch {
-      reply = { id: `a${Date.now()}`, role: 'assistant', content: t('errors.network'), local: true };
+      const result = await sendChat(
+        {
+          // Earlier turns of this conversation, so the assistant remembers what was already said.
+          messages: base.map(({ role, content }) => ({ role, content })).slice(-MAX_HISTORY_TURNS),
+          language, // the server tells the model to answer in this language
+          ...(location ? { latitude: location.lat, longitude: location.lng, area_label: location.label } : null),
+        },
+        { signal: controller.signal, onText: (content) => update({ content }) },
+      );
+      update({ content: result.reply, sources: result.sources, mode: result.mode });
+    } catch (reason) {
+      const code = reason instanceof ApiError ? reason.code : 'network';
+      if (code === 'aborted') {
+        // "Stop" keeps whatever had arrived; an answer with no text yet is simply removed.
+        chatStore.set((all) => all.filter((m) => m.id !== answerId || m.content.trim().length > 0));
+      } else {
+        update({ failed: true, content: '' });
+        setError(t(reason instanceof ApiError && reason.status === 429 ? 'errors.rateLimited' : 'chat.failed'));
+      }
+    } finally {
+      abortRef.current = null;
+      setBusy(false);
     }
-    setMessages((prev) => [...prev, reply]);
-    setLoading(false);
   }
 
-  const textDirection = isRTL ? styles.rtl : null;
-  const canSend = !!input.trim() && !loading;
+  function retry(failedId: string) {
+    const all = chatStore.get();
+    const index = all.findIndex((m) => m.id === failedId);
+    const question = all.slice(0, index).reverse().find((m) => m.role === 'user');
+    if (question) void send(question.content, failedId);
+  }
+
+  const clear = () => { abortRef.current?.abort(); chatStore.set([]); setError(null); };
+  const canSend = !!input.trim() && !busy;
+
+  const composer = age === 'under13' ? <View style={styles.composer}><BrowseOnly /></View> : (
+    <View style={styles.composer}>
+      {messages.length === 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} keyboardShouldPersistTaps="handled">
+          {SUGGESTIONS.map((key) => <Chip key={key} label={t(key)} onPress={() => send(t(key))} testID={`suggestion-${key.slice(-2)}`} />)}
+        </ScrollView>
+      )}
+      {!!error && <Banner tone="warning" body={error} live testID="chat-error" />}
+      <View style={styles.inputRow}>
+        <TextInput
+          style={styles.input}
+          placeholder={t('chat.placeholder')}
+          placeholderTextColor={colors.muted}
+          value={input}
+          onChangeText={setInput}
+          onSubmitEditing={() => send(input)}
+          returnKeyType="send"
+          maxLength={MAX_LENGTH}
+          accessibilityLabel={t('chat.messageLabel')}
+          testID="chat-input"
+        />
+        {busy ? (
+          <Pressable onPress={() => abortRef.current?.abort()} accessibilityRole="button" accessibilityLabel={t('chat.stop')} testID="chat-stop" style={[styles.send, styles.stop]}>
+            <Icon name="stop" size={22} color={colors.white} />
+          </Pressable>
+        ) : (
+          <Pressable onPress={() => send(input)} disabled={!canSend} accessibilityRole="button" accessibilityLabel={t('chat.send')} accessibilityState={{ disabled: !canSend }} testID="chat-send" style={[styles.send, !canSend && styles.sendDisabled]}>
+            <Icon name="arrow-up" size={22} color={colors.white} />
+          </Pressable>
+        )}
+      </View>
+    </View>
+  );
 
   return (
-    <Page>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        {/* Language pills: the AI answers in the selected language */}
-        <View style={styles.languages}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.languageRow}>
-            {languages.map((option) => {
-              const active = option.code === language;
-              return (
-                <Pressable
-                  key={option.code}
-                  onPress={() => setLanguage(option.code)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: active }}
-                  accessibilityLabel={option.label}
-                  style={[styles.languagePill, active && styles.languagePillActive]}
-                >
-                  <Text style={styles.flag}>{option.flag}</Text>
-                  <Text style={[styles.languageText, active && styles.languageTextActive]}>{option.label}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-
+    <Screen title={t('titles.chat')} scroll={false} footer={false} testID="chat-screen">
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
         <FlatList
           ref={listRef}
           data={messages}
           keyExtractor={(m) => m.id}
           contentContainerStyle={styles.list}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-          ListFooterComponent={loading ? <TypingDots label={t('chat.typing')} /> : null}
-          renderItem={({ item }) => (
-            <View style={[styles.bubble, item.role === 'user' ? styles.user : styles.assistant]}>
-              <Text style={[item.role === 'user' ? styles.userText : styles.assistantText, textDirection]}>
-                {item.id === 'welcome' ? t('chat.welcome') : item.content}
-              </Text>
+          ListHeaderComponent={
+            <View style={styles.intro}>
+              <Banner tone="info" icon="robot-outline" title={t('chat.noticeTitle')} body={t('chat.noticeBody')} testID="chat-notice">
+                <LinkText variant="caption" label={t('consent.readPrivacy')} onPress={() => router.push('/privacy' as never)} />
+              </Banner>
+              <Banner tone="warning" icon="phone-alert" body={t('chat.emergency')} testID="chat-emergency" />
+              <LocationChip compact />
+              <View style={[styles.bubble, styles.assistant]}><AppText>{t('chat.welcome')}</AppText></View>
             </View>
-          )}
+          }
+          ListFooterComponent={messages.length > 0 ? <LinkText icon="delete-outline" label={t('chat.clear')} onPress={clear} testID="chat-clear" /> : null}
+          renderItem={({ item }) => {
+            if (item.failed) {
+              return (
+                <View style={[styles.bubble, styles.assistant, styles.failed]} testID="chat-failed">
+                  <AppText variant="bodySmall" color={colors.dangerDark}>{t('chat.failed')}</AppText>
+                  <AppButton variant="outline" small icon="refresh" label={t('common.retry')} onPress={() => retry(item.id)} testID="chat-retry" />
+                </View>
+              );
+            }
+            const mine = item.role === 'user';
+            const waiting = !mine && item.content === '';
+            return (
+              <View style={[styles.bubble, mine ? styles.user : styles.assistant]} testID={mine ? 'chat-user' : 'chat-assistant'}>
+                {waiting
+                  ? <AppText variant="bodySmall" live="polite">{t('chat.typing')}</AppText>
+                  : <AppText color={mine ? colors.white : colors.text} selectable>{item.content}</AppText>}
+                {!mine && !!item.mode && (
+                  <View style={styles.meta}>
+                    <Pill label={t(item.mode === 'ai' ? 'chat.modeAi' : 'chat.modeBasic')} icon={item.mode === 'ai' ? 'robot-outline' : 'database-search'} color={colors.navy} bg={colors.navyLight} />
+                    <AppText variant="caption" testID="chat-sources">{t('chat.sources')}: {item.sources?.length ? item.sources.join(' · ') : t('chat.noSources')}</AppText>
+                  </View>
+                )}
+              </View>
+            );
+          }}
         />
-
-        <View style={styles.composer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips} keyboardShouldPersistTaps="handled">
-            <Pressable
-              onPress={request}
-              accessibilityRole="button"
-              accessibilityState={{ selected: status === 'granted' }}
-              style={[styles.chip, status === 'granted' && styles.chipOn]}
-            >
-              <MaterialCommunityIcons name="crosshairs-gps" size={14} color={status === 'granted' ? colors.successDark : colors.navy} />
-              <Text style={[styles.chipText, status === 'granted' && styles.chipTextOn]}>
-                {t(status === 'granted' ? 'chat.usingLocation' : 'chat.shareLocation')}
-              </Text>
-            </Pressable>
-            {/* Suggested questions, only before the first message */}
-            {messages.length === 1 &&
-              SUGGESTION_KEYS.map((key) => (
-                <Pressable key={key} onPress={() => send(t(key))} accessibilityRole="button" style={styles.chip}>
-                  <Text style={styles.chipText}>{t(key)}</Text>
-                </Pressable>
-              ))}
-          </ScrollView>
-
-          <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.input, textDirection]}
-              placeholder={t('chat.placeholder')}
-              placeholderTextColor={colors.muted}
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={() => send()}
-              returnKeyType="send"
-              accessibilityLabel={t('chat.messageLabel')}
-            />
-            <Pressable
-              onPress={() => send()}
-              disabled={!canSend}
-              accessibilityRole="button"
-              accessibilityLabel={t('chat.send')}
-              accessibilityState={{ disabled: !canSend }}
-              style={[styles.send, !canSend && styles.sendDisabled]}
-            >
-              <MaterialCommunityIcons name="arrow-up" size={22} color={colors.white} />
-            </Pressable>
-          </View>
-        </View>
+        {composer}
       </KeyboardAvoidingView>
-    </Page>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  languages: { borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: colors.background },
-  languageRow: { paddingHorizontal: SCREEN_PADDING, paddingVertical: spacing.sm, gap: spacing.sm },
-  languagePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 36,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  languagePillActive: { backgroundColor: colors.navy, borderColor: colors.navy },
-  flag: { fontSize: 16 },
-  languageText: { fontFamily: fonts.medium, fontSize: 13, color: colors.text },
-  languageTextActive: { color: colors.white },
-  list: { paddingHorizontal: SCREEN_PADDING, paddingVertical: spacing.lg, gap: spacing.md },
-  bubble: { maxWidth: '82%', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: radius.xl },
-  // Messages-app style: your messages in navy on the right, the assistant in white on the left.
-  user: { alignSelf: 'flex-end', backgroundColor: colors.navy, borderBottomRightRadius: 6 },
-  assistant: { ...cardSurface, borderRadius: radius.xl, alignSelf: 'flex-start', borderBottomLeftRadius: 6 },
-  userText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23, color: colors.white },
-  assistantText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 23, color: colors.text },
-  typing: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: spacing.lg },
-  typingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.muted },
-  // Right-to-left languages (Dari).
-  rtl: { writingDirection: 'rtl', textAlign: 'right' },
-  composer: {
-    backgroundColor: colors.surface,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    gap: spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  chips: { paddingHorizontal: SCREEN_PADDING, gap: spacing.sm },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    height: 36,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.navyLight,
-  },
-  chipOn: { backgroundColor: colors.successLight },
-  chipText: { fontFamily: fonts.medium, fontSize: 13, color: colors.navy },
-  chipTextOn: { color: colors.successDark },
-  inputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: SCREEN_PADDING },
-  input: {
-    flex: 1,
-    height: 48,
-    borderRadius: radius.pill,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    fontFamily: fonts.regular,
-    fontSize: 16,
-    color: colors.text,
-  },
-  send: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
-  sendDisabled: { backgroundColor: colors.border },
+  list: { padding: spacing.lg, gap: spacing.md },
+  intro: { gap: spacing.md, marginBottom: spacing.sm },
+  bubble: { maxWidth: '88%', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: radius.xl, gap: spacing.sm },
+  // Your messages in navy at the end of the row; the assistant in white at the start.
+  user: { alignSelf: 'flex-end', backgroundColor: colors.navy, borderBottomEndRadius: 6 },
+  assistant: { ...cardSurface, borderRadius: radius.xl, alignSelf: 'flex-start', borderBottomStartRadius: 6 },
+  failed: { borderWidth: 1.5, borderColor: colors.dangerDark },
+  meta: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  composer: { backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, padding: spacing.md, gap: spacing.sm },
+  chips: { gap: spacing.sm },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  input: { flex: 1, minHeight: 48, borderRadius: radius.pill, backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.borderStrong, paddingHorizontal: spacing.lg, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
+  send: { width: 48, height: 48, minWidth: MIN_TOUCH, borderRadius: 24, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
+  sendDisabled: { backgroundColor: colors.borderStrong },
+  stop: { backgroundColor: colors.dangerDark },
 });

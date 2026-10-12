@@ -1,0 +1,53 @@
+{
+  "source_title": "U.S. Census Bureau 2024 Gazetteer, ZIP Code Tabulation Areas",
+  "source_url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_zcta_national.zip",
+  "retrieved": "2026-10-12",
+  "note": "Latitude and longitude are the Census internal point of each ZIP Code Tabulation Area. Area names are a plain-language guide: ZIP boundaries do not follow neighborhood or council-district lines exactly. 94537 is a post-office-box ZIP (the City's own mailing address uses it) with no land area, so it maps to Fremont City Hall.",
+  "zips": [
+    {
+      "zip": "94536",
+      "area": "94536",
+      "label": "Centerville & Niles",
+      "lat": 37.570508,
+      "lng": -121.98125,
+      "kind": "standard"
+    },
+    {
+      "zip": "94537",
+      "area": "94538",
+      "label": "Fremont PO boxes",
+      "lat": 37.5518,
+      "lng": -121.9826,
+      "kind": "po_box"
+    },
+    {
+      "zip": "94538",
+      "area": "94538",
+      "label": "Central Fremont & Irvington",
+      "lat": 37.501368,
+      "lng": -121.956753,
+      "kind": "standard"
+    },
+    {
+      "zip": "94539",
+      "area": "94539",
+      "label": "Mission San Jose & Warm Springs",
+      "lat": 37.516292,
+      "lng": -121.911891,
+      "kind": "standard"
+    },
+    {
+      "zip": "94555",
+      "area": "94555",
+      "label": "Ardenwood & North Fremont",
+      "lat": 37.547594,
+      "lng": -122.09822,
+      "kind": "standard"
+    }
+  ],
+  "center": {
+    "label": "Fremont City Hall",
+    "lat": 37.5518,
+    "lng": -121.9826
+  }
+}

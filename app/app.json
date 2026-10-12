@@ -40,7 +40,8 @@
           "photosPermission": "ReSource needs photo access so you can attach a picture to a service disruption report."
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-localization"
     ]
   }
 }
