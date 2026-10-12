@@ -1,0 +1,125 @@
+{
+  "language": {
+    "select": "Elegir idioma"
+  },
+  "tabs": {
+    "home": "Inicio",
+    "map": "Mapa",
+    "resources": "Recursos",
+    "report": "Reportar",
+    "alerts": "Alertas",
+    "reps": "Concejales",
+    "community": "Comunidad",
+    "chat": "Chat IA"
+  },
+  "titles": {
+    "home": "ReSource",
+    "map": "Mapa de servicios",
+    "resources": "Recursos",
+    "report": "Reportar una interrupción",
+    "alerts": "Alertas",
+    "reps": "Seguimiento de concejales",
+    "community": "Comunidad",
+    "chat": "Chat con IA"
+  },
+  "home": {
+    "tagline": "Ayudamos a Fremont a enfrentar la crisis presupuestaria",
+    "reportsSubmitted": "Reportes enviados",
+    "statsUnavailable": "Estadísticas no disponibles",
+    "whatDoYouNeed": "¿Qué necesita?",
+    "mapTitle": "Mapa de servicios",
+    "mapSubtitle": "Vea qué se está recortando",
+    "resourcesTitle": "Buscar recursos",
+    "resourcesSubtitle": "Comida, clínicas, organizaciones",
+    "reportTitle": "Reportar una interrupción",
+    "reportSubtitle": "Avise a la ciudad y a sus vecinos",
+    "chatTitle": "Pregunte a ReSource",
+    "chatSubtitle": "Ayuda con IA, en palabras sencillas",
+    "footnote": "Versión de demostración: los cambios de servicios y los votos del presupuesto son ilustrativos. Los recursos nombran organizaciones locales; confirme los datos actuales antes de ir.",
+    "crisisTitle": "Alerta de crisis",
+    "crisisView": "Ver alertas"
+  },
+  "chat": {
+    "welcome": "¡Hola! Soy el asistente de ReSource. Pregúnteme qué servicios de la ciudad se están recortando y dónde encontrar alternativas gratuitas cerca de usted.",
+    "placeholder": "Pregunte sobre servicios cerca de usted…",
+    "messageLabel": "Mensaje",
+    "send": "Enviar mensaje",
+    "typing": "ReSource está escribiendo…",
+    "shareLocation": "Compartir ubicación",
+    "usingLocation": "Usando su ubicación",
+    "s1": "¿Qué está cerrado cerca de mí?",
+    "s2": "¿Adónde pueden ir mis hijos?",
+    "s3": "¿Cómo me comunico con mi representante?"
+  },
+  "faq": {
+    "q1": "¿Qué servicios siguen abiertos cerca de mí?",
+    "q2": "¿Dónde puedo conseguir comida gratis?",
+    "q3": "¿Va a cerrar la biblioteca?",
+    "q4": "¿Dónde hay una clínica gratuita cerca de mí?",
+    "q5": "¿Cómo me comunico con mi concejal?"
+  },
+  "common": {
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "call": "Llamar",
+    "email": "Correo",
+    "search": "Buscar",
+    "post": "Publicar",
+    "contact": "Contactar",
+    "remove": "Quitar",
+    "useMyLocation": "Usar mi ubicación"
+  },
+  "report": {
+    "intro": "¿Vio una instalación cerrada, una ruta cancelada o un servicio reducido? Avísenos para que los vecinos y las autoridades lo sepan.",
+    "serviceName": "Nombre del servicio",
+    "location": "Ubicación",
+    "locationPlaceholder": "Dirección o vecindario",
+    "description": "¿Qué pasó?",
+    "impactLevel": "¿Cuánto le afecta esto?",
+    "impactLow": "Poco",
+    "impactMedium": "Algo",
+    "impactHigh": "Mucho",
+    "uploadPhoto": "Subir una foto",
+    "removePhoto": "Quitar foto",
+    "submit": "Enviar reporte",
+    "yourReports": "Sus reportes",
+    "sent": "¡Gracias! Su reporte fue enviado."
+  },
+  "resources": {
+    "searchPlaceholder": "Buscar comida, clínicas, organizaciones…",
+    "empty": "Ningún recurso coincide con su búsqueda.",
+    "all": "Todos",
+    "distanceFromYou": "Las distancias son desde su ubicación",
+    "distanceFromCityHall": "Las distancias son desde el Ayuntamiento de Fremont"
+  },
+  "alerts": {
+    "subscribeAll": "Suscribirse a todas",
+    "unsubscribeAll": "Cancelar todas",
+    "notifyMe": "Avisarme de novedades",
+    "notificationsOn": "Notificaciones activadas"
+  },
+  "reps": {
+    "budgetVote": "Voto del presupuesto",
+    "voted": "Votó",
+    "yes": "Sí",
+    "no": "No",
+    "abstain": "Abstención"
+  },
+  "community": {
+    "newPost": "Nueva publicación",
+    "shareTip": "Comparta un consejo",
+    "tipLabel": "Su consejo o pregunta",
+    "neighborhood": "Vecindario (opcional)",
+    "top": "Destacadas",
+    "new": "Recientes"
+  },
+  "errors": {
+    "serviceRequired": "Escriba el nombre del servicio.",
+    "descriptionRequired": "Describa la interrupción.",
+    "network": "No pude conectar con ReSource en este momento. Revise su conexión e inténtelo de nuevo.",
+    "reportFailed": "No se pudo enviar su reporte. Inténtelo de nuevo.",
+    "locationDenied": "Permiso de ubicación denegado.",
+    "generic": "Algo salió mal. Inténtelo de nuevo."
+  }
+}

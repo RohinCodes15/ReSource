@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "ReSource",
+    "slug": "resource",
+    "scheme": "resource",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "org.resource.fremont"
+    },
+    "android": {
+      "package": "org.resource.fremont",
+      "adaptiveIcon": {
+        "backgroundColor": "#1B3A6B",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ReSource uses your location to show the resources closest to you."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ReSource needs photo access so you can attach a picture to a service disruption report."
+        }
+      ],
+      "expo-font"
+    ]
+  }
+}

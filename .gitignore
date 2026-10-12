@@ -1,0 +1,58 @@
+# Secrets: never commit real environment files
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.key
+*.jks
+*.mobileprovision
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.tsbuildinfo
+/app/ios
+/app/android
+.kotlin/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Backend local-mode state (reports, posts and subscriptions written without Supabase)
+backend/.local_state/
+
+# Scraper: downloaded source material and caches are re-created by the scripts
+scraper/data/raw/
+scraper/data/pdfs/
+scraper/data/cache/
+scraper/logs/
+
+# Test and audit output
+app/test-results/
+app/playwright-report/
+app/coverage/
+.lighthouseci/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
