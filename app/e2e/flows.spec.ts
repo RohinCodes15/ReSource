@@ -482,13 +482,14 @@ test('data deletion request form: validation, consent and a receipt', async ({ p
 test('admin: wrong passcode, verify a report, impact dashboard and CSV export, lock', async ({ page }) => {
   await fileReport(page, 'Street repair on our block has been postponed again this season.');
   await open(page, '/impact');
-  await expect(v(page, 'impact-dashboard')).toHaveCount(0);
+  await expect(v(page, 'impact-dashboard')).toBeVisible(); // the totals are public
+  await expect(v(page, 'impact-export')).toHaveCount(0); // the export is not
   await v(page, 'admin-passcode').fill('not-the-passcode');
   await v(page, 'admin-unlock').click();
   await expect(v(page, 'admin-passcode-error')).toContainText('not correct');
   await v(page, 'admin-passcode').fill(ADMIN_TOKEN);
   await v(page, 'admin-unlock').click();
-  await expect(v(page, 'impact-dashboard')).toBeVisible();
+  await expect(v(page, 'impact-export')).toBeVisible();
 
   await v(page, 'tab-more').click();
   await v(page, 'more-admin').click();
