@@ -1,6 +1,14 @@
 /** Small wrappers for things that differ between the web and phones: links, calls, sharing, files. */
 import * as Clipboard from 'expo-clipboard';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Linking, Platform, Share } from 'react-native';
+
+/**
+ * False only on an Android build made without a Google Maps key (app.config.js): creating the
+ * map view there fails or draws a grey box, so the map screen shows its list instead.
+ */
+export const MAP_AVAILABLE =
+  Platform.OS !== 'android' || Constants.executionEnvironment === ExecutionEnvironment.StoreClient || Constants.expoConfig?.extra?.androidMapsKey === true;
 
 /** Opens a link in a new tab on the web (without giving the new page access to this one). */
 export async function openUrl(url: string): Promise<boolean> {

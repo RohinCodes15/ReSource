@@ -1,4 +1,4 @@
-"""Admin-only routes: moderation, service status updates and the Community Impact dashboard.
+"""Admin-only routes: moderation, service status updates and the Community Impact CSV export.
 
 Every route here requires `require_admin`: the ADMIN_TOKEN header, or a signed-in Supabase user
 whose app_metadata.role is "admin".
@@ -7,13 +7,12 @@ from __future__ import annotations
 
 import csv
 import io
-from collections import Counter
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
-from routers.public import public_row
+from routers.public import public_row, verified_reports
 from schemas import (
     DeletionRequestStatusIn,
     ModeratePostIn,
@@ -101,39 +100,7 @@ def feedback() -> list[Row]:
     return get_store().list("feedback", order="created_at", desc=True, limit=200)
 
 
-# ---- Community Impact dashboard: verified reports only ----------------------------------------
-
-IMPACT_LEVELS = ("high", "medium", "low")
-
-
-def _verified() -> list[Row]:
-    return get_store().list("reports", {"status": "verified"}, order="created_at", desc=True)
-
-
-def _breakdown(rows: list[Row], key: str) -> list[dict[str, Any]]:
-    groups: dict[str, Counter] = {}
-    for row in rows:
-        groups.setdefault(row.get(key) or "unknown", Counter())[row["impact_level"]] += 1
-    out = [{"key": name, "total": sum(counts.values()), **{level: counts.get(level, 0) for level in IMPACT_LEVELS}}
-           for name, counts in groups.items()]
-    return sorted(out, key=lambda item: (-item["total"], item["key"]))
-
-
-@router.get("/impact/summary")
-def impact_summary() -> dict[str, Any]:
-    rows = _verified()
-    store = get_store()
-    levels = Counter(row["impact_level"] for row in rows)
-    return {
-        "verified_total": len(rows),
-        "pending_total": store.count("reports", {"status": "pending"}),
-        "rejected_total": store.count("reports", {"status": "rejected"}),
-        "by_impact": [{"key": level, "total": levels.get(level, 0)} for level in IMPACT_LEVELS],
-        "by_service": _breakdown(rows, "service_name"),
-        "by_area": _breakdown(rows, "area"),
-        "generated_at": now_iso(),
-    }
-
+# ---- Community Impact export (the totals themselves are public: routers/public.py) -----------
 
 @router.get("/impact/export.csv")
 def impact_export() -> Response:
@@ -141,7 +108,7 @@ def impact_export() -> Response:
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["report_id", "created_at", "service", "area", "impact_level", "description"])
-    for row in _verified():
+    for row in verified_reports():
         description = str(row.get("description") or "")
         # A leading =, +, - or @ would be run as a formula by spreadsheet software.
         if description[:1] in ("=", "+", "-", "@"):

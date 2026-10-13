@@ -27,6 +27,7 @@ const RULES = [
   [/\blorem ipsum\b/i, 'contains lorem ipsum'],
   [/\bcoming soon\b/i, 'says "coming soon": every control must work'],
   [/\b(TODO|FIXME|TBD)\b/, 'contains a leftover TODO/FIXME/TBD'],
+  [/\[Placeholder\b/i, 'contains a leftover [Placeholder: ...] paragraph'],
   [/\b(limited time|act now|hurry|only \d+ left|don'?t miss out)\b/i, 'uses fake urgency'],
   [/\bno thanks, i (don'?t|do not)\b/i, 'uses confirm-shaming copy'],
 ];

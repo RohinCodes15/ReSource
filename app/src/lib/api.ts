@@ -64,7 +64,7 @@ async function request<T>(path: string, options: Options = {}): Promise<T> {
 
 // ---- Public data ---------------------------------------------------------------------------
 
-export type AppConfig = { mode: 'local' | 'supabase'; ai_enabled: boolean; email_enabled: boolean; auth_enabled: boolean; policy_version: string; data_retrieved: string };
+export type AppConfig = { mode: 'local' | 'supabase'; ai_enabled: boolean; email_enabled: boolean; auth_enabled: boolean; admin_enabled?: boolean; policy_version: string; data_retrieved: string };
 export type Stats = { reports_total: number; reports_verified: number; posts: number; services_tracked: number; services_reduced: number; services_closed: number; resources: number };
 
 export const getConfig = () => request<AppConfig>('/config', { timeoutMs: 5000 });
@@ -132,7 +132,7 @@ export const moderatePost = (id: string, status: 'approved' | 'rejected' | 'pend
 export const updateServiceStatus = (id: string, status: ServiceStatus) => request<Service>(`/admin/services/${encodeURIComponent(id)}`, { ...admin, body: { status } });
 export const adminDeletionRequests = () => request<DeletionRequest[]>('/admin/deletion-requests', admin);
 export const closeDeletionRequest = (id: string) => request<DeletionRequest>(`/admin/deletion-requests/${encodeURIComponent(id)}`, { ...admin, body: { status: 'completed' } });
-export const getImpactSummary = () => request<ImpactSummary>('/impact/summary', admin);
+export const getImpactSummary = () => request<ImpactSummary>('/impact/summary');
 export const getImpactCsv = () => request<string>('/impact/export.csv', { ...admin, text: true });
 
 // ---- Assistant -----------------------------------------------------------------------------
