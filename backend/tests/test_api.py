@@ -285,10 +285,19 @@ def test_feedback_is_stored_without_identifiers(client):
 # ---- Admin and the impact dashboard -----------------------------------------------------------
 
 def test_admin_routes_need_the_token(client):
-    for path in ("/admin/me", "/admin/reports", "/admin/posts", "/impact/summary", "/impact/export.csv"):
+    for path in ("/admin/me", "/admin/reports", "/admin/posts", "/impact/export.csv"):
         assert client.get(path).status_code == 403, path
         assert client.get(path, headers={"X-Admin-Token": "wrong"}).status_code == 403, path
         assert client.get(path, headers=ADMIN).status_code == 200, path
+
+
+def test_without_an_admin_token_the_server_says_admin_is_not_set_up(client, env):
+    assert client.get("/config").json()["admin_enabled"] is True
+    env.setenv("ADMIN_TOKEN", "")
+    restart()
+    assert client.get("/config").json()["admin_enabled"] is False
+    assert client.get("/admin/me", headers=ADMIN).status_code == 403
+    assert client.get("/impact/summary").status_code == 200
 
 
 def test_impact_dashboard_counts_only_verified_reports(client):
@@ -301,7 +310,8 @@ def test_impact_dashboard_counts_only_verified_reports(client):
     client.post(f"/admin/reports/{ids[1]}", json={"status": "rejected"}, headers=ADMIN)
     client.post(f"/admin/reports/{formula}", json={"status": "verified"}, headers=ADMIN)
 
-    summary = client.get("/impact/summary", headers=ADMIN).json()
+    summary = client.get("/impact/summary").json()
+    assert "description" not in str(summary) and "potholes" not in str(summary)
     assert (summary["verified_total"], summary["pending_total"], summary["rejected_total"]) == (3, 0, 1)
     assert summary["by_impact"] == [{"key": "high", "total": 1}, {"key": "medium", "total": 1}, {"key": "low", "total": 1}]
     assert summary["by_service"][0] == {"key": "Street pavement maintenance", "total": 3, "high": 1, "medium": 1, "low": 1}
