@@ -127,7 +127,7 @@ export function StackedBarList({ items, series, totalLabel }: { items: StackItem
 }
 
 /** A single headline number with its label. Used instead of a chart when one figure is the point. */
-export function StatTile({ value, label, icon, tone = 'navy', onPress, testID }: { value: string; label: string; icon?: IconName; tone?: 'navy' | 'status'; onPress?: () => void; testID?: string; color?: string }) {
+export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPress, testID }: { value: string; label: string; icon?: IconName; tone?: 'navy' | 'status'; /** Narrowest the tile gets before the row wraps. */ basis?: number; onPress?: () => void; testID?: string; color?: string }) {
   const body = (
     <>
       {icon && <Icon name={icon} size={22} color={tone === 'navy' ? colors.navy : colors.text} />}
@@ -137,10 +137,10 @@ export function StatTile({ value, label, icon, tone = 'navy', onPress, testID }:
   );
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} testID={testID} style={({ pressed }) => [styles.tile, pressed && styles.pressed]}>{body}</Pressable>
+      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} testID={testID} style={({ pressed }) => [styles.tile, { flexBasis: basis }, pressed && styles.pressed]}>{body}</Pressable>
     );
   }
-  return <View style={styles.tile} accessible accessibilityLabel={`${label}: ${value}`} testID={testID}>{body}</View>;
+  return <View style={[styles.tile, { flexBasis: basis }]} accessible accessibilityLabel={`${label}: ${value}`} testID={testID}>{body}</View>;
 }
 
 const styles = StyleSheet.create({

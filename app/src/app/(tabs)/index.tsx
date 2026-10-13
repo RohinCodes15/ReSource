@@ -6,7 +6,7 @@ import { APP_NAME } from '../../../../shared/constants';
 import { StatTile } from '../../components/Charts';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { LocationChip } from '../../components/LocationChip';
-import { Screen } from '../../components/Page';
+import { Footer, Screen } from '../../components/Page';
 import { Icon, AppText, Banner, Card, FadeIn, type IconName, Pill, Skeleton, SourceLine } from '../../components/ui';
 import { ALERT_ICONS, bundledAlerts, bundledResources, bundledServices } from '../../data';
 import { useApi } from '../../hooks/useData';
@@ -49,7 +49,7 @@ export default function HomeScreen() {
   const count = (value: number | undefined) => (value === undefined ? '' : value < 0 ? '—' : String(value));
 
   return (
-    <Screen title={APP_NAME} contentStyle={styles.content} testID="home-screen">
+    <Screen title={APP_NAME} contentStyle={styles.content} footer={false} testID="home-screen">
       <LinearGradient colors={[colors.navy, colors.navyDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + spacing.lg }]}>
         <View style={styles.heroTop}>
           <AppText variant="h1" heading={1} color={colors.white} accessibilityLabel={APP_NAME}>
@@ -131,6 +131,8 @@ export default function HomeScreen() {
           <AppText variant="bodySmall" color={colors.text}>{t('home.emergencyBody')}</AppText>
         </Card>
         {latest && <SourceLine title={t('home.dataSources')} retrieved={latest.retrieved} />}
+        {/* Inside the padded body: the hero above is full width, so the Screen itself has no padding. */}
+        <Footer />
       </View>
     </Screen>
   );
@@ -143,7 +145,7 @@ const styles = StyleSheet.create({
   tagline: { marginTop: spacing.sm, maxWidth: 460 },
   body: { padding: spacing.lg, gap: spacing.lg },
   sectionGap: { gap: spacing.sm },
-  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, justifyContent: 'space-between' },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   alert: { ...cardSurface, padding: spacing.lg, gap: spacing.sm, borderStartWidth: 4, borderStartColor: colors.gold },
   alertHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
   alertFoot: { flexDirection: 'row', alignItems: 'center', gap: 2 },

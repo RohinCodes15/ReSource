@@ -38,7 +38,7 @@ export default function BudgetScreen() {
         <AppText variant="h3" heading={2}>{t('budget.keyNumbers')}</AppText>
         {budget.headline.map((item) => (
           <Card key={item.id} style={styles.fact} testID={`headline-${item.id}`}>
-            <StatTile value={formatMoney(item.amount)} label={item.label} />
+            <View style={styles.tileRow}><StatTile value={formatMoney(item.amount)} label={item.label} /></View>
             {source(item.source, item.page)}
           </Card>
         ))}
@@ -122,5 +122,7 @@ export default function BudgetScreen() {
 const styles = StyleSheet.create({
   block: { gap: spacing.md },
   fact: { gap: spacing.sm },
+  // A row, so the tile's flex basis sets its width and not its height.
+  tileRow: { flexDirection: 'row' },
   sources: { gap: spacing.xs },
 });

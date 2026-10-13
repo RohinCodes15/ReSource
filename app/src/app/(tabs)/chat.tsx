@@ -8,7 +8,7 @@ import { Icon, AppButton, AppText, Banner, Chip, LinkText, Pill } from '../../co
 import { ApiError, sendChat } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { ageStore, type ChatMessage, chatStore, locationStore } from '../../state/stores';
-import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
+import { cardSurface, colors, fonts, MIN_TOUCH, radius, SCREEN_PADDING, spacing } from '../../theme';
 
 // Starter questions shown before the first message, translated under "chat" in the locale files.
 const SUGGESTIONS = ['chat.s1', 'chat.s2', 'chat.s3', 'chat.s4'];
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   assistant: { ...cardSurface, borderRadius: radius.xl, alignSelf: 'flex-start', borderBottomStartRadius: 6 },
   failed: { borderWidth: 1.5, borderColor: colors.dangerDark },
   meta: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  composer: { backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, padding: spacing.md, gap: spacing.sm },
+  composer: { backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: SCREEN_PADDING, paddingVertical: spacing.md, gap: spacing.sm },
   chips: { gap: spacing.sm },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   input: { flex: 1, minHeight: 48, borderRadius: radius.pill, backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.borderStrong, paddingHorizontal: spacing.lg, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
