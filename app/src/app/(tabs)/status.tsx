@@ -27,7 +27,8 @@ export default function StatusScreen() {
   const categories = useMemo(() => Array.from(new Set(services.map((s) => s.category))).sort(), [services]);
   const counts = useMemo(() => Object.fromEntries(STATUSES.map((s) => [s, services.filter((x) => x.status === s).length])) as Record<ServiceStatus, number>, [services]);
   const shown = services.filter((s) => (!category || s.category === category) && (!area || s.area === area) && (!status || s.status === status));
-  const recent = useMemo(() => [...services].sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? '')).slice(0, 5), [services]);
+  // Only services whose status changed, newest change first. `updated_at` is the day the data was checked, not the day anything changed.
+  const recent = useMemo(() => services.filter((s) => s.status !== 'open').sort((a, b) => (b.effective_date ?? '').localeCompare(a.effective_date ?? '')).slice(0, 5), [services]);
   const latest = services.reduce((max, s) => ((s.retrieved ?? '') > max ? (s.retrieved ?? '') : max), '');
 
   const byCategory = categories.map((key) => {

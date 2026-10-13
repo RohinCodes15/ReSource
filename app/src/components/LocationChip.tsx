@@ -1,11 +1,11 @@
 import * as Location from 'expo-location';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import { FREMONT_CENTER, zipTable } from '../data';
+import { FREMONT_CENTER } from '../data';
 import { useTranslation } from '../lib/i18n';
 import { type AppLocation, locationStore, lookupZip } from '../state/stores';
 import { colors, MIN_TOUCH, radius, spacing } from '../theme';
-import { distanceMiles, inFremont } from '../utils/geo';
+import { inFremont } from '../utils/geo';
 import { Sheet } from './Sheet';
 import { Icon, AppButton, AppText, Banner, Field } from './ui';
 
@@ -15,15 +15,6 @@ const LOW_ACCURACY_METERS = 1000;
 export type GpsOutcome =
   | { status: 'ok'; location: AppLocation; outside: boolean }
   | { status: 'denied' | 'blocked' | 'unavailable' | 'timeout' };
-
-/** Name of the ZIP area closest to a point, so a GPS fix can be shown as a place, not numbers. */
-function nearestAreaLabel(lat: number, lng: number): string {
-  const nearest = zipTable.zips
-    .filter((entry) => entry.kind === 'standard')
-    .map((entry) => ({ entry, miles: distanceMiles({ latitude: lat, longitude: lng }, { latitude: entry.lat, longitude: entry.lng }) }))
-    .sort((a, b) => a.miles - b.miles)[0];
-  return nearest.entry.label;
-}
 
 /**
  * Asks for the device location once, after the person has tapped "Use my location".
@@ -50,7 +41,7 @@ export async function requestGps(): Promise<GpsOutcome> {
     return {
       status: 'ok',
       outside,
-      location: { kind: 'gps', label: outside ? '' : nearestAreaLabel(lat, lng), lat, lng, lowAccuracy: (position.coords.accuracy ?? 0) > LOW_ACCURACY_METERS },
+      location: { kind: 'gps', label: '', lat, lng, lowAccuracy: (position.coords.accuracy ?? 0) > LOW_ACCURACY_METERS },
     };
   } catch (error) {
     const code = (error as { code?: unknown } | null)?.code;
@@ -88,7 +79,9 @@ export function LocationSheet({ visible, onClose }: { visible: boolean; onClose:
       setNotice({ tone: 'warning', text: t(`location.gps.${outcome.status}`) });
       return;
     }
-    const label = outcome.outside ? t('location.outsideLabel') : t('location.nearLabel', { area: outcome.location.label });
+    // No neighborhood name: the nearest ZIP center is often the wrong ZIP (City Hall is closer to
+    // the 94536 center than to its own), and the app has no ZIP boundaries to check against.
+    const label = t(outcome.outside ? 'location.outsideLabel' : 'location.gpsLabel');
     locationStore.set({ ...outcome.location, label });
     if (outcome.outside) setNotice({ tone: 'info', text: t('location.gps.outside') });
     else if (outcome.location.lowAccuracy) setNotice({ tone: 'info', text: t('location.gps.lowAccuracy') });

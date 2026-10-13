@@ -71,7 +71,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
 export default function ResourcesScreen() {
   const { t, tx } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ categories?: string; from?: string }>();
+  const params = useLocalSearchParams<{ categories?: string; from?: string; at?: string }>();
   const { data, loading, error, reload } = useApi(getResources, () => bundledResources);
   const { origin } = useOrigin();
   const favorites = favoritesStore.use();
@@ -81,10 +81,12 @@ export default function ResourcesScreen() {
   const [sort, setSort] = useState<'near' | 'name'>('near');
   const [notice, setNotice] = useState('');
 
-  // Arriving from "Find Alternative" on the map pre-selects that service's categories.
+  // Arriving from "Find Alternative" on the map pre-selects that service's categories. `at` changes
+  // on every press, so pressing it again for the same service selects them again.
+  const arrival = `${params.at ?? ''}|${params.categories ?? ''}`;
   const [seenParam, setSeenParam] = useState<string | undefined>(undefined);
-  if (params.categories !== seenParam) {
-    setSeenParam(params.categories);
+  if (arrival !== seenParam) {
+    setSeenParam(arrival);
     setSelected(params.categories ? params.categories.split(',').filter(Boolean) : []);
   }
 
@@ -129,7 +131,7 @@ export default function ResourcesScreen() {
         )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        <Chip label={t('common.all')} selected={selected.length === 0 && !savedOnly} onPress={() => { setSelected([]); setSavedOnly(false); }} testID="chip-all" />
+        <Chip label={t('common.all')} selected={selected.length === 0 && !savedOnly} onPress={() => { setSelected([]); setSavedOnly(false); if (params.from) router.setParams({ from: '' } as never); }} testID="chip-all" />
         <Chip label={t('resources.saved', { count: favorites.length })} icon="bookmark" selected={savedOnly} onPress={() => setSavedOnly(!savedOnly)} testID="chip-saved" />
         {categories.map((category) => (
           <Chip key={category} label={tx('resourceCategory', category)} icon={RESOURCE_ICONS[category]} selected={selected.includes(category)} onPress={() => toggle(category)} testID={`chip-${category}`} />

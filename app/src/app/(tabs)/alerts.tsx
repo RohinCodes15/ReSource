@@ -104,14 +104,19 @@ export default function AlertsScreen() {
 
   async function unsubscribe() {
     alertPrefsStore.set((current) => ({ ...current, subscribed: false, notifications: false }));
-    setNotice({ tone: 'info', text: t('alerts.unsubscribed') });
-    await deleteSubscription().catch(() => undefined);
+    try {
+      await deleteSubscription();
+      setNotice({ tone: 'info', text: t('alerts.unsubscribed') });
+    } catch {
+      setNotice({ tone: 'warning', text: t('alerts.unsubscribedOffline') });
+    }
   }
 
   async function setNotifications(on: boolean) {
     if (!on) { alertPrefsStore.set((current) => ({ ...current, notifications: false })); return; }
     const outcome = await askToNotify();
-    alertPrefsStore.set((current) => ({ ...current, notifications: outcome === 'granted' }));
+    // Updates already on the list are not news: only ones that arrive later are announced.
+    alertPrefsStore.set((current) => ({ ...current, notifications: outcome === 'granted', notified: Array.from(new Set([...current.notified, ...alerts.map((alert) => alert.id)])) }));
     setNotice(outcome === 'granted' ? { tone: 'success', text: t('alerts.notifyOn') } : { tone: 'warning', text: t(outcome === 'denied' ? 'alerts.notifyDenied' : 'alerts.notifyUnsupported') });
   }
 

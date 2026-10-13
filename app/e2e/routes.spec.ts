@@ -84,6 +84,6 @@ test('home shows real counts from the database and the independent-project notic
   await open(page, '/');
   await expect(v(page, 'stat-tracked-value')).toHaveText(String(stats.services_tracked));
   await expect(v(page, 'stat-resources-value')).toHaveText(String(stats.resources));
-  await expect(v(page, 'stat-reports-value')).toHaveText(String(stats.reports_total));
+  await expect(v(page, 'stat-reports-value')).toHaveText(String(stats.reports_verified));
   await expect(v(page, 'independent-notice')).toContainText('not an official City of Fremont service');
 });

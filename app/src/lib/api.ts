@@ -126,6 +126,23 @@ export type DeletionRequest = { id: string; contact_email: string | null; detail
 const admin = { admin: true } as const;
 export const adminCheck = () => request<{ admin: string }>('/admin/me', admin);
 export const adminReports = (status: string) => request<AdminReport[]>(`/admin/reports?status=${status}`, admin);
+/** A report's photo as a data: address an <Image> can show. The route needs the admin passcode. */
+export async function adminReportPhoto(id: string): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/admin/reports/${encodeURIComponent(id)}/photo`, { headers: { ...(await headersFor(admin)), Accept: 'image/jpeg' } });
+  } catch {
+    throw new ApiError(0, 'network');
+  }
+  if (!response.ok) throw new ApiError(response.status, `http_${response.status}`);
+  const blob = await response.blob();
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new ApiError(0, 'network'));
+    reader.readAsDataURL(blob);
+  });
+}
 export const moderateReport = (id: string, status: 'verified' | 'rejected' | 'pending') => request<AdminReport>(`/admin/reports/${encodeURIComponent(id)}`, { ...admin, body: { status } });
 export const adminPosts = (status: string) => request<AdminPost[]>(`/admin/posts?status=${status}`, admin);
 export const moderatePost = (id: string, status: 'approved' | 'rejected' | 'pending') => request<Post>(`/admin/posts/${encodeURIComponent(id)}`, { ...admin, body: { status } });

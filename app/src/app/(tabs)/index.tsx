@@ -73,7 +73,7 @@ export default function HomeScreen() {
               <StatTile value={count(stats.data.services_reduced + stats.data.services_closed)} label={t('home.statReduced')} onPress={() => router.push('/status' as never)} testID="stat-reduced" />
               <StatTile value={count(stats.data.services_tracked)} label={t('home.statTracked')} onPress={() => router.push('/status' as never)} testID="stat-tracked" />
               <StatTile value={count(stats.data.resources)} label={t('home.statResources')} onPress={() => router.push('/resources' as never)} testID="stat-resources" />
-              <StatTile value={count(stats.data.reports_total)} label={t('home.statReports')} onPress={() => router.push('/report' as never)} testID="stat-reports" />
+              <StatTile value={count(stats.data.reports_verified)} label={t('home.statReports')} onPress={() => router.push('/report' as never)} testID="stat-reports" />
             </View>
           )}
           <AppText variant="caption">{t(stats.bundled ? 'home.numbersOffline' : 'home.numbersNote')}</AppText>
