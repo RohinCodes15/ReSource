@@ -12,7 +12,7 @@ import { bundledServices, SERVICE_ICONS } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getServices } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
-import { directionsUrl, telUrl } from '../../lib/platform';
+import { directionsUrl, MAP_AVAILABLE, telUrl } from '../../lib/platform';
 import { useOrigin } from '../../state/stores';
 import { colors, fonts, MIN_TOUCH, radius, spacing, statusTone } from '../../theme';
 
@@ -79,7 +79,7 @@ export default function MapScreen() {
   const params = useLocalSearchParams<{ service?: string }>();
   const { data, loading, error, reload } = useApi(getServices, () => bundledServices);
   const { origin, location } = useOrigin();
-  const [view, setView] = useState<'map' | 'list'>('map');
+  const [view, setView] = useState<'map' | 'list'>(MAP_AVAILABLE ? 'map' : 'list');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<'all' | ServiceStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -128,7 +128,9 @@ export default function MapScreen() {
         ))}
       </ScrollView>
       <View style={styles.row}>
-        <Segmented label={t('map.viewLabel')} value={view} onChange={setView} options={[{ value: 'map', label: t('map.viewMap') }, { value: 'list', label: t('map.viewList') }]} />
+        {MAP_AVAILABLE
+          ? <Segmented label={t('map.viewLabel')} value={view} onChange={setView} options={[{ value: 'map', label: t('map.viewMap') }, { value: 'list', label: t('map.viewList') }]} />
+          : <AppText variant="caption" testID="map-list-only">{t('map.listOnly')}</AppText>}
         <View style={styles.flex} />
         {view === 'map' && <IconAction icon="image-filter-center-focus" label={t('map.recenter')} onPress={() => setRecenterKey((key) => key + 1)} testID="map-recenter" />}
       </View>
