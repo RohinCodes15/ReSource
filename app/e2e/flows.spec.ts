@@ -396,6 +396,30 @@ test('chat: Stop cancels a slow answer, and a failed answer can be retried', asy
   await expect(v(page, 'chat-failed')).toHaveCount(0);
 });
 
+test('chat: a reload while an answer is being written leaves a retry, not an endless wait', async ({ page }) => {
+  let slow = true;
+  await page.route(`${API}/chat/stream`, async (route) => {
+    if (!slow) return route.continue();
+    await new Promise((resolve) => setTimeout(resolve, 15000));
+    return route.abort().catch(() => undefined);
+  });
+  await open(page, '/chat');
+  // Chat history is only saved when optional storage is accepted.
+  await page.evaluate(() => localStorage.setItem('resource.storageConsent', JSON.stringify({ choice: 'all', decidedAt: '2026-10-12T00:00:00.000Z' })));
+  await open(page, '/chat');
+  await v(page, 'chat-input').fill('Where can I get free food?');
+  await v(page, 'chat-send').click();
+  await expect(v(page, 'chat-stop')).toBeVisible();
+  await page.reload();
+  await expect(v(page, 'chat-failed')).toBeVisible();
+  slow = false;
+  await v(page, 'chat-retry').click();
+  await expect(v(page, 'chat-assistant').last()).toContainText('TCV Food Bank');
+  await v(page, 'chat-input').fill('Is there a low-cost clinic?');
+  await v(page, 'chat-send').click();
+  await expect(v(page, 'chat-assistant').last()).toContainText('Clinic');
+});
+
 // ---- Language, text size, settings ------------------------------------------------------------
 
 test('language: switch, persist, and Dari is right-to-left', async ({ page }) => {

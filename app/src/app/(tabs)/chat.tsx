@@ -28,6 +28,13 @@ export default function ChatScreen() {
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // An empty answer with no request behind it is left over from a reload or a closed app while
+  // the answer was being written. Offer "Try again" instead of waiting forever.
+  useEffect(() => {
+    if (abortRef.current || !messages.some((m) => m.role === 'assistant' && !m.failed && m.content === '')) return;
+    chatStore.set((all) => all.map((m) => (m.role === 'assistant' && !m.failed && m.content === '' ? { ...m, failed: true } : m)));
+  }, [messages]);
+
   // Keep the newest message in view as it grows.
   const lastText = messages[messages.length - 1]?.content ?? '';
   useEffect(() => {
@@ -43,13 +50,13 @@ export default function ChatScreen() {
     setError(null);
     setInput('');
     setBusy(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
     const answerId = newId();
-    const earlier = chatStore.get().filter((m) => !m.failed && m.id !== retryOf);
+    const earlier = chatStore.get().filter((m) => !m.failed && m.id !== retryOf && m.content.trim().length > 0);
     const base = retryOf ? earlier : [...earlier, { id: newId(), role: 'user' as const, content: question }];
     chatStore.set([...base, { id: answerId, role: 'assistant', content: '' }]);
     const update = (changes: Partial<ChatMessage>) => chatStore.set((all) => all.map((m) => (m.id === answerId ? { ...m, ...changes } : m)));
-    const controller = new AbortController();
-    abortRef.current = controller;
     try {
       const result = await sendChat(
         {
