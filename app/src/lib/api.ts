@@ -141,60 +141,82 @@ export type ChatPayload = { messages: ChatTurn[]; language: LanguageCode; latitu
 export type ChatResult = { reply: string; sources: string[]; mode: 'ai' | 'basic' };
 type StreamHandlers = { onText: (fullText: string) => void; signal: AbortSignal };
 
+// The server stalled: no byte for this long ends the request instead of leaving "Writing an answer" up.
+const CHAT_IDLE_MS = 20000;
+// Where the reply cannot be read as a stream, nothing arrives until the whole answer is written.
+const CHAT_WHOLE_MS = 60000;
+
 /**
- * Sends a chat turn and reports the reply as it is written. Uses server-sent events where the
- * platform can read a response as a stream, and one plain request everywhere else.
+ * Sends a chat turn and reports the reply as it is written. The server always answers with
+ * server-sent events; where the platform cannot read a response as a stream, the same response
+ * is read whole and parsed, so a question is never answered twice.
  */
 export async function sendChat(payload: ChatPayload, handlers: StreamHandlers): Promise<ChatResult> {
   const headers = { ...(await headersFor({ body: payload })), Accept: 'text/event-stream' };
-  let response: Response;
-  try {
-    response = await fetch(`${API_URL}/chat/stream`, { method: 'POST', headers, body: JSON.stringify(payload), signal: handlers.signal });
-  } catch {
-    if (handlers.signal.aborted) throw new ApiError(0, 'aborted');
-    offlineStore.set(true);
-    throw new ApiError(0, 'network');
-  }
-  offlineStore.set(false);
-  if (!response.ok) {
-    const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
-    throw new ApiError(response.status, typeof body?.detail === 'string' ? body.detail : `http_${response.status}`, [], Number(response.headers.get('Retry-After')) || undefined);
-  }
-  const reader = response.body?.getReader?.();
-  if (!reader) {
-    // No streaming support on this platform: fall back to the one-shot route.
-    const result = await request<ChatResult>('/chat', { body: payload, timeoutMs: 60000, signal: handlers.signal });
-    handlers.onText(result.reply);
-    return result;
-  }
-  const decoder = new TextDecoder();
+  const controller = new AbortController();
+  const stop = () => controller.abort();
+  handlers.signal.addEventListener('abort', stop);
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const allow = (ms: number) => { clearTimeout(timer); timer = setTimeout(stop, ms); };
+  // Why the request ended early: the person pressed Stop, or the connection failed or stalled.
+  const ended = () => new ApiError(0, handlers.signal.aborted ? 'aborted' : 'network');
+
   let buffer = '';
   let reply = '';
   let done: Pick<ChatResult, 'sources' | 'mode'> | null = null;
-  try {
-    for (;;) {
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      buffer += decoder.decode(chunk.value, { stream: true });
-      let boundary = buffer.indexOf('\n\n');
-      while (boundary !== -1) {
-        const block = buffer.slice(0, boundary);
-        buffer = buffer.slice(boundary + 2);
-        boundary = buffer.indexOf('\n\n');
-        const event = /^event: (.+)$/m.exec(block)?.[1];
-        const data = /^data: (.+)$/m.exec(block)?.[1];
-        if (!event || !data) continue;
-        const parsed = JSON.parse(data) as { text?: string; sources?: string[]; mode?: 'ai' | 'basic' };
-        if (event === 'delta') reply += parsed.text ?? '';
-        if (event === 'reset') reply = parsed.text ?? ''; // the server withdrew what it had sent
-        if (event === 'done') done = { sources: parsed.sources ?? [], mode: parsed.mode ?? 'ai' };
-        if (event !== 'done') handlers.onText(reply);
-      }
+  const consume = (text: string) => {
+    buffer += text;
+    let boundary = buffer.indexOf('\n\n');
+    while (boundary !== -1) {
+      const block = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      boundary = buffer.indexOf('\n\n');
+      const event = /^event: (.+)$/m.exec(block)?.[1];
+      const data = /^data: (.+)$/m.exec(block)?.[1];
+      if (!event || !data) continue;
+      const parsed = JSON.parse(data) as { text?: string; sources?: string[]; mode?: 'ai' | 'basic' };
+      if (event === 'delta') reply += parsed.text ?? '';
+      if (event === 'reset') reply = parsed.text ?? ''; // the server withdrew what it had sent
+      if (event === 'done') done = { sources: parsed.sources ?? [], mode: parsed.mode ?? 'ai' };
+      if (event !== 'done') handlers.onText(reply);
     }
-  } catch {
-    if (handlers.signal.aborted) throw new ApiError(0, 'aborted');
-    throw new ApiError(0, 'network');
+  };
+
+  try {
+    let response: Response;
+    allow(CHAT_IDLE_MS);
+    try {
+      response = await fetch(`${API_URL}/chat/stream`, { method: 'POST', headers, body: JSON.stringify(payload), signal: controller.signal });
+    } catch {
+      if (!handlers.signal.aborted) offlineStore.set(true);
+      throw ended();
+    }
+    offlineStore.set(false);
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+      throw new ApiError(response.status, typeof body?.detail === 'string' ? body.detail : `http_${response.status}`, [], Number(response.headers.get('Retry-After')) || undefined);
+    }
+    try {
+      const reader = response.body?.getReader?.();
+      if (reader) {
+        const decoder = new TextDecoder();
+        for (;;) {
+          allow(CHAT_IDLE_MS);
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          consume(decoder.decode(chunk.value, { stream: true }));
+        }
+      } else {
+        allow(CHAT_WHOLE_MS);
+        consume(`${await response.text()}\n\n`);
+      }
+    } catch {
+      throw ended();
+    }
+    if (!done) throw ended();
+    return { reply, ...(done as Pick<ChatResult, 'sources' | 'mode'>) };
+  } finally {
+    clearTimeout(timer);
+    handlers.signal.removeEventListener('abort', stop);
   }
-  if (!done) throw new ApiError(0, handlers.signal.aborted ? 'aborted' : 'network');
-  return { reply, ...done };
 }

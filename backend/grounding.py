@@ -196,8 +196,23 @@ CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "Referral": ("help", "referral", "where do i", "ayuda", "帮助", "کمک", "giúp"),
 }
 EMERGENCY_HINTS = ("emergency", "911", "overdose", "bleeding", "can't breathe", "emergencia", "紧急", "急救", "اضطراری", "khẩn cấp", "cấp cứu")
-SERVICE_HINTS = ("cut", "closed", "close", "reduc", "budget", "service", "police", "fire", "street", "pavement", "pothole", "park",
-                 "recorte", "cerrado", "presupuesto", "servicio", "削减", "关闭", "预算", "服务", "بودجه", "خدمات", "بسته", "ngân sách", "dịch vụ", "đóng cửa", "cắt giảm")
+SERVICE_HINTS = ("cut", "closed", "close", "reduc", "budget", "service",
+                 "recort", "cerrado", "presupuesto", "servicio", "削减", "关闭", "预算", "服务", "بودجه", "خدمات", "بسته", "ngân sách", "dịch vụ", "đóng cửa", "cắt giảm")
+# A question about one department gets that department's rows, not every reduction.
+# Each entry: (words in the question, words in the service name). A trailing space means the
+# whole word, so "fire " does not match "fired" and "park " does not match "parking".
+TOPIC_HINTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "police": (("police", "policía", "policia", "警察", "پولیس", "cảnh sát"), ("police", "detention")),
+    "fire": (("fire ", "firefighter", "bomberos", "消防", "آتش‌نشانی", "cứu hỏa"), ("fire",)),
+    "streets": (("street", "pavement", "pothole", "road ", "roads ", "calle", "bache", "pavimento", "道路", "路面", "سرک", "جاده", "đường phố"), ("street", "pavement")),
+    "parks": (("park ", "parks ", "parque", "公园", "پارک", "công viên"), ("park",)),
+}
+# Words in resource names that are too common to mean the person named that resource.
+GENERIC_NAME_WORDS = frozenset((
+    "fremont", "city", "county", "area", "bay", "community", "health", "library", "services", "service", "center", "clinic",
+    "resource", "family", "food", "bank", "senior", "institute", "league", "volunteers", "mobile", "pantry", "crisis",
+    "lifeline", "suicide", "immigration", "alameda", "the", "and", "for",
+))
 COUNCIL_HINTS = ("council", "mayor", "vote", "representative", "district", "concejal", "alcalde", "voto", "议员", "市长", "投票", "شورا", "شهردار", "رأی", "hội đồng", "thị trưởng", "bỏ phiếu")
 
 BASIC_TEXT: dict[str, dict[str, str]] = {
@@ -254,8 +269,9 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
 
     categories = [c for c, hints in CATEGORY_HINTS.items() if c not in ("Referral", "Crisis") and _has(q, hints)]
     picked = [r for r in resources if r["category"] in categories][:4]
-    named = [r for r in resources if any(len(w) > 3 and w in q for w in re.findall(r"[a-z0-9]+", r["name"].lower())
-                                         if w not in ("fremont", "city", "county", "area", "community", "health", "library"))]
+    words = set(re.findall(r"[a-z0-9]+", q))
+    named = [r for r in resources if any(len(w) >= 3 and w in words for w in re.findall(r"[a-z0-9]+", r["name"].lower())
+                                         if w not in GENERIC_NAME_WORDS)]
     for row in named:
         if row not in picked:
             picked.append(row)
@@ -268,9 +284,15 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
             lines.append("• " + " · ".join(bit for bit in bits if bit))
             sources.append(r["name"])
 
-    if _has(q, SERVICE_HINTS) and not picked:
+    reduced = [s for s in services if s.get("status") != "open"]
+    spaced = " " + re.sub(r"[^\w\s]", " ", q) + " "
+    topic_words = [word for hints, name_words in TOPIC_HINTS.values() if _has(spaced, hints) for word in name_words]
+    if topic_words:
+        reduced = [s for s in reduced if any(word in s["name"].lower() for word in topic_words)]
+    # A resource that merely shares a word with the question must not hide the list of reductions.
+    if reduced and (topic_words or (_has(q, SERVICE_HINTS) and not categories)):
         lines.append(text["services"])
-        for s in [s for s in services if s.get("status") != "open"][:6]:
+        for s in reduced[:6]:
             lines.append(f"• {s['name']}: {s['summary']}")
             sources.append(s["name"])
 
