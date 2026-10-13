@@ -42,9 +42,9 @@ function Dashboard() {
   return (
     <View style={styles.block} testID="impact-dashboard">
       <View style={styles.tiles}>
-        <StatTile value={String(data.verified_total)} label={t('impact.verified')} icon="check-decagram" testID="impact-verified" />
-        <StatTile value={String(data.pending_total)} label={t('impact.pending')} icon="clock-outline" testID="impact-pending" />
-        <StatTile value={String(data.rejected_total)} label={t('impact.rejected')} icon="close-circle-outline" />
+        <StatTile value={String(data.verified_total)} label={t('impact.verified')} icon="check-decagram" basis={96} testID="impact-verified" />
+        <StatTile value={String(data.pending_total)} label={t('impact.pending')} icon="clock-outline" basis={96} testID="impact-pending" />
+        <StatTile value={String(data.rejected_total)} label={t('impact.rejected')} icon="close-circle-outline" basis={96} />
       </View>
       <AppText variant="caption">{t('impact.generated', { date: formatDate(data.generated_at, locale) })}</AppText>
       <AppButton variant="gold" icon="download" label={t('impact.export')} onPress={exportCsv} testID="impact-export" />
