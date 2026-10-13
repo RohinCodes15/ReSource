@@ -20,6 +20,7 @@ const GROUPS: { key: string; items: { href: string; title: string; icon: IconNam
     items: [
       { href: '/report', title: 'report', icon: 'clipboard-alert' },
       { href: '/community', title: 'community', icon: 'forum' },
+      { href: '/impact', title: 'impact', icon: 'chart-box' },
     ],
   },
   {
@@ -37,7 +38,6 @@ const GROUPS: { key: string; items: { href: string; title: string; icon: IconNam
   {
     key: 'staff',
     items: [
-      { href: '/impact', title: 'impact', icon: 'chart-box' },
       { href: '/admin', title: 'admin', icon: 'shield-account' },
     ],
   },
