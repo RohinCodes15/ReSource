@@ -11,7 +11,7 @@ from moderation import clean_text
 from routers.contribute import record_consent, reject_bots
 from routers.public import public_row
 from schemas import DeletionRequestIn, EmailSubscribeIn, SubscriptionIn
-from security import rate_limit, require_owner, sign, unsign
+from security import rate_limit, require_owner, require_owners, sign, unsign
 from settings import POLICY_VERSION, get_settings
 from store import Row, get_store, now_iso
 
@@ -114,11 +114,11 @@ OWNED_TABLES = ("reports", "posts", "post_votes", "post_flags", "subscriptions",
 @router.get("/me/export")
 def export_my_data(request: Request) -> dict[str, Any]:
     """Everything stored about this device or account, as JSON the app saves to a file."""
-    owner = require_owner(request)
+    owners = require_owners(request)
     store = get_store()
     data: dict[str, Any] = {}
     for table in OWNED_TABLES:
-        rows = store.list(table, {"owner_hash": owner})
+        rows = [row for owner in owners for row in store.list(table, {"owner_hash": owner})]
         data[table] = [{**public_row(row), **({"email": row["email"]} if "email" in row else {})} for row in rows]
     return {"exported_at": now_iso(), "policy_version": POLICY_VERSION, "data": data,
             "note": "ReSource does not store your name, IP address or precise location."}
@@ -127,16 +127,18 @@ def export_my_data(request: Request) -> dict[str, Any]:
 @router.delete("/me", dependencies=[Depends(rate_limit("delete-me", 5, 3600))])
 def delete_my_data(request: Request) -> dict[str, Any]:
     """Deletes this device's or account's reports, posts, votes, subscriptions and consent records now."""
-    owner = require_owner(request)
+    owners = require_owners(request)
     store = get_store()
-    for report in store.list("reports", {"owner_hash": owner}):
-        if report.get("photo_path"):
-            store.delete_file(report["photo_path"])
-    for post in store.list("posts", {"owner_hash": owner}):
-        store.delete("post_votes", {"post_id": post["id"]})
-        store.delete("post_flags", {"post_id": post["id"]})
-    voted_posts = [vote["post_id"] for vote in store.list("post_votes", {"owner_hash": owner})]
-    deleted = {table: store.delete(table, {"owner_hash": owner}) for table in OWNED_TABLES}
+    voted_posts: list[str] = []
+    for owner in owners:
+        for report in store.list("reports", {"owner_hash": owner}):
+            if report.get("photo_path"):
+                store.delete_file(report["photo_path"])
+        for post in store.list("posts", {"owner_hash": owner}):
+            store.delete("post_votes", {"post_id": post["id"]})
+            store.delete("post_flags", {"post_id": post["id"]})
+        voted_posts += [vote["post_id"] for vote in store.list("post_votes", {"owner_hash": owner})]
+    deleted = {table: sum(store.delete(table, {"owner_hash": owner}) for owner in owners) for table in OWNED_TABLES}
     for post_id in voted_posts:  # keep the public counts honest after removing this person's votes
         if store.get("posts", post_id):
             store.update("posts", post_id, {"upvotes": store.count("post_votes", {"post_id": post_id})})

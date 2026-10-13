@@ -40,6 +40,16 @@ def reports(status: str = Query(default="pending", pattern="^(pending|verified|r
     return [_report_view(r) for r in get_store().list("reports", filters, order="created_at", desc=True, limit=200)]
 
 
+@router.get("/admin/reports/{report_id}/photo")
+def report_photo(report_id: str) -> Response:
+    """The photo attached to a report, so a moderator can look at it before verifying."""
+    report = get_store().get("reports", report_id)
+    data = get_store().read_file(report["photo_path"]) if report and report.get("photo_path") else None
+    if data is None:
+        raise HTTPException(status_code=404, detail="photo_not_found")
+    return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
 @router.post("/admin/reports/{report_id}")
 def moderate_report(report_id: str, body: ModerateReportIn) -> Row:
     row = get_store().update("reports", report_id, {"status": body.status, "reviewed_at": now_iso()})

@@ -9,6 +9,7 @@ import { CookieBanner } from '../components/CookieBanner';
 import { AppText, LinkText } from '../components/ui';
 import { getConfig } from '../lib/api';
 import { applyDocumentLanguage, languageStore, useTranslation } from '../lib/i18n';
+import { watchAuth } from '../lib/supabase';
 import { hydrateStores, offlineStore } from '../state/stores';
 import { colors, spacing } from '../theme';
 
@@ -83,6 +84,7 @@ export default function RootLayout() {
   const [hydrated, setHydrated] = useState(false);
   const { isRTL } = useTranslation();
   useWebPageStyles();
+  useEffect(watchAuth, []);
 
   useEffect(() => {
     let active = true;

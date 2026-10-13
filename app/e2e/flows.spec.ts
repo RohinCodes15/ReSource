@@ -65,7 +65,8 @@ test.describe('location', () => {
       await open(page, '/resources');
       await v(page, 'location-chip').click();
       await v(page, 'use-gps').click();
-      await expect(v(page, 'location-label')).toContainText('your location, near Centerville & Niles');
+      await expect(v(page, 'location-label')).toContainText('your location');
+      await expect(v(page, 'location-label')).not.toContainText('near '); // no guessed neighborhood name
       await expect(page.locator('[data-testid^="resource-res-"]:visible:not([inert] *)').first()).toContainText('Niles Library');
       await open(page, '/chat');
       await expect(v(page, 'location-label')).toContainText('your location');
