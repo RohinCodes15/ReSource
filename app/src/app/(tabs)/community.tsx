@@ -32,6 +32,12 @@ export default function CommunityScreen() {
   const [confirm, setConfirm] = useState<{ kind: 'delete' | 'flag'; post: Post } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
+  // A vote shows at once from `local`; fresh data from the server replaces it.
+  const [seenData, setSeenData] = useState(data);
+  if (data !== seenData) {
+    setSeenData(data);
+    setLocal({});
+  }
   const posts = (data ?? []).map((post) => ({ ...post, ...local[post.id] }));
   const failed = (reason: unknown) => setNotice({ tone: 'warning', text: t(reason instanceof ApiError && reason.status === 429 ? 'errors.rateLimited' : reason instanceof ApiError && reason.isNetwork ? 'community.offline' : 'errors.generic') });
 
@@ -112,10 +118,10 @@ export default function CommunityScreen() {
         <Card key={post.id} style={styles.post} testID={`post-${post.id}`}>
           <Pressable
             onPress={() => vote(post)}
-            disabled={bundled || busyId === post.id}
+            disabled={bundled || age === 'under13' || busyId === post.id}
             accessibilityRole="button"
             aria-pressed={!!post.voted}
-            accessibilityState={a11yState({ selected: !!post.voted, disabled: bundled })}
+            accessibilityState={a11yState({ selected: !!post.voted, disabled: bundled || age === 'under13' })}
             accessibilityLabel={t(post.voted ? 'community.removeVote' : 'community.upvote', { count: post.upvotes })}
             testID={`vote-${post.id}`}
             style={[styles.vote, post.voted && styles.voteOn]}
@@ -130,7 +136,7 @@ export default function CommunityScreen() {
             </View>
             <AppText>{post.body}</AppText>
             <AppText variant="caption">{tx('area', post.area)} · {formatDate(post.created_at, locale)}</AppText>
-            {!bundled && !post.is_sample && (
+            {!bundled && !post.is_sample && age !== 'under13' && (
               <View style={styles.meta}>
                 {post.mine
                   ? <LinkText icon="delete-outline" color={colors.dangerDark} label={t('community.delete')} onPress={() => setConfirm({ kind: 'delete', post })} testID={`delete-${post.id}`} />

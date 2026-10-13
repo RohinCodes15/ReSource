@@ -142,7 +142,14 @@ def test_report_photo_rules(client):
     assert client.post(url, files={"photo": ("street.png", png_bytes(), "image/png")}, headers=BOB).status_code == 404
     assert client.post(url, files={"photo": ("notes.txt", b"not an image", "image/png")}, headers=ALICE).status_code == 415
     assert client.post(url, files={"photo": ("big.png", b"0" * (5 * 1024 * 1024 + 1), "image/png")}, headers=ALICE).status_code == 413
+    # 30,000,000 pixels of one color is a tiny file but a huge bitmap: refused before decoding.
+    assert client.post(url, files={"photo": ("huge.png", png_bytes((6000, 5000)), "image/png")}, headers=ALICE).status_code == 413
+    # A moderator can look at the photo; nobody else can.
+    assert client.get(f"/admin/reports/{report['id']}/photo").status_code == 403
+    seen = client.get(f"/admin/reports/{report['id']}/photo", headers=ADMIN)
+    assert seen.status_code == 200 and seen.headers["content-type"] == "image/jpeg" and seen.content[:2] == b"\xff\xd8"
     assert client.delete(url, headers=ALICE).json()["has_photo"] is False
+    assert client.get(f"/admin/reports/{report['id']}/photo", headers=ADMIN).status_code == 404
 
 
 # ---- Community board --------------------------------------------------------------------------
@@ -247,24 +254,22 @@ def test_public_deletion_request_and_admin_follow_up(client):
     assert closed["contact_email"] is None and closed["completed_at"]
 
 
-def test_email_alerts_are_off_until_configured_and_unsubscribe_is_one_click(client, env):
+def test_email_alerts_collect_nothing_while_there_is_no_sender_and_unsubscribe_still_works(client, env):
     body = {"email": "Resident@Example.com", "categories": ["budget"], "areas": [], **CONSENT}
-    assert client.post("/email/subscribe", json=body, headers=ALICE).json()["detail"] == "email_not_configured"
-
     env.setenv("SMTP_HOST", "smtp.example.test")
     env.setenv("EMAIL_FROM", "alerts@example.test")
     env.setenv("PUBLIC_API_URL", "https://api.example.test")
     restart()
-    assert client.post("/email/subscribe", json={**body, "consent": False}, headers=ALICE).status_code == 422
-    assert client.post("/email/subscribe", json=body, headers=ALICE).status_code == 201
-    assert client.post("/email/subscribe", json=body, headers=ALICE).status_code == 201  # same address: updated, not duplicated
+    assert client.get("/config").json()["email_enabled"] is False
+    assert client.post("/email/subscribe", json=body, headers=ALICE).json()["detail"] == "email_not_configured"
 
     import store
     from routers.account import unsubscribe_url
 
-    rows = store.get_store().list("email_subscriptions")
-    assert len(rows) == 1 and rows[0]["email"] == "resident@example.com"
-    link = unsubscribe_url(rows[0]["id"])
+    assert store.get_store().list("email_subscriptions") == []
+    # An address stored by an earlier version can still be removed with its link.
+    row = store.get_store().insert("email_subscriptions", {"email": "resident@example.com", "categories": [], "areas": [], "owner_hash": "x"})
+    link = unsubscribe_url(row["id"])
     assert link.startswith("https://api.example.test/email/unsubscribe?token=")
     token = link.split("token=")[1]
 
@@ -331,3 +336,16 @@ def test_admin_service_status_update_survives_a_restart(client):
     assert client.get("/services/svc-age-well-lake").json()["status"] == "closed"
     assert client.get("/stats").json()["services_closed"] == 1
     assert client.post("/admin/services/svc-nope", json={"status": "open"}, headers=ADMIN).status_code == 404
+
+
+def test_delete_and_export_cover_what_was_posted_before_signing_in(client, monkeypatch):
+    import security
+
+    before = client.post("/posts", json={"body": "Posted before I had an account.", "area": "94538", **CONSENT}, headers=ALICE).json()
+    # The same device, now signed in: requests carry both the account and the install token.
+    monkeypatch.setattr(security, "signed_in_user", lambda request: {"id": "user-1", "role": None})
+    client.post("/posts", json={"body": "Posted after signing in to my account.", "area": "94538", **CONSENT}, headers=ALICE)
+    assert len(client.get("/me/export", headers=ALICE).json()["data"]["posts"]) == 2
+    assert client.delete("/me", headers=ALICE).json()["deleted"]["posts"] == 2
+    monkeypatch.undo()
+    assert before["id"] not in [post["id"] for post in client.get("/posts").json()]

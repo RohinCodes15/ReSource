@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { BrowseOnly } from '../../components/ConsentFields';
 import { cookieSettingsStore } from '../../components/CookieBanner';
 import { LanguageList } from '../../components/LanguageSelector';
 import { LocationChip } from '../../components/LocationChip';
@@ -10,8 +11,8 @@ import { AppButton, AppText, Banner, Card, Chip, Field, LinkText, Segmented } fr
 import { ApiError, deleteMyData, exportMyData, sendFeedback } from '../../lib/api';
 import { formatDate, useTranslation } from '../../lib/i18n';
 import { saveTextFile } from '../../lib/platform';
-import { authEnabled } from '../../lib/supabase';
-import { consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
+import { authEnabled, signInAvailable } from '../../lib/supabase';
+import { ageStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 type Notice = { tone: 'success' | 'warning' | 'info'; text: string };
@@ -23,6 +24,7 @@ export default function SettingsScreen() {
   const scale = textScaleStore.use();
   const location = locationStore.use();
   const consent = consentStore.use();
+  const age = ageStore.use();
   const [notice, setNotice] = useState<Notice | null>(null);
   const [confirm, setConfirm] = useState<'server' | 'device' | null>(null);
   const [busy, setBusy] = useState(false);
@@ -113,18 +115,22 @@ export default function SettingsScreen() {
 
       <Card style={styles.block}>
         <AppText variant="h3" heading={2}>{t('settings.account')}</AppText>
-        <AppText variant="bodySmall" color={colors.text}>{t(authEnabled ? 'settings.accountOptional' : 'settings.accountOff')}</AppText>
-        {authEnabled && <AppButton variant="outline" icon="login" label={t('titles.signIn')} onPress={() => router.push('/sign-in' as never)} testID="go-sign-in" />}
+        <AppText variant="bodySmall" color={colors.text}>{t(signInAvailable ? 'settings.accountOptional' : authEnabled ? 'signIn.webOnly' : 'settings.accountOff')}</AppText>
+        {signInAvailable && <AppButton variant="outline" icon="login" label={t('titles.signIn')} onPress={() => router.push('/sign-in' as never)} testID="go-sign-in" />}
       </Card>
 
       <Card style={styles.block} testID="feedback-form">
         <AppText variant="h3" heading={2}>{t('settings.feedbackTitle')}</AppText>
         <AppText variant="bodySmall" color={colors.text}>{t('settings.feedbackBody')}</AppText>
-        <View style={styles.chips} role="radiogroup" accessibilityLabel={t('settings.feedbackKind')}>
-          {KINDS.map((value) => <Chip key={value} role="radio" label={t(`settings.kind_${value}`)} selected={kind === value} onPress={() => setKind(value)} testID={`feedback-${value}`} />)}
-        </View>
-        <Field label={t('settings.feedbackLabel')} hint={t('consent.noPersonalDetails')} value={message} onChangeText={setMessage} multiline maxLength={1000} error={messageError} testID="feedback-message" />
-        <AppButton variant="navy" icon="send" label={t('settings.feedbackSend')} onPress={submitFeedback} testID="feedback-send" />
+        {age === 'under13' ? <BrowseOnly /> : (
+          <>
+            <View style={styles.chips} role="radiogroup" accessibilityLabel={t('settings.feedbackKind')}>
+              {KINDS.map((value) => <Chip key={value} role="radio" label={t(`settings.kind_${value}`)} selected={kind === value} onPress={() => setKind(value)} testID={`feedback-${value}`} />)}
+            </View>
+            <Field label={t('settings.feedbackLabel')} hint={t('consent.noPersonalDetails')} value={message} onChangeText={setMessage} multiline maxLength={1000} error={messageError} testID="feedback-message" />
+            <AppButton variant="navy" icon="send" label={t('settings.feedbackSend')} onPress={submitFeedback} testID="feedback-send" />
+          </>
+        )}
       </Card>
 
       <Sheet visible={!!confirm} onClose={() => setConfirm(null)} title={t(confirm === 'device' ? 'settings.clearDevice' : 'settings.delete')} testID="confirm-delete">

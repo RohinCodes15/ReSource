@@ -67,6 +67,26 @@ def owner_from(request: Request) -> str | None:
     return _hmac(f"install:{token}") if TOKEN_RE.match(token) else None
 
 
+def owners_from(request: Request) -> list[str]:
+    """Every id this request can prove it owns: the signed-in account and this install. Export and
+    delete use both, so what someone posted before signing in is not left behind."""
+    owners = []
+    user = signed_in_user(request)
+    if user:
+        owners.append(_hmac(f"user:{user['id']}"))
+    token = request.headers.get("x-client-token", "")
+    if TOKEN_RE.match(token):
+        owners.append(_hmac(f"install:{token}"))
+    return owners
+
+
+def require_owners(request: Request) -> list[str]:
+    owners = owners_from(request)
+    if not owners:
+        raise HTTPException(status_code=400, detail="missing_client_token")
+    return owners
+
+
 def require_owner(request: Request) -> str:
     owner = owner_from(request)
     if owner is None:

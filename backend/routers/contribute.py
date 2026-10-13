@@ -17,6 +17,8 @@ from store import Row, get_store, now_iso
 router = APIRouter(tags=["contribute"])
 
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
+# A small file can still decode to a huge bitmap (one flat color compresses to almost nothing).
+MAX_PHOTO_PIXELS = 25_000_000
 PHOTO_FORMATS = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 FLAGS_BEFORE_REVIEW = 3
 
@@ -67,7 +69,7 @@ def my_reports(request: Request) -> list[Row]:
 
 
 @router.post("/reports/{report_id}/photo", dependencies=[Depends(rate_limit("photo", 10, 3600))])
-async def attach_photo(report_id: str, request: Request, photo: UploadFile = File(...)) -> dict[str, Any]:
+def attach_photo(report_id: str, request: Request, photo: UploadFile = File(...)) -> dict[str, Any]:
     """Optional photo for a report the caller just filed. JPEG, PNG or WebP, at most 5 MB.
 
     The image is decoded and re-encoded as JPEG, which removes embedded metadata such as the
@@ -78,7 +80,8 @@ async def attach_photo(report_id: str, request: Request, photo: UploadFile = Fil
     report = store.get("reports", report_id)
     if report is None or report.get("owner_hash") != owner:
         raise HTTPException(status_code=404, detail="report_not_found")
-    data = await photo.read(MAX_PHOTO_BYTES + 1)
+    # A plain `def`: FastAPI runs it in a worker thread, so decoding does not stall other requests.
+    data = photo.file.read(MAX_PHOTO_BYTES + 1)
     if len(data) > MAX_PHOTO_BYTES:
         raise HTTPException(status_code=413, detail="photo_too_large")
     try:
@@ -87,6 +90,9 @@ async def attach_photo(report_id: str, request: Request, photo: UploadFile = Fil
         image = Image.open(io.BytesIO(data))
         if image.format not in PHOTO_FORMATS:
             raise ValueError(image.format)
+        # The size comes from the file header, before any pixels are decoded.
+        if image.width * image.height > MAX_PHOTO_PIXELS:
+            raise HTTPException(status_code=413, detail="photo_too_large")
         image = ImageOps.exif_transpose(image).convert("RGB")
         image.thumbnail((1600, 1600))
         buffer = io.BytesIO()

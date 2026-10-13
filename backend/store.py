@@ -149,6 +149,10 @@ class LocalStore:
         (folder / name).write_bytes(data)
         return f"local:{name}"
 
+    def read_file(self, path: str) -> bytes | None:
+        file = self._state_dir / "uploads" / path.removeprefix("local:")
+        return file.read_bytes() if path.startswith("local:") and file.is_file() else None
+
     def delete_file(self, path: str) -> None:
         if path.startswith("local:"):
             (self._state_dir / "uploads" / path.removeprefix("local:")).unlink(missing_ok=True)
@@ -215,6 +219,13 @@ class SupabaseStore:
             logger.exception("Supabase Storage upload failed")
             raise StoreError("The photo could not be stored") from exc
         return f"{self.bucket}/{name}"
+
+    def read_file(self, path: str) -> bytes | None:
+        try:
+            return self.client.storage.from_(self.bucket).download(path.split("/", 1)[-1])
+        except Exception:
+            logger.exception("Supabase Storage download failed for %s", path)
+            return None
 
     def delete_file(self, path: str) -> None:
         try:

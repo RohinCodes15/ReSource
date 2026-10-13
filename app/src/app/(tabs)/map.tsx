@@ -62,7 +62,7 @@ function ServiceDetail({ service, onClose }: { service: Service; onClose: () => 
         {!!service.hours && <AppText variant="bodySmall" color={colors.text}>{t('common.hours')}: {service.hours}</AppText>}
         {service.coords === 'approximate' && <AppText variant="caption">{t('map.approximate')}</AppText>}
       </View>
-      <AppButton variant="gold" icon="compass" label={t('map.findAlternative')} onPress={() => go('/resources', { categories: categories.join(','), from: service.name })} testID="find-alternative" />
+      <AppButton variant="gold" icon="compass" label={t('map.findAlternative')} onPress={() => go('/resources', { categories: categories.join(','), from: service.name, at: String(Date.now()) })} testID="find-alternative" />
       <View style={styles.actions}>
         {!!service.phone && <AppButton variant="outline" icon="phone" label={t('common.callNumber', { phone: service.phone })} href={telUrl(service.phone)} style={styles.action} testID="detail-call" />}
         <AppButton variant="outline" icon="directions" label={t('common.directions')} href={directionsUrl(service.address)} style={styles.action} testID="detail-directions" />

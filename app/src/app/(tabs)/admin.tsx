@@ -1,17 +1,38 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import type { ServiceStatus } from '../../../../shared/types';
 import { AdminGate } from '../../components/AdminGate';
 import { Screen } from '../../components/Page';
 import { AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, LoadingList, Pill, Segmented, StatusBadge } from '../../components/ui';
 import { useApi } from '../../hooks/useData';
-import { adminDeletionRequests, adminPosts, adminReports, closeDeletionRequest, getServices, moderatePost, moderateReport, updateServiceStatus } from '../../lib/api';
+import { adminDeletionRequests, adminPosts, adminReportPhoto, adminReports, closeDeletionRequest, getServices, moderatePost, moderateReport, updateServiceStatus } from '../../lib/api';
 import { formatDate, useTranslation } from '../../lib/i18n';
 import { adminTokenStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 type Tab = 'reports' | 'posts' | 'services' | 'requests';
 const STATUSES: ServiceStatus[] = ['open', 'reduced', 'closed'];
+
+/** Loads and shows a report's photo when the moderator asks for it. */
+function ReportPhoto({ id }: { id: string }) {
+  const { t } = useTranslation();
+  const [state, setState] = useState<{ uri?: string; loading?: boolean; failed?: boolean }>({});
+  async function load() {
+    setState({ loading: true });
+    try {
+      setState({ uri: await adminReportPhoto(id) });
+    } catch {
+      setState({ failed: true });
+    }
+  }
+  if (state.uri) return <Image source={{ uri: state.uri }} accessibilityLabel={t('admin.photoAlt')} resizeMode="contain" style={styles.photo} testID={`photo-${id}`} />;
+  return (
+    <>
+      <AppButton variant="outline" small icon="image" label={t('admin.viewPhoto')} loading={state.loading} onPress={load} testID={`view-photo-${id}`} />
+      {state.failed && <Banner tone="warning" body={t('admin.photoFailed')} live />}
+    </>
+  );
+}
 
 /** Runs a moderation action, then reloads the list and says what happened. */
 function useAction(reload: () => void, setNotice: (text: string) => void, done: string, failed: string) {
@@ -48,6 +69,7 @@ function Reports({ setNotice }: { setNotice: (text: string) => void }) {
           <AppText variant="h4" heading={3}>{report.service_name}</AppText>
           <AppText variant="caption">{formatDate(report.created_at, locale)} · {tx('area', report.area)} · {tx('impact', report.impact_level)}{report.has_photo ? ` · ${t('admin.hasPhoto')}` : ''}</AppText>
           <AppText color={colors.text}>{report.description}</AppText>
+          {report.has_photo && <ReportPhoto id={report.id} />}
           <View style={styles.actions}>
             <AppButton variant="navy" small icon="check" label={t('admin.verify')} loading={action.busy === report.id} onPress={() => action.run(report.id, () => moderateReport(report.id, 'verified'))} style={styles.action} testID={`verify-${report.id}`} />
             <AppButton variant="danger" small icon="close" label={t('admin.reject')} onPress={() => action.run(report.id, () => moderateReport(report.id, 'rejected'))} style={styles.action} testID={`reject-${report.id}`} />
@@ -159,4 +181,5 @@ const styles = StyleSheet.create({
   block: { gap: spacing.md },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   action: { flexGrow: 1, flexBasis: 140 },
+  photo: { width: '100%', height: 240, backgroundColor: colors.background },
 });

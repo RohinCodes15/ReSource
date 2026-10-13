@@ -121,6 +121,8 @@ export const offlineStore = createStore<boolean>(false);
 export const adminTokenStore = createStore<string>('');
 /** Supabase session token when someone has signed in; memory only. */
 export const authTokenStore = createStore<string>('');
+/** Email address of the signed-in account, or '' when signed out; memory only. */
+export const authEmailStore = createStore<string>('');
 
 // ---- Install token -------------------------------------------------------------------------
 

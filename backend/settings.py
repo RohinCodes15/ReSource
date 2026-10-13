@@ -62,7 +62,10 @@ class Settings:
 
     @property
     def email_enabled(self) -> bool:
-        return bool(self.smtp_host and self.email_from and self.public_api_url)
+        # Nothing in this project sends an alert email yet, so no address may be collected,
+        # whatever the SMTP settings say. Return the line below once a sender exists.
+        #   bool(self.smtp_host and self.email_from and self.public_api_url)
+        return False
 
 
 def _owner_salt(state_dir: Path, service_role_key: str) -> str:
