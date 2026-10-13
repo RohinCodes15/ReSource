@@ -209,6 +209,7 @@
     "viewLabel": "Show services as",
     "viewMap": "Map",
     "viewList": "List",
+    "listOnly": "The map is not available in this build of the app, so services are shown as a list.",
     "recenter": "Recenter the map",
     "mapLabel": "Map of Fremont showing city services and their status. A list view is available.",
     "you": "Your location",

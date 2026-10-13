@@ -177,6 +177,7 @@
     "viewLabel": "Mostrar los servicios como",
     "viewMap": "Mapa",
     "viewList": "Lista",
+    "listOnly": "El mapa no está disponible en esta versión de la aplicación, así que los servicios se muestran en una lista.",
     "recenter": "Volver a centrar el mapa",
     "mapLabel": "Mapa de Fremont con los servicios de la ciudad y su estado. Hay una vista de lista disponible.",
     "you": "Su ubicación",
