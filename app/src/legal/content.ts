@@ -185,7 +185,7 @@ export const TERMS: LegalSection[] = [
   },
   {
     heading: 'Governing law',
-    body: ['[Placeholder: these terms are intended to be governed by the laws of the State of California. Confirm this section with a parent, teacher or attorney before public launch.]'],
+    body: ['These terms are governed by the laws of the State of California, USA.'],
   },
   {
     heading: 'Changes and contact',
