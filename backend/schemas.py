@@ -89,9 +89,23 @@ class DeletionRequestIn(Strict):
         return self
 
 
+# What a person may type, and how much of an earlier answer the app may send back as history.
+MAX_QUESTION_CHARS = 2000
+MAX_ANSWER_CHARS = 12000
+
+
 class ChatTurn(Strict):
     role: Literal["user", "assistant"]
-    content: str = Field(min_length=1, max_length=2000)
+    content: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _length(self) -> "ChatTurn":
+        if self.role == "user" and len(self.content) > MAX_QUESTION_CHARS:
+            raise ValueError("too_long")
+        # A long earlier answer is shortened, not rejected: rejecting it would end the conversation.
+        if self.role == "assistant" and len(self.content) > MAX_ANSWER_CHARS:
+            self.content = self.content[:MAX_ANSWER_CHARS]
+        return self
 
 
 class ChatIn(Strict):

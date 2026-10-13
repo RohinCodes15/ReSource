@@ -30,7 +30,8 @@ EFFORT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claud
 # Models where a request declined by a safety check can be retried server-side on Anthropic's
 # recommended fallback model. Claude Haiku 5.5 has no server-side fallback.
 FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
-MAX_TOKENS = 16000
+# Answers are meant to be short; this also bounds what one question can cost.
+MAX_TOKENS = 2000
 
 REFUSAL_TEXT = {
     "en": "I can't help with that. I can answer questions about Fremont city services, budget changes and places to get help.",
