@@ -12,14 +12,14 @@ export const BRAND_COLORS = {
 };
 
 /**
- * Details only the project's creator can fill in. They are placeholders on purpose:
- * docs/HUMAN_TODO.md lists each one. Nothing here may be invented.
+ * Details supplied by the project's creator. Nothing here may be invented.
+ * repoUrl must not be shown on any screen until the repository is public (docs/HUMAN_TODO.md).
  */
 export const PROJECT = {
-  creator: '[Your name]',
-  contactEmail: '[your-contact-email@example.com]',
+  creator: 'Rohin Pidathala',
+  contactEmail: 'rohincodes15@gmail.com',
   location: 'Fremont, California',
-  repoUrl: '[link to your public code repository]',
+  repoUrl: 'https://github.com/RohinCodes15/ReSource',
 };
 
 export const AREA_CODES = ['citywide', '94536', '94538', '94539', '94555'] as const;
