@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { Icon, type IconName } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
-import { colors, fonts, MIN_TOUCH, spacing } from '../../theme';
+import { colors, fonts, MIN_TOUCH, SCREEN_PADDING, spacing } from '../../theme';
 
 // The six destinations in the tab bar. `key` picks the translated title (titles.<key>) and label (tabs.<key>).
 const TABS: { name: string; key: string; icon: IconName; iconOutline: IconName }[] = [
@@ -49,16 +49,20 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerTitleAlign: 'left',
-        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 20, color: colors.text },
+        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 18, color: colors.text },
+        // A long title shortens with "…" on a narrow phone and never runs under the language button.
+        // The header reserves 52px for the right side, and the language button is wider than that.
+        headerTitleContainerStyle: { flexShrink: 1, maxWidth: '100%' },
+        headerRightContainerStyle: { flexBasis: 'auto', flexShrink: 0 },
         headerShadowVisible: false,
         headerRight: () => <View style={styles.headerRight}><LanguageSelector /></View>,
         tabBarActiveTintColor: colors.navy,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: [styles.tabBar, { height: 62 + insets.bottom, paddingBottom: insets.bottom + 6 }],
-        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 11 },
+        tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 4 }],
+        // 10px with tight tracking: each tab has 50px for its label on a 360px phone, and "Resources" must fit.
+        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 10, lineHeight: 14, letterSpacing: -0.2 },
         // The bar has a fixed height; the label stays one size so six tabs always fit.
         tabBarAllowFontScaling: false,
-        tabBarItemStyle: { paddingTop: 6 },
       }}
     >
       {TABS.map((tab) => (
@@ -88,6 +92,7 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: { backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border },
-  headerButton: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', marginHorizontal: spacing.xs },
-  headerRight: { marginHorizontal: spacing.md },
+  headerButton: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', marginStart: 6, marginEnd: 2 },
+  // The language button ends on the same line as the screen content below it.
+  headerRight: { marginStart: spacing.sm, marginEnd: SCREEN_PADDING },
 });

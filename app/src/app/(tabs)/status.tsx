@@ -44,7 +44,7 @@ export default function StatusScreen() {
       <AppText variant="bodySmall" color={colors.text}>{t('statusPage.intro')}</AppText>
       <View style={styles.tiles} testID="status-counts">
         {STATUSES.map((s) => (
-          <StatTile key={s} value={String(counts[s])} label={t(`status.${s}`)} icon={statusTone(s).icon} onPress={() => setStatus(status === s ? null : s)} testID={`count-${s}`} />
+          <StatTile key={s} value={String(counts[s])} label={t(`status.${s}`)} icon={statusTone(s).icon} basis={96} onPress={() => setStatus(status === s ? null : s)} testID={`count-${s}`} />
         ))}
       </View>
       <SourceLine title={t('statusPage.sourceNote')} retrieved={latest} />

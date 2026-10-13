@@ -49,7 +49,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
       </View>
       <View style={styles.actions}>
         <LinkText variant="label" icon="phone" label={item.phone} href={telUrl(item.phone)} testID={`call-${item.id}`} />
-        <View style={styles.flex} />
+        <View style={styles.actionIcons}>
         {hasStreetAddress(item.address) && <IconAction icon="directions" label={t('resources.directionsTo', { name: item.name })} href={directionsUrl(item.address)} testID={`directions-${item.id}`} />}
         {!!item.website && <IconAction icon="web" label={t('resources.websiteOf', { name: item.name })} href={item.website} testID={`website-${item.id}`} />}
         <IconAction icon="share-variant" label={t('resources.share', { name: item.name })} onPress={share} testID={`share-${item.id}`} />
@@ -61,6 +61,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
           onPress={() => toggleFavorite(item.id)}
           testID={`save-${item.id}`}
         />
+        </View>
       </View>
       <SourceLine title={t('resources.sourceLabel')} url={item.source_url} retrieved={item.retrieved} />
     </View>
@@ -179,4 +180,6 @@ const styles = StyleSheet.create({
   cardIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
   facts: { gap: 2 },
   actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  // The buttons stay together at the end of the row, and wrap as a group on a narrow phone.
+  actionIcons: { flexDirection: 'row', gap: spacing.xs, marginStart: 'auto' },
 });

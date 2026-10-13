@@ -241,6 +241,9 @@ export function IconAction({ icon, label, onPress, href, tone = 'navy', active, 
 }
 
 /** Text link. External links open in a new tab on the web with rel="noopener noreferrer". */
+// A long web address has no spaces to break at, so on the web it may break anywhere to stay inside its card.
+const WRAP_ANYWHERE = { overflowWrap: 'anywhere' } as unknown as TextStyle;
+
 export function LinkText({ label, href, onPress, variant = 'bodySmall', icon, testID, color = colors.navy }: {
   label: string; href?: string; onPress?: () => void; variant?: TextVariant; icon?: IconName; testID?: string; color?: string;
 }) {
@@ -256,7 +259,7 @@ export function LinkText({ label, href, onPress, variant = 'bodySmall', icon, te
       style={styles.link}
     >
       {icon && <Icon name={icon} size={16} color={color} />}
-      <AppText variant={variant} color={color} style={styles.linkText}>{label}</AppText>
+      <AppText variant={variant} color={color} style={[styles.linkText, isWeb && WRAP_ANYWHERE]}>{label}</AppText>
     </Pressable>
   );
 }
@@ -511,7 +514,7 @@ const styles = StyleSheet.create({
   disabled: { opacity: 0.5 },
   iconAction: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
   iconActionGold: { backgroundColor: colors.goldLight },
-  link: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', minHeight: 24 },
+  link: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', minHeight: 24, maxWidth: '100%' },
   linkText: { textDecorationLine: 'underline', fontFamily: fonts.medium, flexShrink: 1 },
   chip: { minHeight: MIN_TOUCH, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong, flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipOn: { backgroundColor: colors.navy, borderColor: colors.navy },
