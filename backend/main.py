@@ -20,6 +20,7 @@ from fastapi.responses import JSONResponse
 from routers import account, admin, chat, contribute, public
 from settings import get_settings
 from store import StoreError, get_store
+from upload_limits import PhotoBodyLimit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger("resource.api")
@@ -40,6 +41,8 @@ app = FastAPI(
                 "An independent student project, not a City of Fremont service.",
     version="1.0.0",
 )
+
+app.add_middleware(PhotoBodyLimit)
 
 if "*" in settings.cors_origins:
     logger.warning("CORS_ORIGINS contains '*'; set it to the web app's exact origin before going live")
