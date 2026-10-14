@@ -9,7 +9,7 @@ Area = Literal["citywide", "94536", "94538", "94539", "94555"]
 ImpactLevel = Literal["low", "medium", "high"]
 ServiceStatus = Literal["open", "reduced", "closed"]
 AlertCategory = Literal["budget", "public_safety", "human_services", "infrastructure", "civic"]
-LanguageCode = Literal["en", "es", "fa", "zh", "vi", "hi", "pa"]
+LanguageCode = Literal["en", "es", "fa", "zh", "vi"]
 EMAIL_PATTERN = r"^[^@\s]{1,64}@[^@\s]{1,255}\.[^@\s]{2,}$"
 
 
@@ -99,7 +99,7 @@ class ChatTurn(Strict):
     content: str = Field(min_length=1)
 
     @model_validator(mode="after")
-    def _length(self) -> "ChatTurn":
+    def _length(self) -> ChatTurn:
         if self.role == "user" and len(self.content) > MAX_QUESTION_CHARS:
             raise ValueError("too_long")
         # A long earlier answer is shortened, not rejected: rejecting it would end the conversation.
