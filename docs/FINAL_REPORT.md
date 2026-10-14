@@ -64,7 +64,6 @@ All run on October 13, 2026 on macOS.
 8. The age check is self-declared, and "I am under 13" has no undo short of clearing the device.
 9. `POLICY_VERSION` still reads `2026-10-12` although the policy text was clarified on October 13; it lives outside the folders this pass could edit.
 10. A backend test (`backend/tests/test_browse_only.py`) pins exact lines of `settings.tsx` and `community.tsx`. Editing those lines will fail a backend test even if the behavior is unchanged.
-11. When this report was written the working tree also held uncommitted changes under `backend/` that belong to Codex. They were left alone and are not part of any commit listed here.
 
 ## What to do next, in order
 
