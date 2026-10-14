@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import uuid
+import warnings
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -88,7 +89,10 @@ def attach_photo(report_id: str, request: Request, photo: UploadFile = File(...)
     try:
         from PIL import Image, ImageOps
 
-        image = Image.open(io.BytesIO(data))
+        Image.MAX_IMAGE_PIXELS = MAX_PHOTO_PIXELS
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            image = Image.open(io.BytesIO(data))
         if image.format not in PHOTO_FORMATS:
             raise ValueError(image.format)
         # The size comes from the file header, before any pixels are decoded.
@@ -98,6 +102,8 @@ def attach_photo(report_id: str, request: Request, photo: UploadFile = File(...)
         image.thumbnail((1600, 1600))
         buffer = io.BytesIO()
         image.save(buffer, format="JPEG", quality=82)
+    except (Image.DecompressionBombWarning, Image.DecompressionBombError) as exc:
+        raise HTTPException(status_code=413, detail="photo_too_large") from exc
     except HTTPException:
         raise
     except Exception as exc:
