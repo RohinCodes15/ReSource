@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { blockApi, expectNoSidewaysScroll, open, prepare, ROUTES, trackErrors, v } from './helpers';
+import { API, blockApi, expectNoSidewaysScroll, open, prepare, ROUTES, trackErrors, v } from './helpers';
 
 // Everything here runs with the API unreachable. The app must keep working from its bundled data.
 test.beforeEach(async ({ page }) => {
@@ -58,11 +58,14 @@ test('offline: report and chat fail politely and can be retried when the API ret
   await expect(page.locator('[data-testid^="post-post-sample"]:visible:not([inert] *)').first()).toBeVisible();
 });
 
-// Screenshots for the submission. Taken offline so they show the bundled data and never change
-// with whatever happens to be in a database.
+// Screenshots for the submission: `npm run screenshots`. That starts a fresh API with an empty
+// state folder and runs only these two tests, so the images show the real app online with no
+// test reports or posts in it. They are skipped in the full run, where earlier tests have left data.
 for (const [device, size] of [['mobile', { width: 390, height: 844 }], ['desktop', { width: 1280, height: 800 }]] as const) {
   test(`screenshots: every screen, ${device}`, async ({ page }) => {
+    test.skip(!process.env.SCREENSHOTS, 'run with `npm run screenshots`');
     test.setTimeout(180_000);
+    await page.unroute(`${API}/**`); // online: undo the block this file applies to every other test
     const folder = join(__dirname, '..', '..', 'submission', 'screenshots', device);
     mkdirSync(folder, { recursive: true });
     await page.setViewportSize(size);
@@ -73,5 +76,13 @@ for (const [device, size] of [['mobile', { width: 390, height: 844 }], ['desktop
       await expectNoSidewaysScroll(page, `${name} (${device})`);
       await page.screenshot({ path: join(folder, `${name}.png`), fullPage: false });
     }
+    // The main feature after it has been used, which the route list alone would not show.
+    await open(page, '/for-me');
+    await v(page, 'interest-parks').click();
+    await v(page, 'interest-kids').click();
+    await v(page, 'for-me-show').click();
+    await v(page, 'for-me-section-parks').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: join(folder, 'for-me-summary.png'), fullPage: false });
   });
 }
