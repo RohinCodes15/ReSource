@@ -4,7 +4,7 @@
  * Design rules followed here:
  *   - One hue for magnitude (navy). The only multi-color chart is the impact breakdown, whose
  *     three levels are ordered, so it uses one hue from light to dark (IMPACT_RAMP was checked
- *     with a colorblind-separation validator; see docs/DECISIONS.md).
+ *     with a colorblind-separation validator).
  *   - Thin bars growing from one baseline, rounded at the data end only, 2px gaps in stacks.
  *   - Every bar carries its exact value as text, in normal text colors, never the bar color.
  *   - Every chart has a "Show as table" switch and a one-sentence text summary.
