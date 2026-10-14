@@ -85,3 +85,19 @@ def test_scraper_defaults_to_preview_and_writes_explicit_ids(monkeypatch, args, 
     assert len(inserted) == writes
     if writes:
         assert inserted[0]["id"] == "svc-niles-library"
+
+
+@pytest.mark.parametrize("table", ["post_votes", "post_flags"])
+def test_local_mode_has_atomic_unique_community_actions(client, table):
+    from concurrent.futures import ThreadPoolExecutor
+
+    store = get_store()
+    def insert(_):
+        try:
+            store.insert(table, {"post_id": "test-post", "owner_hash": "same-owner"})
+            return True
+        except StoreError:
+            return False
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sum(pool.map(insert, range(2))) == 1
+    assert store.count(table, {"post_id": "test-post", "owner_hash": "same-owner"}) == 1
