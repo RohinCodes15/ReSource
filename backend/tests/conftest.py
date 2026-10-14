@@ -37,6 +37,9 @@ def client(env):
 
     store.reset_store()
     security.limiter.reset()
+    from community_guard import guard
+
+    guard.reset()
     import main
 
     with TestClient(main.app) as test_client:
@@ -51,6 +54,9 @@ def restart():
 
     store.reset_store()
     security.limiter.reset()
+    from community_guard import guard
+
+    guard.reset()
 
 
 def report_body(**overrides):
