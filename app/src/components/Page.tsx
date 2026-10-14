@@ -59,13 +59,18 @@ export function Screen({ title, scroll = true, footer = true, below, contentStyl
   // is not the current one is made inert: no focus, no clicks, hidden from screen readers.
   const focused = useIsFocused();
   const outer = useRef<View>(null);
+  const main = useRef<View>(null);
   useEffect(() => {
-    if (Platform.OS === 'web') (outer.current as unknown as HTMLElement | null)?.toggleAttribute('inert', !focused);
+    if (Platform.OS !== 'web') return;
+    (outer.current as unknown as HTMLElement | null)?.toggleAttribute('inert', !focused);
+    // Only the screen in view carries id="main", so the skip link's #main has exactly one target.
+    const region = main.current as unknown as HTMLElement | null;
+    if (region) { if (focused) region.id = 'main'; else region.removeAttribute('id'); }
   }, [focused]);
   return (
     <View ref={outer} style={styles.outer} testID={testID}>
       {/* role="main" is what the "Skip to main content" link in the root layout focuses. */}
-      <View style={styles.inner} role="main" tabIndex={-1}>
+      <View ref={main} style={styles.inner} role="main" tabIndex={-1}>
         {scroll ? (
           <ScrollView contentContainerStyle={[styles.content, contentStyle]} keyboardShouldPersistTaps="handled">
             {children}

@@ -173,7 +173,7 @@ export default function MapScreen() {
               <View style={styles.listHead}>
                 <View style={styles.listIcon}><Icon name={SERVICE_ICONS[item.category] ?? 'office-building'} size={22} color={colors.navy} /></View>
                 <View style={styles.flex}>
-                  <AppText variant="h4" heading={3}>{item.name}</AppText>
+                  <AppText variant="h4" heading={2}>{item.name}</AppText>
                   <AppText variant="caption">{tx('category', item.category)} · {tx('area', item.area)}</AppText>
                 </View>
               </View>
