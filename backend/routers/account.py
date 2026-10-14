@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+from html import escape
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -9,7 +10,7 @@ from fastapi.responses import HTMLResponse
 
 from chat_sessions import sessions
 from moderation import clean_text
-from routers.contribute import record_consent, reject_bots
+from routers.contribute import reject_bots
 from routers.public import public_row
 from schemas import DeletionRequestIn, EmailSubscribeIn, SubscriptionIn
 from security import rate_limit, require_owner, require_owners, sign, unsign
@@ -62,21 +63,9 @@ def unsubscribe_url(email_subscription_id: str) -> str:
 
 @router.post("/email/subscribe", status_code=201, dependencies=[Depends(rate_limit("email", 3, 3600))])
 def email_subscribe(body: EmailSubscribeIn, request: Request) -> dict[str, Any]:
-    if not get_settings().email_enabled:
-        raise HTTPException(status_code=503, detail="email_not_configured")
-    reject_bots(body.website)
-    owner = require_owner(request)
-    store = get_store()
-    email = body.email.lower()
-    existing = store.list("email_subscriptions", {"email": email})
-    changes = {"categories": sorted(set(body.categories)), "areas": sorted(set(body.areas)),
-               "owner_hash": owner, "policy_version": POLICY_VERSION}
-    if existing:
-        store.update("email_subscriptions", existing[0]["id"], changes)
-    else:
-        store.insert("email_subscriptions", {"email": email, **changes})
-    record_consent(owner, "email_alerts")
-    return {"subscribed": True}
+    # No sender or address-confirmation flow exists. Do not collect addresses or retain a
+    # dormant writer that could reassign ownership when someone flips a configuration flag.
+    raise HTTPException(status_code=503, detail="email_not_configured")
 
 
 def _unsubscribe(token: str) -> bool:
@@ -92,11 +81,15 @@ UNSUBSCRIBED_PAGE = """<!doctype html><html lang="en"><head><meta charset="utf-8
 
 @router.get("/email/unsubscribe", response_class=HTMLResponse)
 def email_unsubscribe_link(token: str = Query(max_length=400)) -> HTMLResponse:
-    """The link in every alert email. One click, no sign-in, effective immediately."""
-    if not _unsubscribe(token):
-        page = UNSUBSCRIBED_PAGE.format(title="This link is not valid", body="It may have been copied incompletely. You can also reply to any alert email and ask to be removed.")
+    """GET only confirms; mail scanners must never change subscription state."""
+    subscription_id = unsign(token)
+    if not subscription_id:
+        page = UNSUBSCRIBED_PAGE.format(title="This link is not valid", body="It may have been copied incompletely.")
         return HTMLResponse(page, status_code=400)
-    return HTMLResponse(UNSUBSCRIBED_PAGE.format(title="You are unsubscribed", body="Your email address has been deleted from ReSource alerts. You will not get another message."))
+    if get_store().get("email_subscriptions", subscription_id) is None:
+        return HTMLResponse(UNSUBSCRIBED_PAGE.format(title="Already unsubscribed", body="This subscription no longer exists."))
+    form = f'<form method="post" action="/email/unsubscribe?token={escape(token, quote=True)}"><button type="submit">Unsubscribe</button></form>'
+    return HTMLResponse(UNSUBSCRIBED_PAGE.format(title="Confirm unsubscribe", body="Remove this address from ReSource alerts?" + form))
 
 
 @router.post("/email/unsubscribe")
