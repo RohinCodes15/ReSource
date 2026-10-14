@@ -1,15 +1,14 @@
 // Fails when copy contains a claim we cannot support, or leftover placeholder text.
 // Scans what people read: the locale files, legal text, screens, README, docs and submission.
-// docs/CLAIMS_AUDIT.md explains each rule. To allow a phrase in one place, reword it; there is
-// deliberately no inline "ignore" comment.
+// To allow a phrase in one place, reword it; there is deliberately no inline "ignore" comment.
 import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repo = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SOURCES = ['app/src/locales', 'app/src/legal', 'app/src/app', 'app/src/components', 'shared/data', 'README.md', 'submission'];
-// The audit documents themselves quote the banned phrases in order to explain them.
-const EXEMPT = [/CLAIMS_AUDIT\.md$/, /RULES_CHECKLIST\.md$/];
+// Documents that quote the banned phrases in order to explain them would be listed here.
+const EXEMPT = [];
 
 const RULES = [
   [/\breal[- ]?time\b/i, 'says "real-time": data is updated by hand from public documents'],
