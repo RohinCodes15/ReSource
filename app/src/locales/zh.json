@@ -32,7 +32,8 @@
     "cookies": "Cookie 政策",
     "credits": "致谢与许可",
     "dataRequest": "数据删除请求",
-    "signIn": "登录"
+    "signIn": "登录",
+    "forMe": "对我有什么影响"
   },
   "common": {
     "all": "全部",
@@ -162,11 +163,48 @@
     "chatSubtitle": "答案来自我们的数据",
     "repsTitle": "民意代表",
     "repsSubtitle": "联系您的市议员",
-    "communityTitle": "社区留言板",
-    "communitySubtitle": "邻居的建议",
     "emergencyTitle": "紧急情况",
     "emergencyBody": "请拨打 911。如遇心理健康危机，请拨打或发短信至 988。如需食物、住房和医疗服务的免费转介，请拨打 211。",
-    "dataSources": "弗里蒙特市政府公开文件和各机构网站"
+    "dataSources": "弗里蒙特市政府公开文件和各机构网站",
+    "forMeTitle": "对我有什么影响？",
+    "forMeBody": "选择您的地区和您关心的事项，即可看到与您有关的预算变化摘要，每一项都附有来源。",
+    "forMeButton": "查看我的摘要"
+  },
+  "forMe": {
+    "intro": "选择您住在哪里以及您关心什么。显示的所有内容都来自 ReSource 读过的弗里蒙特市政府文件，每一项都链接到来源。您的选择只留在这个页面，不会发送到任何地方。",
+    "step1": "1. 您的地区",
+    "areaHelp": "输入弗里蒙特的邮政编码，即可标出位于您所在地区的服务。您可以跳过这一步。",
+    "step2": "2. 您关心什么",
+    "interestsLabel": "选择您关心的事项",
+    "interest_kids": "儿童与家庭",
+    "interest_seniors": "长者",
+    "interest_transit": "街道与出行",
+    "interest_health": "健康与民生服务",
+    "interest_parks": "公园",
+    "show": "显示变化",
+    "pickOne": "请至少选择一项。",
+    "resultsTitle": "您的摘要",
+    "everyone": "影响弗里蒙特所有人",
+    "noChange": "ReSource 读过的市政府文件没有显示这些服务有与预算相关的变化。情况可能改变，请查看来源。",
+    "noData": "ReSource 没有这个主题的条目。我们读过的市政府文件没有提供相关细节。",
+    "transitNote": "ReSource 没有关于公交或火车服务的条目。数据中最接近的是街道维护，显示如下。",
+    "inYourArea": "位于您的地区",
+    "amount": "削减：{{amount}}。",
+    "noAmount": "市政府没有为这一项单独公布金额。",
+    "since": "自 {{date}} 起生效。",
+    "noDate": "市政府没有公布这项变化的日期。",
+    "help": "可以提供帮助的地方",
+    "seeResources": "查看所有相关资源",
+    "englishNote": "服务名称和说明按市政府文件原文以英文显示。",
+    "print": "打印我的影响卡",
+    "share": "分享我的影响卡",
+    "cardTitle": "我的影响卡",
+    "cardArea": "地区：{{area}}",
+    "cardDate": "制作日期：{{date}}",
+    "cardFooter": "由 ReSource 制作。ReSource 是一个独立的学生项目。这不是弗里蒙特市政府的官方文件。这张卡上没有个人信息。",
+    "cardPrivacy": "卡片只列出您的地区和主题，不含姓名、地址或位置。",
+    "cardFailed": "无法打印或分享卡片。",
+    "cardCopied": "卡片已复制为文字。"
   },
   "more": {
     "city": "城市与预算",
@@ -437,7 +475,8 @@
     "report": "举报不当内容",
     "reportTitle": "举报这条留言？",
     "reportBody": "用于举报带有辱骂、不实内容，或泄露他人个人信息的留言。审核员会进行审核。",
-    "flagged": "谢谢。这条留言已报告给审核员。"
+    "flagged": "谢谢。这条留言已报告给审核员。",
+    "networkVoted": "您所在网络的另一台设备已经给这条留言投过票，所以这一票没有计入。这个限制是为了防止同一个地方多次投票。"
   },
   "budget": {
     "intro": "弗里蒙特的预算削减从何而来。下面每个数字都链接到它所出自的市政府文件。",

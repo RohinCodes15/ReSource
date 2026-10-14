@@ -32,7 +32,8 @@
     "cookies": "Cookie Policy",
     "credits": "Credits & Licenses",
     "dataRequest": "Data Deletion Request",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "forMe": "What Changed for Me"
   },
   "common": {
     "all": "All",
@@ -162,11 +163,48 @@
     "chatSubtitle": "Answers from our data",
     "repsTitle": "Rep Tracker",
     "repsSubtitle": "Contact your council member",
-    "communityTitle": "Community Board",
-    "communitySubtitle": "Tips from neighbors",
     "emergencyTitle": "In an emergency",
     "emergencyBody": "Call 911. For a mental health crisis, call or text 988. For free referrals to food, housing and health services, call 211.",
-    "dataSources": "City of Fremont public documents and organization websites"
+    "dataSources": "City of Fremont public documents and organization websites",
+    "forMeTitle": "What changed for me?",
+    "forMeBody": "Pick your area and what you care about. Get a short summary of the budget changes that touch you, with the source for each one.",
+    "forMeButton": "See my summary"
+  },
+  "forMe": {
+    "intro": "Choose where you live and what matters to you. Everything shown comes from the City of Fremont documents ReSource has read, and each item links to its source. Your choices stay on this screen and are not sent anywhere.",
+    "step1": "1. Your area",
+    "areaHelp": "Enter a Fremont ZIP code to mark the services located in your area. You can skip this step.",
+    "step2": "2. What matters to you",
+    "interestsLabel": "Choose your interests",
+    "interest_kids": "Kids and families",
+    "interest_seniors": "Older adults",
+    "interest_transit": "Streets and getting around",
+    "interest_health": "Health and human services",
+    "interest_parks": "Parks",
+    "show": "Show what changed",
+    "pickOne": "Choose at least one interest.",
+    "resultsTitle": "Your summary",
+    "everyone": "Affects everyone in Fremont",
+    "noChange": "The City documents ReSource has read show no budget-related change to these services. That can change, so check the source.",
+    "noData": "ReSource has no entry for this topic. The City documents we have read do not give detail on it.",
+    "transitNote": "ReSource has no entry about bus or train service. The closest match in the data is street upkeep, shown here.",
+    "inYourArea": "Located in your area",
+    "amount": "Reduction: {{amount}}.",
+    "noAmount": "The City has not published a separate dollar amount for this item.",
+    "since": "In effect since {{date}}.",
+    "noDate": "The City has not published a date for this change.",
+    "help": "Places that can help",
+    "seeResources": "See all matching resources",
+    "englishNote": "Service names and descriptions are shown in English, as written in the City's documents.",
+    "print": "Print my impact card",
+    "share": "Share my impact card",
+    "cardTitle": "My impact card",
+    "cardArea": "Area: {{area}}",
+    "cardDate": "Made on {{date}}",
+    "cardFooter": "Made with ReSource, an independent student project. This is not an official City of Fremont document. No personal information is on this card.",
+    "cardPrivacy": "The card lists your area and topics only. It has no name, address or location on it.",
+    "cardFailed": "The card could not be printed or shared.",
+    "cardCopied": "The card was copied as text."
   },
   "more": {
     "city": "City and budget",
@@ -437,7 +475,8 @@
     "report": "Report abuse",
     "reportTitle": "Report this post?",
     "reportBody": "Use this for posts that are abusive, false, or share someone's personal information. A moderator will review it.",
-    "flagged": "Thank you. The post was reported to a moderator."
+    "flagged": "Thank you. The post was reported to a moderator.",
+    "networkVoted": "Another device on your network has already voted on this post, so this vote was not counted. The limit stops one place from voting many times."
   },
   "budget": {
     "intro": "Where Fremont's budget reductions come from. Every figure below links to the City document it was read from.",

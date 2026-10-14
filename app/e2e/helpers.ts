@@ -5,7 +5,7 @@ export const API = 'http://localhost:8000';
 /** Every route in the app: [path, name used for screenshots]. */
 export const ROUTES: [string, string][] = [
   ['/', 'home'], ['/map', 'map'], ['/resources', 'resources'], ['/alerts', 'alerts'], ['/chat', 'chat'], ['/more', 'more'],
-  ['/status', 'status'], ['/report', 'report'], ['/reptracker', 'reps'], ['/community', 'community'], ['/budget', 'budget'],
+  ['/for-me', 'for-me'], ['/status', 'status'], ['/report', 'report'], ['/reptracker', 'reps'], ['/community', 'community'], ['/budget', 'budget'],
   ['/impact', 'impact'], ['/admin', 'admin'], ['/settings', 'settings'], ['/about', 'about'], ['/privacy', 'privacy'],
   ['/terms', 'terms'], ['/cookies', 'cookies'], ['/credits', 'credits'], ['/data-request', 'data-request'], ['/sign-in', 'sign-in'],
 ];

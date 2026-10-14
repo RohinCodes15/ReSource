@@ -171,6 +171,40 @@ test('status dashboard: counts, filters and recent changes', async ({ page }) =>
   await expect(v(page, 'data-table')).toBeVisible();
 });
 
+// ---- What changed for me ---------------------------------------------------------------------
+
+test('what changed for me: interests give a sourced summary and a printable card with no personal data', async ({ page }) => {
+  await open(page, '/');
+  await v(page, 'home-action-forMe').click();
+  await expect(v(page, 'for-me-screen')).toBeVisible();
+  await v(page, 'for-me-show').click();
+  await expect(v(page, 'for-me-error')).toContainText('at least one');
+
+  await v(page, 'location-chip').click();
+  await v(page, 'zip-input').fill('94538');
+  await v(page, 'use-zip').click();
+  await v(page, 'interest-parks').click();
+  await v(page, 'interest-kids').click();
+  await v(page, 'for-me-show').click();
+
+  // A reduction, with its source link.
+  const parks = v(page, 'for-me-section-parks');
+  await expect(parks).toContainText('Park and street-median capital replacement');
+  await expect(parks.locator('a[href^="https://"]').first()).toBeVisible();
+  // Where the documents show no change, the screen says so instead of implying one.
+  await expect(v(page, 'for-me-nochange-kids')).toContainText('no budget-related change');
+  // Citywide items are always included, and ones in the chosen ZIP area are marked.
+  await expect(v(page, 'for-me-section-everyone')).toContainText('Located in your area');
+
+  await page.evaluate(() => { HTMLIFrameElement.prototype.focus = () => undefined; });
+  await v(page, 'for-me-card').click();
+  const card = await page.locator('iframe[data-print="impact-card"]').getAttribute('srcdoc');
+  expect(card).toContain('My impact card');
+  expect(card).toContain('Park and street-median capital replacement');
+  expect(card).toContain('No personal information is on this card');
+  expect(card).not.toMatch(/resource\.installToken|@gmail|latitude/i);
+});
+
 // ---- Report an Impact ------------------------------------------------------------------------
 
 test('report: validation at every step, back, consent, success and "your reports"', async ({ page }) => {
@@ -211,7 +245,9 @@ test('report: validation at every step, back, consent, success and "your reports
 });
 
 test('report: a double tap on Submit files one report', async ({ page, request }) => {
-  const before = (await (await request.get(`${API}/stats`)).json()).reports_total;
+  // Every report, reviewed or not: the public count only includes verified ones.
+  const filed = async () => ((await (await request.get(`${API}/admin/reports?status=all`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } })).json()) as unknown[]).length;
+  const before = await filed();
   await open(page, '/report');
   await v(page, 'service-option-svc-fire-ops').click();
   await v(page, 'report-next').click();
@@ -221,7 +257,7 @@ test('report: a double tap on Submit files one report', async ({ page, request }
   await tick(page);
   await v(page, 'report-submit').dblclick();
   await expect(v(page, 'report-success')).toBeVisible();
-  expect((await (await request.get(`${API}/stats`)).json()).reports_total).toBe(before + 1);
+  expect(await filed()).toBe(before + 1);
 });
 
 test('report: photo can be picked and removed, and the wrong type is refused', async ({ page }) => {
@@ -327,13 +363,15 @@ test('community: post, one vote per person, report abuse, delete own post', asyn
   await v(page, `vote-${id}`).click();
   await expect(v(page, `votes-${id}`)).toHaveText('1');
 
-  // A second person sees the post, can vote once and can report it, but cannot delete it.
+  // A second person sees the post and can report it, but cannot delete it. Their vote comes from
+  // the same network as the first one, so the server does not count it and the app says why.
   const other = await (await browser.newContext()).newPage();
   await prepare(other);
   await open(other, '/community');
   await expect(v(other, `delete-${id}`)).toHaveCount(0);
   await v(other, `vote-${id}`).click();
-  await expect(v(other, `votes-${id}`)).toHaveText('2');
+  await expect(v(other, 'community-notice')).toContainText('already voted');
+  await expect(v(other, `votes-${id}`)).toHaveText('1');
   await v(other, `flag-${id}`).click();
   await v(other, 'confirm-yes').click();
   await expect(v(other, 'community-notice')).toContainText('reported to a moderator');
