@@ -27,7 +27,7 @@ export type LanguageOption = { code: LanguageCode; label: string; english: strin
 export const LANGUAGES: LanguageOption[] = [
   { code: 'en', label: 'English', english: 'English', rtl: false, locale: 'en-US' },
   { code: 'es', label: 'Español', english: 'Spanish', rtl: false, locale: 'es-US' },
-  { code: 'fa', label: 'دری', english: 'Dari', rtl: true, locale: 'fa-AF' },
+  { code: 'fa', label: 'دری', english: 'Dari', rtl: true, locale: 'fa-AF-u-ca-gregory-nu-latn' }, // Gregorian dates in Western digits, the same as the sources and the money amounts,
   { code: 'zh', label: '中文', english: 'Mandarin', rtl: false, locale: 'zh-CN' },
   { code: 'vi', label: 'Tiếng Việt', english: 'Vietnamese', rtl: false, locale: 'vi-VN' },
 ];

@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { Service, ServiceStatus } from '../../../../shared/types';
 import { LocationChip } from '../../components/LocationChip';
 import { Footer, Screen } from '../../components/Page';
@@ -142,7 +142,9 @@ export default function MapScreen() {
   return (
     <Screen title={t('titles.map')} scroll={false} testID="map-screen">
       {loading ? <View style={styles.pad}><LoadingList /></View> : error ? <ErrorState onRetry={reload} /> : view === 'map' ? (
-        <View style={styles.fill}>
+        // On a tall screen the map fills what is left; on a short one, or with larger text, the column scrolls
+        // so the map keeps a usable height and the note stays reachable.
+        <ScrollView style={styles.fill} contentContainerStyle={styles.mapColumn} keyboardShouldPersistTaps="handled">
           {controls}
           <View style={styles.mapWrap}>
             <ServiceMap
@@ -156,8 +158,8 @@ export default function MapScreen() {
             />
             {!visible.length && <View style={styles.mapEmpty}><Banner tone="info" body={t('map.none')} live /></View>}
           </View>
-          <AppText variant="caption" style={styles.mapNote}>{t('map.pinsNote')}</AppText>
-        </View>
+          <AppText variant="caption" style={styles.mapNote}>{t('map.pinsNote')}{Platform.OS === 'web' ? ` ${t('map.osmCredit')}` : ''}</AppText>
+        </ScrollView>
       ) : (
         <FlatList
           data={visible}
@@ -192,6 +194,7 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   fill: { flex: 1 },
+  mapColumn: { flexGrow: 1 },
   pad: { padding: spacing.lg },
   controls: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.sm, gap: spacing.sm },
   search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },

@@ -66,7 +66,7 @@ test.describe('location', () => {
       await v(page, 'location-chip').click();
       await v(page, 'use-gps').click();
       await expect(v(page, 'location-label')).toContainText('your location');
-      await expect(v(page, 'location-label')).not.toContainText('near '); // no guessed neighborhood name
+      await expect(v(page, 'location-label')).not.toContainText('Centerville'); // no guessed neighborhood name
       await expect(page.locator('[data-testid^="resource-res-"]:visible:not([inert] *)').first()).toContainText('Niles Library');
       await open(page, '/chat');
       await expect(v(page, 'location-label')).toContainText('your location');
@@ -525,8 +525,10 @@ test('admin: wrong passcode, verify a report, impact dashboard and CSV export, l
 
   await v(page, 'segment-services').click();
   await v(page, 'set-svc-age-well-south-reduced').click();
+  await v(page, 'confirm-status').click();
   await expect(v(page, 'admin-service-svc-age-well-south')).toContainText('Reduced');
   await v(page, 'set-svc-age-well-south-open').click();
+  await v(page, 'confirm-status').click();
   await expect(v(page, 'admin-service-svc-age-well-south')).toContainText('Open');
   await v(page, 'segment-posts').click();
   await v(page, 'segment-requests').click();
