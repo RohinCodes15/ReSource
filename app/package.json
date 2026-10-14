@@ -63,5 +63,16 @@
     "check": "npm run typecheck && npm run lint && npm run check:i18n && npm run check:contrast && npm run check:alt && npm run check:storage && npm run check:claims && npm test",
     "e2e": "playwright test"
   },
+  "jest": {
+    "preset": "jest-expo",
+    "moduleNameMapper": {
+      "^@react-native-async-storage/async-storage$": "@react-native-async-storage/async-storage/jest/async-storage-mock"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/e2e/",
+      "/dist/"
+    ]
+  },
   "private": true
 }
