@@ -58,7 +58,9 @@ def verified_reports() -> list[Row]:
 def _breakdown(rows: list[Row], key: str) -> list[dict[str, Any]]:
     groups: dict[str, Counter] = {}
     for row in rows:
-        groups.setdefault(row.get(key) or "unknown", Counter())[row["impact_level"]] += 1
+        # Free-text names may contain personal details from old versions. Aggregate them as Other.
+        name = "Other" if key == "service_name" and not row.get("service_id") else row.get(key) or "unknown"
+        groups.setdefault(name, Counter())[row["impact_level"]] += 1
     out = [{"key": name, "total": sum(counts.values()), **{level: counts.get(level, 0) for level in IMPACT_LEVELS}}
            for name, counts in groups.items()]
     return sorted(out, key=lambda item: (-item["total"], item["key"]))
