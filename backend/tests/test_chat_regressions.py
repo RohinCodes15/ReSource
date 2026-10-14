@@ -72,7 +72,5 @@ def test_followup_after_long_answer_reaches_model(client, monkeypatch, path, len
     assert response.status_code == 200
     assert llm.messages[-1] == turns[-1]
     assert llm.messages[0]["role"] == "user"
-    if length <= 6000:
-        assert llm.messages == turns
-    else:
-        assert llm.messages == [turns[-1]]
+    # Unsigned client history is accepted for compatibility but never forwarded to the model.
+    assert llm.messages == [turns[-1]]

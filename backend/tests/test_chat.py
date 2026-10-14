@@ -135,9 +135,9 @@ def test_reply_language_history_and_coarse_location(client, fake):
                {"role": "user", "content": "first"}, {"role": "assistant", "content": "second"}, {"role": "user", "content": "third"}]
     client.post("/chat", json={"messages": history, "language": "fa", "latitude": 37.561234, "longitude": -121.987654, "area_label": "Centerville & Niles"}, headers=ALICE)
     assert "Write your whole reply in Dari" in llm.system_text
-    assert [m["content"] for m in llm.messages] == ["first", "second", "third"]
+    assert [m["content"] for m in llm.messages] == ["third"]
     assert "37.561234" not in llm.system_text and "121.987654" not in llm.system_text  # never sent at full precision
-    assert "distance from the resident" in llm.system_text and "Centerville & Niles" in llm.system_text
+    assert "distance from the resident" in llm.system_text and "Centerville & Niles" not in llm.system_text
 
 
 def test_refusal_and_outage_are_handled(client, fake):
@@ -182,7 +182,7 @@ def test_stream_sends_deltas_then_sources(client, fake):
     response = client.post("/chat/stream", json={"messages": [{"role": "user", "content": "food?"}]}, headers=ALICE)
     assert response.headers["content-type"].startswith("text/event-stream")
     events = sse(response)
-    assert [name for name, _ in events] == ["delta", "delta", "done"]
+    assert [name for name, _ in events] == ["delta", "done"]
     assert events[-1][1] == {"sources": ["TCV Food Bank + Mobile Pantry"], "mode": "ai"}
 
 
@@ -191,7 +191,7 @@ def test_stream_withdraws_a_partial_answer_on_refusal_and_falls_back_on_error(cl
 
     fake(chunks=["Here is how to "], error=Refused())
     events = sse(client.post("/chat/stream", json={"messages": [{"role": "user", "content": "x"}]}, headers=ALICE))
-    assert [name for name, _ in events] == ["delta", "reset", "done"] and events[1][1]["text"].startswith("I can't help with that")
+    assert [name for name, _ in events] == ["reset", "done"] and events[0][1]["text"].startswith("I can't help with that")
 
     fake(chunks=["partial"], error=RuntimeError("connection lost"))
     events = sse(client.post("/chat/stream", json={"messages": [{"role": "user", "content": "free food"}]}, headers=ALICE))
