@@ -56,4 +56,4 @@ From the CA-17 page; confirm against your district's rules:
 
 ## Screenshots
 
-`submission/screenshots/desktop/` and `mobile/` hold one image per screen, made by the test suite from the real app (`npm run e2e` regenerates them). Use them for the form or a poster. Do not edit them to show data that is not there.
+`submission/screenshots/desktop/` and `mobile/` hold one image per screen, made from the real app running against a fresh, empty API (`npm run build:web && npm run screenshots` in `app/` regenerates them). `for-me-summary.png` shows the main feature after it has been used. Community Impact is empty in them because no report exists in a fresh install. Use them for the form or a poster. Do not edit them to show data that is not there.
