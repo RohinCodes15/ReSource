@@ -15,12 +15,9 @@ LOCALE_FILES = sorted(LOCALES.glob("*.json"))
 def expected_source(locale, chip):
     if chip == "s1":
         return "Street pavement maintenance"
-    if locale in ("en", "es"):
-        return {"s2": "TCV Food Bank + Mobile Pantry",
-                "s3": "Bay Area Community Health: Liberty Clinic",
-                "s4": "Mayor & City Council (City of Fremont)"}[chip]
-    # These locale chips ask about children and representatives instead of food/health.
-    return "211 Alameda County" if chip == "s2" else "Mayor & City Council (City of Fremont)"
+    return {"s2": "TCV Food Bank + Mobile Pantry",
+            "s3": "Bay Area Community Health: Liberty Clinic",
+            "s4": "Mayor & City Council (City of Fremont)"}[chip]
 
 
 @pytest.mark.parametrize("locale_file", LOCALE_FILES, ids=lambda path: path.stem)
