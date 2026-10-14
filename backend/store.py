@@ -113,6 +113,13 @@ class LocalStore:
     def insert(self, table: str, row: Row) -> Row:
         new_row = {"id": str(uuid.uuid4()), "created_at": now_iso(), **row}
         with self._lock:
+            # Mirror Supabase unique(post_id, owner_hash) while holding the write lock.
+            if table in ("post_votes", "post_flags") and any(
+                existing.get("post_id") == row.get("post_id")
+                and existing.get("owner_hash") == row.get("owner_hash")
+                for existing in self._tables[table]
+            ):
+                raise StoreError("Duplicate community action")
             self._tables[table].append(new_row)
             self._persist()
         return dict(new_row)
