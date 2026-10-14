@@ -12,7 +12,7 @@ from routers.public import public_row
 from schemas import FeedbackIn, PostIn, ReportIn
 from security import rate_limit, require_owner
 from settings import POLICY_VERSION
-from store import Row, get_store, now_iso
+from store import Row, StoreError, get_store, now_iso
 
 router = APIRouter(tags=["contribute"])
 
@@ -154,7 +154,12 @@ def toggle_vote(post_id: str, request: Request) -> dict[str, Any]:
     if already:
         store.delete("post_votes", {"post_id": post_id, "owner_hash": owner})
     else:
-        store.insert("post_votes", {"post_id": post_id, "owner_hash": owner})
+        try:
+            store.insert("post_votes", {"post_id": post_id, "owner_hash": owner})
+        except StoreError:
+            # Two taps arrived together and the other one stored the vote first (unique key).
+            if store.count("post_votes", {"post_id": post_id, "owner_hash": owner}) == 0:
+                raise
     upvotes = store.count("post_votes", {"post_id": post_id})
     store.update("posts", post_id, {"upvotes": upvotes})
     return {"id": post_id, "upvotes": upvotes, "voted": not already}
@@ -169,7 +174,12 @@ def flag_post(post_id: str, request: Request) -> dict[str, Any]:
     if post is None:
         raise HTTPException(status_code=404, detail="post_not_found")
     if store.count("post_flags", {"post_id": post_id, "owner_hash": owner}) == 0:
-        store.insert("post_flags", {"post_id": post_id, "owner_hash": owner})
+        try:
+            store.insert("post_flags", {"post_id": post_id, "owner_hash": owner})
+        except StoreError:
+            # The same flag arrived twice at once and the other request stored it (unique key).
+            if store.count("post_flags", {"post_id": post_id, "owner_hash": owner}) == 0:
+                raise
     flags = store.count("post_flags", {"post_id": post_id})
     if flags >= FLAGS_BEFORE_REVIEW and post.get("status") == "approved":
         store.update("posts", post_id, {"status": "pending"})

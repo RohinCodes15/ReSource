@@ -54,7 +54,7 @@ MONEY_RE = re.compile(r"\(?-?\$?\s?\d[\d,]*(?:\.\d+)?\)?\s*(?:million|thousand|[
 DOLLAR_RE = re.compile(r"\(?-?\$\s?\d[\d,]*(?:\.\d+)?\)?\s*(?:million|thousand|[mk]\b)?", re.I)
 MULTIPLIERS = {"million": 1_000_000, "m": 1_000_000, "thousand": 1_000, "k": 1_000}
 
-# The Supabase `services.category` column only accepts these five values.
+# Categories this parser assigns. The `services.category` column itself accepts any text.
 CATEGORY_RULES = [
     ("library", r"librar"),
     ("transit", r"transit|\bbus\b|shuttle|paratransit|transport"),
@@ -210,7 +210,7 @@ def to_supabase_rows(df: pd.DataFrame) -> tuple[list[dict], int]:
     for record in df.to_dict(orient="records"):
         category = first_match(f"{record['service']} {record['department']} {record['evidence']}", CATEGORY_RULES)
         if not category:
-            skipped += 1  # the table only allows five categories; this cut fits none of them
+            skipped += 1  # no parser category fits this cut
             continue
         details = [f"Budget {record['status']}."]
         if record["department"]:
@@ -225,7 +225,7 @@ def to_supabase_rows(df: pd.DataFrame) -> tuple[list[dict], int]:
             "address": DEFAULT_ADDRESS,
             "lat": DEFAULT_LAT,
             "lng": DEFAULT_LNG,
-            "description": " ".join(details),
+            "summary": " ".join(details),
             "cut_amount": int(round(record["cut_amount"])),
             "effective_date": record["effective_date"] or None,
         })
