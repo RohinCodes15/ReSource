@@ -180,14 +180,22 @@ class SupabaseStore:
             query = query.is_(key, "null") if value is None else query.eq(key, value)
         return query
 
+    PAGE = 1000
+
     def list(self, table: str, filters: Row | None = None, order: str | None = None,
              desc: bool = False, limit: int | None = None) -> list[Row]:
         query = self._filtered(self.client.table(table).select("*"), filters)
         if order:
             query = query.order(order, desc=desc)
         if limit:
-            query = query.limit(limit)
-        return self._run(query).data or []
+            return self._run(query.limit(limit)).data or []
+        # Supabase returns at most PAGE rows per request, so read every page.
+        rows: list[Row] = []
+        while True:
+            page = self._run(query.range(len(rows), len(rows) + self.PAGE - 1)).data or []
+            rows += page
+            if len(page) < self.PAGE:
+                return rows
 
     def get(self, table: str, row_id: str) -> Row | None:
         rows = self._run(self.client.table(table).select("*").eq("id", row_id).limit(1)).data or []
@@ -251,8 +259,11 @@ def get_store() -> LocalStore | SupabaseStore:
                         create_client(settings.supabase_url, settings.supabase_service_role_key),
                         settings.storage_bucket,
                     )
-                except Exception:
-                    logger.exception("Could not start the Supabase client; falling back to local mode")
+                except Exception as exc:
+                    # Never fall back to local files here: reports would be written to a disk
+                    # that the next deploy erases, while the API looked healthy.
+                    logger.exception("Could not start the Supabase client")
+                    raise RuntimeError("SUPABASE_URL is set but the Supabase client could not start") from exc
             if _store is None:
                 _store = LocalStore(settings.data_dir, settings.state_dir)
             logger.info("ReSource store running in %s mode", _store.mode)
