@@ -277,7 +277,9 @@ def test_email_alerts_collect_nothing_while_there_is_no_sender_and_unsubscribe_s
     assert client.get("/email/unsubscribe", params={"token": token + "x"}).status_code == 400
     assert client.post("/email/unsubscribe", params={"token": "garbage"}).status_code == 400
     page = client.get("/email/unsubscribe", params={"token": token})
-    assert page.status_code == 200 and "unsubscribed" in page.text.lower()
+    assert page.status_code == 200 and "Confirm unsubscribe" in page.text
+    assert store.get_store().list("email_subscriptions")
+    assert client.post("/email/unsubscribe", params={"token": token}).json() == {"unsubscribed": True}
     assert store.get_store().list("email_subscriptions") == []
     assert client.post("/email/unsubscribe", params={"token": token}).json() == {"unsubscribed": True}  # repeat is harmless
 
