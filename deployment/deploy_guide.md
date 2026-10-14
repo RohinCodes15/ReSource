@@ -29,7 +29,7 @@ Without Docker, follow "Run it" in the README.
 
 1. Create a project at supabase.com. Choose a region in the United States.
 2. In the SQL editor, run these three files from `backend/database/` in order: `schema.sql`, `rls_policies.sql`, `seed.sql`.
-3. In Storage, confirm a private bucket named `report-photos` exists (the policies file creates it; create it by hand if it is missing, and keep it private).
+3. In Storage, confirm a private bucket named `report-photos` exists (`schema.sql` creates it; create it by hand if it is missing, and keep it private).
 4. From Project Settings, API, copy the project URL and the `service_role` key. The service-role key is a secret: it goes into the API host's settings and nowhere else.
 5. Optional, for sign-in on the web: also copy the `anon` key, and under Authentication, URL Configuration, set the Site URL to the web app's address.
 
