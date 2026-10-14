@@ -148,6 +148,8 @@ export const adminPosts = (status: string) => request<AdminPost[]>(`/admin/posts
 export const moderatePost = (id: string, status: 'approved' | 'rejected' | 'pending') => request<Post>(`/admin/posts/${encodeURIComponent(id)}`, { ...admin, body: { status } });
 export const updateServiceStatus = (id: string, status: ServiceStatus) => request<Service>(`/admin/services/${encodeURIComponent(id)}`, { ...admin, body: { status } });
 export const adminDeletionRequests = () => request<DeletionRequest[]>('/admin/deletion-requests', admin);
+export type FeedbackRow = { id: string; kind: 'problem' | 'idea' | 'data_error'; message: string; created_at: string };
+export const adminFeedback = () => request<FeedbackRow[]>('/admin/feedback', admin);
 export const closeDeletionRequest = (id: string) => request<DeletionRequest>(`/admin/deletion-requests/${encodeURIComponent(id)}`, { ...admin, body: { status: 'completed' } });
 export const getImpactSummary = () => request<ImpactSummary>('/impact/summary');
 export const getImpactCsv = () => request<string>('/impact/export.csv', { ...admin, text: true });

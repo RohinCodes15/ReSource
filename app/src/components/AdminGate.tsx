@@ -29,7 +29,8 @@ export function AdminGate({ children, body }: PropsWithChildren<{ body?: string 
       setInput('');
     } catch (reason) {
       adminTokenStore.set('');
-      setError(t(reason instanceof ApiError && reason.isNetwork ? 'admin.offline' : 'admin.wrong'));
+      const status = reason instanceof ApiError ? reason.status : 0;
+      setError(t(status === 0 ? 'admin.offline' : status === 403 ? 'admin.wrong' : status === 429 ? 'errors.rateLimited' : 'errors.generic'));
     } finally {
       setChecking(false);
     }

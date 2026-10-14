@@ -55,6 +55,9 @@ export default function ReportScreen() {
     if (params.service) { setServiceId(params.service); setStep(0); }
   }
 
+  // A link with an id that is not on the list selects nothing, so the person picks one.
+  if (serviceId && serviceId !== OTHER && services.data && !services.data.some((s) => s.id === serviceId)) setServiceId(null);
+
   const steps = [t('report.step1'), t('report.step2'), t('report.step3')];
   const serviceError = !serviceId ? t('report.serviceRequired') : serviceId === OTHER && otherName.trim().length < 2 ? t('report.serviceNameRequired') : null;
   const descriptionError = description.trim().length < MIN_DESCRIPTION ? t('report.descriptionTooShort', { min: MIN_DESCRIPTION }) : null;
@@ -74,7 +77,9 @@ export default function ReportScreen() {
     if (result.canceled) return;
     const asset = result.assets[0];
     if (asset.mimeType && !PHOTO_TYPES.includes(asset.mimeType)) return setPhotoError(t('report.photoType'));
-    if (asset.fileSize && asset.fileSize > MAX_PHOTO_BYTES) return setPhotoError(t('report.photoTooLarge'));
+    // Browsers do not always fill in fileSize; the picked File knows its own size.
+    const bytes = asset.fileSize ?? asset.file?.size;
+    if (bytes && bytes > MAX_PHOTO_BYTES) return setPhotoError(t('report.photoTooLarge'));
     setPhoto({ uri: asset.uri, mimeType: asset.mimeType });
   }
 

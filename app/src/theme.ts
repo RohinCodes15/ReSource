@@ -55,16 +55,20 @@ export const fonts = {
   bold: 'Inter_700Bold',
 } as const;
 
-/** Type scale. Sizes are multiplied by the person's text-size setting inside <AppText>. */
+/**
+ * Type scale. `fontWeight` repeats what the family name says: Inter has no Persian or Chinese
+ * glyphs, so those scripts fall back to a system font, which only knows the weight.
+ * Sizes are multiplied by the person's text-size setting inside <AppText>.
+ */
 export const type = {
-  h1: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.6, color: colors.text },
-  h2: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.3, color: colors.text },
-  h3: { fontFamily: fonts.semibold, fontSize: 18, lineHeight: 24, color: colors.text },
-  h4: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.text },
-  body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: colors.text },
-  bodySmall: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.muted },
-  label: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20, color: colors.text },
-  caption: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 17, color: colors.muted },
+  h1: { fontFamily: fonts.bold, fontWeight: '700', fontSize: 30, lineHeight: 36, letterSpacing: -0.6, color: colors.text },
+  h2: { fontFamily: fonts.bold, fontWeight: '700', fontSize: 22, lineHeight: 28, letterSpacing: -0.3, color: colors.text },
+  h3: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 18, lineHeight: 24, color: colors.text },
+  h4: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 16, lineHeight: 22, color: colors.text },
+  body: { fontFamily: fonts.regular, fontWeight: '400', fontSize: 16, lineHeight: 24, color: colors.text },
+  bodySmall: { fontFamily: fonts.regular, fontWeight: '400', fontSize: 14, lineHeight: 21, color: colors.muted },
+  label: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 14, lineHeight: 20, color: colors.text },
+  caption: { fontFamily: fonts.medium, fontWeight: '500', fontSize: 12, lineHeight: 17, color: colors.muted },
 } as const;
 export type TextVariant = keyof typeof type;
 
