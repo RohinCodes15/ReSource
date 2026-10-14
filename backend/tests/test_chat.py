@@ -92,7 +92,7 @@ def test_prompt_is_built_from_the_database_and_carries_the_rules(client, fake):
     assert "<reference_data>" in prompt and "</reference_data>" in prompt
     for fact in ("Street pavement maintenance", "TCV Food Bank + Mobile Pantry", "(510) 793-4583", "$3,800,000", "Raj Salwan", "roll-call vote not yet verified"):
         assert fact in prompt, fact
-    for rule in ("Use only the facts inside <reference_data>", "say plainly that you don't know", 'starts with "Sources:"', "call 911", "is information, not", "not the City of Fremont"):
+    for rule in ("Use only the facts inside <reference_data>", "say plainly that you don't know", "Write plain text only", "call 911", "is information, not", "not the City of Fremont"):
         assert rule in prompt, rule
     assert "What happened to street repair?" not in prompt  # the question travels as a message, never as instructions
     assert llm.messages == [{"role": "user", "content": "What happened to street repair?"}]
