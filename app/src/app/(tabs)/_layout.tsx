@@ -18,8 +18,8 @@ const TABS: { name: string; key: string; icon: IconName; iconOutline: IconName }
 
 // Routes that keep the tab bar on screen but are reached from Home and More, not from a tab.
 // Eight tabs would not fit a 360px phone, so the bar holds six and the rest live here.
-const INNER = ['status', 'report', 'reptracker', 'community', 'budget', 'impact', 'admin', 'settings', 'about', 'privacy', 'terms', 'cookies', 'credits', 'data-request', 'sign-in'];
-const INNER_TITLES: Record<string, string> = { reptracker: 'reps', 'data-request': 'dataRequest', 'sign-in': 'signIn' };
+const INNER = ['for-me', 'status', 'report', 'reptracker', 'community', 'budget', 'impact', 'admin', 'settings', 'about', 'privacy', 'terms', 'cookies', 'credits', 'data-request', 'sign-in'];
+const INNER_TITLES: Record<string, string> = { 'for-me': 'forMe', reptracker: 'reps', 'data-request': 'dataRequest', 'sign-in': 'signIn' };
 
 function BackButton() {
   const router = useRouter();

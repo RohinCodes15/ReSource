@@ -39,7 +39,7 @@ export default function CommunityScreen() {
     setLocal({});
   }
   const posts = (data ?? []).map((post) => ({ ...post, ...local[post.id] }));
-  const failed = (reason: unknown) => setNotice({ tone: 'warning', text: t(reason instanceof ApiError && reason.status === 429 ? 'errors.rateLimited' : reason instanceof ApiError && reason.isNetwork ? 'community.offline' : 'errors.generic') });
+  const failed = (reason: unknown) => setNotice({ tone: 'warning', text: t(reason instanceof ApiError && reason.status === 429 ? 'errors.rateLimited' : reason instanceof ApiError && reason.code === 'network_already_voted' ? 'community.networkVoted' : reason instanceof ApiError && reason.isNetwork ? 'community.offline' : 'errors.generic') });
 
   async function publish() {
     const text = body.trim();
