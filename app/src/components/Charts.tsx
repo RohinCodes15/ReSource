@@ -23,12 +23,13 @@ export type TableData = { columns: string[]; rows: (string | number)[][] };
 
 /** A real data table: column headers, row headers and cells are exposed to screen readers. */
 export function DataTable({ caption, columns, rows }: TableData & { caption: string }) {
+  const { isRTL } = useTranslation(); // numbers line up on the far side from the label column
   return (
     <View role="table" aria-label={caption} accessibilityLabel={caption} style={styles.table} testID="data-table">
       <View role="row" style={[styles.tableRow, styles.tableHead]}>
         {columns.map((column, i) => (
           <View key={column} role="columnheader" style={[styles.cell, i === 0 && styles.cellFirst]}>
-            <AppText variant="caption" color={colors.text} style={i === 0 ? undefined : styles.right}>{column}</AppText>
+            <AppText variant="caption" color={colors.text} style={i === 0 ? undefined : isRTL ? styles.left : styles.right}>{column}</AppText>
           </View>
         ))}
       </View>
@@ -36,7 +37,7 @@ export function DataTable({ caption, columns, rows }: TableData & { caption: str
         <View key={r} role="row" style={styles.tableRow}>
           {row.map((value, i) => (
             <View key={i} role={i === 0 ? 'rowheader' : 'cell'} style={[styles.cell, i === 0 && styles.cellFirst]}>
-              <AppText variant="bodySmall" color={colors.text} style={i === 0 ? undefined : styles.right}>{value}</AppText>
+              <AppText variant="bodySmall" color={colors.text} style={i === 0 ? undefined : isRTL ? styles.left : styles.right}>{value}</AppText>
             </View>
           ))}
         </View>
@@ -127,7 +128,7 @@ export function StackedBarList({ items, series, totalLabel }: { items: StackItem
 }
 
 /** A single headline number with its label. Used instead of a chart when one figure is the point. */
-export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPress, testID }: { value: string; label: string; icon?: IconName; tone?: 'navy' | 'status'; /** Narrowest the tile gets before the row wraps. */ basis?: number; onPress?: () => void; testID?: string; color?: string }) {
+export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPress, selected, testID }: { value: string; label: string; icon?: IconName; tone?: 'navy' | 'status'; /** Narrowest the tile gets before the row wraps. */ basis?: number; onPress?: () => void; /** For a tile that works as a filter: whether its filter is on. */ selected?: boolean; testID?: string; color?: string }) {
   const body = (
     <>
       {icon && <Icon name={icon} size={22} color={tone === 'navy' ? colors.navy : colors.text} />}
@@ -137,7 +138,7 @@ export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPre
   );
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${label}: ${value}`} testID={testID} style={({ pressed }) => [styles.tile, { flexBasis: basis }, pressed && styles.pressed]}>{body}</Pressable>
+      <Pressable onPress={onPress} accessibilityRole="button" aria-pressed={selected} accessibilityLabel={`${label}: ${value}`} testID={testID} style={({ pressed }) => [styles.tile, { flexBasis: basis }, selected && styles.tileSelected, pressed && styles.pressed]}>{body}</Pressable>
     );
   }
   return <View style={[styles.tile, { flexBasis: basis }]} accessible accessibilityLabel={`${label}: ${value}`} testID={testID}>{body}</View>;
@@ -146,7 +147,9 @@ export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPre
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   right: { textAlign: 'right' },
+  left: { textAlign: 'left' },
   pressed: { opacity: 0.8 },
+  tileSelected: { borderWidth: 2, borderColor: colors.navy, backgroundColor: colors.navyLight },
   chartCard: { gap: spacing.md },
   bars: { gap: spacing.md },
   barRow: { gap: 6 },

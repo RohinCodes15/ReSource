@@ -3,14 +3,15 @@ import { Image, StyleSheet, View } from 'react-native';
 import type { ServiceStatus } from '../../../../shared/types';
 import { AdminGate } from '../../components/AdminGate';
 import { Screen } from '../../components/Page';
+import { Sheet } from '../../components/Sheet';
 import { AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, LoadingList, Pill, Segmented, StatusBadge } from '../../components/ui';
 import { useApi } from '../../hooks/useData';
-import { adminDeletionRequests, adminPosts, adminReportPhoto, adminReports, closeDeletionRequest, getServices, moderatePost, moderateReport, updateServiceStatus } from '../../lib/api';
+import { adminDeletionRequests, adminFeedback, adminPosts, adminReportPhoto, adminReports, closeDeletionRequest, getServices, moderatePost, moderateReport, updateServiceStatus } from '../../lib/api';
 import { formatDate, useTranslation } from '../../lib/i18n';
 import { adminTokenStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
-type Tab = 'reports' | 'posts' | 'services' | 'requests';
+type Tab = 'reports' | 'posts' | 'services' | 'requests' | 'feedback';
 const STATUSES: ServiceStatus[] = ['open', 'reduced', 'closed'];
 
 /** Loads and shows a report's photo when the moderator asks for it. */
@@ -112,18 +113,29 @@ function Services({ setNotice }: { setNotice: (text: string) => void }) {
   const { t } = useTranslation();
   const { data, loading, error, reload } = useApi(getServices);
   const action = useAction(reload, setNotice, t('admin.saved'), t('errors.generic'));
+  // A status change is public at once, so it is confirmed first.
+  const [pending, setPending] = useState<{ id: string; name: string; status: ServiceStatus } | null>(null);
   if (loading) return <LoadingList />;
   if (error) return <ErrorState onRetry={reload} />;
   return (
     <>
       <Banner tone="warning" body={t('admin.statusWarning')} />
+      <Sheet visible={!!pending} onClose={() => setPending(null)} title={t('admin.confirmStatusTitle')} testID="confirm-status-sheet">
+        {pending && (
+          <>
+            <AppText color={colors.text}>{t('admin.confirmStatusBody', { name: pending.name, status: t(`status.${pending.status}`) })}</AppText>
+            <AppButton variant="navy" icon="check" label={t('admin.confirmStatus')} onPress={() => { const next = pending; setPending(null); void action.run(next.id, () => updateServiceStatus(next.id, next.status)); }} testID="confirm-status" />
+            <AppButton variant="outline" label={t('common.cancel')} onPress={() => setPending(null)} testID="cancel-status" />
+          </>
+        )}
+      </Sheet>
       {(data ?? []).map((service) => (
         <Card key={service.id} style={styles.block} testID={`admin-service-${service.id}`}>
           <AppText variant="h4" heading={3}>{service.name}</AppText>
           <StatusBadge status={service.status} />
           <View style={styles.actions} role="radiogroup" accessibilityLabel={t('admin.setStatus', { name: service.name })}>
             {STATUSES.map((status) => (
-              <Chip key={status} role="radio" label={t(`status.${status}`)} selected={service.status === status} onPress={() => action.run(service.id, () => updateServiceStatus(service.id, status))} testID={`set-${service.id}-${status}`} />
+              <Chip key={status} role="radio" label={t(`status.${status}`)} selected={service.status === status} onPress={() => { if (service.status !== status) setPending({ id: service.id, name: service.name, status }); }} testID={`set-${service.id}-${status}`} />
             ))}
           </View>
         </Card>
@@ -153,7 +165,25 @@ function Requests({ setNotice }: { setNotice: (text: string) => void }) {
   );
 }
 
-/** Admin tools: review reports and posts, update a service's status, and close deletion requests. */
+function Feedback() {
+  const { t, locale } = useTranslation();
+  const { data, loading, error, reload } = useApi(adminFeedback, undefined, [], 0);
+  if (loading) return <LoadingList />;
+  if (error) return <ErrorState onRetry={reload} />;
+  if (!data?.length) return <EmptyState icon="message-outline" title={t('admin.noFeedback')} />;
+  return (
+    <>
+      {data.map((item) => (
+        <Card key={item.id} style={styles.block} testID={`admin-feedback-${item.id}`}>
+          <AppText variant="caption">{formatDate(item.created_at, locale)} · {t(`settings.kind_${item.kind}`)}</AppText>
+          <AppText color={colors.text} selectable>{item.message}</AppText>
+        </Card>
+      ))}
+    </>
+  );
+}
+
+/** Admin tools: review reports and posts, update a service's status, close deletion requests and read feedback. */
 export default function AdminScreen() {
   const { t } = useTranslation();
   const token = adminTokenStore.use();
@@ -164,12 +194,13 @@ export default function AdminScreen() {
       <AdminGate>
         {token ? (
           <View style={styles.block}>
-            <Segmented label={t('titles.admin')} value={tab} onChange={(next) => { setTab(next); setNotice(null); }} options={(['reports', 'posts', 'services', 'requests'] as const).map((value) => ({ value, label: t(`admin.tab_${value}`) }))} />
+            <Segmented label={t('titles.admin')} value={tab} onChange={(next) => { setTab(next); setNotice(null); }} options={(['reports', 'posts', 'services', 'requests', 'feedback'] as const).map((value) => ({ value, label: t(`admin.tab_${value}`) }))} />
             {notice && <Banner tone="info" body={notice} live testID="admin-notice" />}
             {tab === 'reports' && <Reports setNotice={setNotice} />}
             {tab === 'posts' && <Posts setNotice={setNotice} />}
             {tab === 'services' && <Services setNotice={setNotice} />}
             {tab === 'requests' && <Requests setNotice={setNotice} />}
+            {tab === 'feedback' && <Feedback />}
           </View>
         ) : null}
       </AdminGate>

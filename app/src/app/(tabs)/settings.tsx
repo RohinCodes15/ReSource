@@ -9,7 +9,7 @@ import { Screen } from '../../components/Page';
 import { Sheet } from '../../components/Sheet';
 import { AppButton, AppText, Banner, Card, Chip, Field, LinkText, Segmented } from '../../components/ui';
 import { ApiError, deleteMyData, exportMyData, sendFeedback } from '../../lib/api';
-import { formatDate, useTranslation } from '../../lib/i18n';
+import { applyDocumentLanguage, formatDate, languageStore, useTranslation } from '../../lib/i18n';
 import { saveTextFile } from '../../lib/platform';
 import { authEnabled, signInAvailable } from '../../lib/supabase';
 import { ageStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
@@ -56,6 +56,8 @@ export default function SettingsScreen() {
         setNotice({ tone: 'success', text: t('settings.deleted', { count: total, receipt: receipt.receipt_id, date: formatDate(receipt.completed_at, locale) }) });
       } else {
         await resetDeviceData();
+        languageStore.reset(); // back to the device's language, like a fresh install
+        applyDocumentLanguage(languageStore.get());
         setNotice({ tone: 'success', text: t('settings.deviceCleared') });
       }
     } catch (reason) {
