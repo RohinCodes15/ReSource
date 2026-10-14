@@ -42,12 +42,18 @@ def create_report(report: ReportIn, request: Request) -> Row:
     owner = require_owner(request)
     store = get_store()
     service_name = clean_text(report.service_name)
+    name_removed = []
     if report.service_id:
         service = store.get("services", report.service_id)
         if service is None:
             raise HTTPException(status_code=422, detail="unknown_service")
         service_name = service["name"]
+    else:
+        service_name, name_removed = scrub_pii(service_name)
+        service_name = service_name[:160]
     description, removed = scrub_pii(clean_text(report.description))
+    removed = list(dict.fromkeys([*name_removed, *removed]))
+    description = description[:1000]
     row = store.insert("reports", {
         "service_id": report.service_id,
         "service_name": service_name,
