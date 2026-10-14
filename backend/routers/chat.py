@@ -19,7 +19,7 @@ from pydantic import BaseModel
 
 import grounding
 from schemas import ChatIn
-from security import rate_limit
+from security import chat_global_limit, rate_limit
 from settings import get_settings
 
 logger = logging.getLogger("resource.chat")
@@ -116,7 +116,11 @@ def _log_failure(exc: Exception) -> None:
         logger.exception("Unexpected error while answering a chat message")
 
 
-chat_limits = [Depends(rate_limit("chat", 12, 60)), Depends(rate_limit("chat-day", 150, 86400))]
+chat_limits = [
+    Depends(rate_limit("chat", 12, 60)),
+    Depends(rate_limit("chat-day", 150, 86400)),
+    Depends(chat_global_limit),
+]
 
 
 @router.post("/chat", response_model=ChatOut, dependencies=chat_limits)
@@ -186,4 +190,3 @@ def chat_status() -> dict[str, Any]:
     if not get_settings().ai_enabled:
         return {"mode": "basic"}
     return {"mode": "ai", "model": get_settings().claude_model}
-
