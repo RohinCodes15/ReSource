@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 
+from chat_sessions import sessions
 from moderation import clean_text
 from routers.contribute import record_consent, reject_bots
 from routers.public import public_row
@@ -131,6 +132,7 @@ def delete_my_data(request: Request) -> dict[str, Any]:
     store = get_store()
     voted_posts: list[str] = []
     for owner in owners:
+        sessions.forget(owner)
         for report in store.list("reports", {"owner_hash": owner}):
             if report.get("photo_path"):
                 store.delete_file(report["photo_path"])
