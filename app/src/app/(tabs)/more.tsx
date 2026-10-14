@@ -10,6 +10,7 @@ const GROUPS: { key: string; items: { href: string; title: string; icon: IconNam
   {
     key: 'city',
     items: [
+      { href: '/for-me', title: 'forMe', icon: 'account-search' },
       { href: '/status', title: 'status', icon: 'clipboard-list' },
       { href: '/budget', title: 'budget', icon: 'chart-bar' },
       { href: '/reptracker', title: 'reps', icon: 'account-tie' },

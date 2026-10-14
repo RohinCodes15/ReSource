@@ -32,7 +32,8 @@
     "cookies": "Chính sách cookie",
     "credits": "Ghi công và giấy phép",
     "dataRequest": "Yêu cầu xóa dữ liệu",
-    "signIn": "Đăng nhập"
+    "signIn": "Đăng nhập",
+    "forMe": "Điều gì thay đổi với tôi"
   },
   "common": {
     "all": "Tất cả",
@@ -162,11 +163,48 @@
     "chatSubtitle": "Câu trả lời từ dữ liệu của chúng tôi",
     "repsTitle": "Người đại diện",
     "repsSubtitle": "Liên hệ nghị viên hội đồng của quý vị",
-    "communityTitle": "Bảng tin cộng đồng",
-    "communitySubtitle": "Mẹo từ hàng xóm",
     "emergencyTitle": "Khi khẩn cấp",
     "emergencyBody": "Hãy gọi 911. Nếu khủng hoảng tâm lý, hãy gọi hoặc nhắn tin đến 988. Để được giới thiệu miễn phí về thực phẩm, nhà ở và dịch vụ y tế, hãy gọi 211.",
-    "dataSources": "Tài liệu công khai của Thành phố Fremont và trang web của các tổ chức"
+    "dataSources": "Tài liệu công khai của Thành phố Fremont và trang web của các tổ chức",
+    "forMeTitle": "Điều gì đã thay đổi với tôi?",
+    "forMeBody": "Chọn khu vực và điều quý vị quan tâm. Nhận bản tóm tắt ngắn về các thay đổi ngân sách liên quan đến quý vị, kèm nguồn cho từng mục.",
+    "forMeButton": "Xem bản tóm tắt của tôi"
+  },
+  "forMe": {
+    "intro": "Hãy chọn nơi quý vị sống và điều quý vị quan tâm. Mọi thông tin hiển thị đều lấy từ các tài liệu của Thành phố Fremont mà ReSource đã đọc, và mỗi mục đều dẫn đến nguồn. Lựa chọn của quý vị chỉ nằm trên màn hình này và không được gửi đi đâu.",
+    "step1": "1. Khu vực của quý vị",
+    "areaHelp": "Nhập mã ZIP của Fremont để đánh dấu các dịch vụ nằm trong khu vực của quý vị. Quý vị có thể bỏ qua bước này.",
+    "step2": "2. Điều quý vị quan tâm",
+    "interestsLabel": "Chọn các mối quan tâm",
+    "interest_kids": "Trẻ em và gia đình",
+    "interest_seniors": "Người cao tuổi",
+    "interest_transit": "Đường phố và đi lại",
+    "interest_health": "Sức khỏe và dịch vụ xã hội",
+    "interest_parks": "Công viên",
+    "show": "Xem điều gì đã thay đổi",
+    "pickOne": "Hãy chọn ít nhất một mối quan tâm.",
+    "resultsTitle": "Bản tóm tắt của quý vị",
+    "everyone": "Ảnh hưởng đến mọi người ở Fremont",
+    "noChange": "Các tài liệu của Thành phố mà ReSource đã đọc không cho thấy thay đổi nào liên quan đến ngân sách đối với các dịch vụ này. Điều đó có thể thay đổi, vì vậy hãy xem nguồn.",
+    "noData": "ReSource không có mục nào về chủ đề này. Các tài liệu của Thành phố mà chúng tôi đã đọc không nêu chi tiết.",
+    "transitNote": "ReSource không có mục nào về dịch vụ xe buýt hay tàu. Mục gần nhất trong dữ liệu là việc bảo trì đường phố, được nêu ở đây.",
+    "inYourArea": "Nằm trong khu vực của quý vị",
+    "amount": "Cắt giảm: {{amount}}.",
+    "noAmount": "Thành phố chưa công bố số tiền riêng cho mục này.",
+    "since": "Có hiệu lực từ {{date}}.",
+    "noDate": "Thành phố chưa công bố ngày của thay đổi này.",
+    "help": "Những nơi có thể giúp",
+    "seeResources": "Xem tất cả nơi trợ giúp liên quan",
+    "englishNote": "Tên và mô tả dịch vụ được hiển thị bằng tiếng Anh, đúng như trong tài liệu của Thành phố.",
+    "print": "In thẻ tác động của tôi",
+    "share": "Chia sẻ thẻ tác động của tôi",
+    "cardTitle": "Thẻ tác động của tôi",
+    "cardArea": "Khu vực: {{area}}",
+    "cardDate": "Lập ngày {{date}}",
+    "cardFooter": "Được tạo bằng ReSource, một dự án độc lập của học sinh. Đây không phải tài liệu chính thức của Thành phố Fremont. Thẻ này không có thông tin cá nhân.",
+    "cardPrivacy": "Thẻ chỉ ghi khu vực và chủ đề của quý vị. Không có tên, địa chỉ hay vị trí.",
+    "cardFailed": "Không in hoặc chia sẻ được thẻ.",
+    "cardCopied": "Thẻ đã được sao chép dưới dạng văn bản."
   },
   "more": {
     "city": "Thành phố và ngân sách",
@@ -437,7 +475,8 @@
     "report": "Báo cáo vi phạm",
     "reportTitle": "Báo cáo bài đăng này?",
     "reportBody": "Dùng cho bài đăng có nội dung lăng mạ, sai sự thật hoặc tiết lộ thông tin cá nhân của người khác. Người kiểm duyệt sẽ xem xét.",
-    "flagged": "Cảm ơn quý vị. Bài đăng đã được báo cho người kiểm duyệt."
+    "flagged": "Cảm ơn quý vị. Bài đăng đã được báo cho người kiểm duyệt.",
+    "networkVoted": "Một thiết bị khác trong mạng của quý vị đã bình chọn cho bài đăng này, nên lượt bình chọn này không được tính. Giới hạn này ngăn một nơi bình chọn nhiều lần."
   },
   "budget": {
     "intro": "Các khoản cắt giảm ngân sách của Fremont đến từ đâu. Mỗi con số bên dưới đều dẫn đến tài liệu của Thành phố mà nó được lấy ra.",

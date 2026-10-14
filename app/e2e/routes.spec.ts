@@ -45,7 +45,7 @@ test('the tab bar reaches every tab and the header Back button returns', async (
 
 test('every row on the More screen opens its screen', async ({ page }) => {
   await prepare(page);
-  for (const [row, path] of [['status', '/status'], ['budget', '/budget'], ['reps', '/reptracker'], ['report', '/report'], ['community', '/community'], ['settings', '/settings'],
+  for (const [row, path] of [['forMe', '/for-me'], ['status', '/status'], ['budget', '/budget'], ['reps', '/reptracker'], ['report', '/report'], ['community', '/community'], ['settings', '/settings'],
     ['about', '/about'], ['privacy', '/privacy'], ['terms', '/terms'], ['cookies', '/cookies'], ['dataRequest', '/data-request'], ['credits', '/credits'], ['impact', '/impact'], ['admin', '/admin']]) {
     await open(page, '/more');
     await v(page, `more-${row}`).click();
@@ -55,7 +55,7 @@ test('every row on the More screen opens its screen', async ({ page }) => {
 
 test('home actions and the footer links all go somewhere', async ({ page }) => {
   await prepare(page);
-  for (const [action, path] of [['map', '/map'], ['resources', '/resources'], ['status', '/status'], ['budget', '/budget'], ['report', '/report'], ['chat', '/chat'], ['reps', '/reptracker'], ['community', '/community']]) {
+  for (const [action, path] of [['map', '/map'], ['resources', '/resources'], ['status', '/status'], ['budget', '/budget'], ['report', '/report'], ['chat', '/chat'], ['reps', '/reptracker'], ['forMe', '/for-me']]) {
     await open(page, '/');
     await v(page, `home-action-${action}`).click();
     await expect(page, action).toHaveURL(new RegExp(path));

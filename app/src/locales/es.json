@@ -3,7 +3,14 @@
     "select": "Elegir idioma",
     "reviewNote": "Las traducciones se hicieron con cuidado, pero todavía no las han revisado hablantes nativos. Los datos del presupuesto se muestran en inglés, tal como aparecen en los documentos de la Ciudad."
   },
-  "tabs": { "home": "Inicio", "map": "Mapa", "resources": "Recursos", "alerts": "Alertas", "chat": "Preguntar", "more": "Más" },
+  "tabs": {
+    "home": "Inicio",
+    "map": "Mapa",
+    "resources": "Recursos",
+    "alerts": "Alertas",
+    "chat": "Preguntar",
+    "more": "Más"
+  },
   "titles": {
     "home": "ReSource",
     "map": "Mapa de impacto del presupuesto",
@@ -25,7 +32,8 @@
     "cookies": "Política de cookies",
     "credits": "Créditos y licencias",
     "dataRequest": "Solicitud de eliminación de datos",
-    "signIn": "Iniciar sesión"
+    "signIn": "Iniciar sesión",
+    "forMe": "Qué cambió para mí"
   },
   "common": {
     "all": "Todos",
@@ -49,7 +57,11 @@
     "checked": "Revisado el {{date}}",
     "sampleData": "Datos de ejemplo"
   },
-  "status": { "open": "Abierto", "reduced": "Reducido", "closed": "Cerrado" },
+  "status": {
+    "open": "Abierto",
+    "reduced": "Reducido",
+    "closed": "Cerrado"
+  },
   "category": {
     "infrastructure": "Calles e infraestructura",
     "parks": "Parques",
@@ -84,10 +96,26 @@
     "infrastructure": "Calles y parques",
     "civic": "Elecciones y reuniones"
   },
-  "severity": { "info": "Para su información", "warning": "Cambio en un servicio", "critical": "Urgente" },
-  "reportStatus": { "pending": "En espera de revisión", "verified": "Verificado", "rejected": "No aceptado" },
-  "postStatus": { "approved": "Visible", "pending": "En espera de revisión", "rejected": "Eliminado" },
-  "outcome": { "adopted": "Adoptado", "approved": "Aprobado", "deferred": "Aplazado" },
+  "severity": {
+    "info": "Para su información",
+    "warning": "Cambio en un servicio",
+    "critical": "Urgente"
+  },
+  "reportStatus": {
+    "pending": "En espera de revisión",
+    "verified": "Verificado",
+    "rejected": "No aceptado"
+  },
+  "postStatus": {
+    "approved": "Visible",
+    "pending": "En espera de revisión",
+    "rejected": "Eliminado"
+  },
+  "outcome": {
+    "adopted": "Adoptado",
+    "approved": "Aprobado",
+    "deferred": "Aplazado"
+  },
   "offline": {
     "banner": "Modo sin conexión: se muestra la información guardada con la aplicación.",
     "savedCopy": "Está viendo la copia guardada con la aplicación. Puede ser más antigua que la que está en línea."
@@ -135,13 +163,55 @@
     "chatSubtitle": "Respuestas basadas en nuestros datos",
     "repsTitle": "Sus representantes",
     "repsSubtitle": "Comuníquese con su concejal",
-    "communityTitle": "Tablero comunitario",
-    "communitySubtitle": "Consejos de los vecinos",
     "emergencyTitle": "En una emergencia",
     "emergencyBody": "Llame al 911. Para una crisis de salud mental, llame o envíe un mensaje de texto al 988. Para referencias gratuitas de comida, vivienda y salud, llame al 211.",
-    "dataSources": "Documentos públicos de la Ciudad de Fremont y sitios web de las organizaciones"
+    "dataSources": "Documentos públicos de la Ciudad de Fremont y sitios web de las organizaciones",
+    "forMeTitle": "¿Qué cambió para mí?",
+    "forMeBody": "Elija su zona y lo que le importa. Reciba un resumen breve de los cambios del presupuesto que le afectan, con la fuente de cada uno.",
+    "forMeButton": "Ver mi resumen"
   },
-  "more": { "city": "Ciudad y presupuesto", "takePart": "Participe", "app": "Esta aplicación", "staff": "Equipo del proyecto" },
+  "forMe": {
+    "intro": "Elija dónde vive y qué le importa. Todo lo que se muestra viene de los documentos de la Ciudad de Fremont que ReSource ha leído, y cada punto enlaza a su fuente. Sus selecciones se quedan en esta pantalla y no se envían a ningún lugar.",
+    "step1": "1. Su zona",
+    "areaHelp": "Escriba un código postal de Fremont para marcar los servicios ubicados en su zona. Puede omitir este paso.",
+    "step2": "2. Lo que le importa",
+    "interestsLabel": "Elija sus intereses",
+    "interest_kids": "Niños y familias",
+    "interest_seniors": "Adultos mayores",
+    "interest_transit": "Calles y traslados",
+    "interest_health": "Salud y servicios humanos",
+    "interest_parks": "Parques",
+    "show": "Mostrar qué cambió",
+    "pickOne": "Elija al menos un interés.",
+    "resultsTitle": "Su resumen",
+    "everyone": "Afecta a todos en Fremont",
+    "noChange": "Los documentos de la Ciudad que ReSource ha leído no muestran cambios relacionados con el presupuesto en estos servicios. Eso puede cambiar, así que revise la fuente.",
+    "noData": "ReSource no tiene datos sobre este tema. Los documentos de la Ciudad que hemos leído no dan detalles al respecto.",
+    "transitNote": "ReSource no tiene datos sobre el servicio de autobús o tren. Lo más cercano en los datos es el mantenimiento de calles, que se muestra aquí.",
+    "inYourArea": "Ubicado en su zona",
+    "amount": "Reducción: {{amount}}.",
+    "noAmount": "La Ciudad no ha publicado un monto en dólares aparte para este punto.",
+    "since": "Vigente desde el {{date}}.",
+    "noDate": "La Ciudad no ha publicado una fecha para este cambio.",
+    "help": "Lugares que pueden ayudar",
+    "seeResources": "Ver todos los recursos relacionados",
+    "englishNote": "Los nombres y las descripciones de los servicios se muestran en inglés, tal como aparecen en los documentos de la Ciudad.",
+    "print": "Imprimir mi tarjeta de impacto",
+    "share": "Compartir mi tarjeta de impacto",
+    "cardTitle": "Mi tarjeta de impacto",
+    "cardArea": "Zona: {{area}}",
+    "cardDate": "Hecha el {{date}}",
+    "cardFooter": "Hecha con ReSource, un proyecto estudiantil independiente. No es un documento oficial de la Ciudad de Fremont. Esta tarjeta no contiene información personal.",
+    "cardPrivacy": "La tarjeta solo muestra su zona y sus temas. No lleva nombre, dirección ni ubicación.",
+    "cardFailed": "No se pudo imprimir ni compartir la tarjeta.",
+    "cardCopied": "La tarjeta se copió como texto."
+  },
+  "more": {
+    "city": "Ciudad y presupuesto",
+    "takePart": "Participe",
+    "app": "Esta aplicación",
+    "staff": "Equipo del proyecto"
+  },
   "location": {
     "title": "Elija su ubicación",
     "explain": "Elija una ubicación para ordenar los recursos por distancia, centrar el mapa y ayudar al asistente a sugerir lugares cercanos. Puede omitirlo: todo funciona desde el Ayuntamiento de Fremont.",
@@ -405,7 +475,8 @@
     "report": "Denunciar abuso",
     "reportTitle": "¿Denunciar esta publicación?",
     "reportBody": "Úselo para publicaciones abusivas, falsas o que compartan información personal de alguien. Un moderador la revisará.",
-    "flagged": "Gracias. La publicación se envió a un moderador."
+    "flagged": "Gracias. La publicación se envió a un moderador.",
+    "networkVoted": "Otro dispositivo de su red ya votó por esta publicación, así que este voto no se contó. El límite evita que un mismo lugar vote muchas veces."
   },
   "budget": {
     "intro": "De dónde vienen las reducciones del presupuesto de Fremont. Cada cifra enlaza al documento de la Ciudad del que se tomó.",
@@ -427,7 +498,10 @@
     "sourcePage": "{{title}}, página {{page}}",
     "notEndorsed": "ReSource cita documentos de la Ciudad de Fremont. La Ciudad no ha revisado ni respaldado esta aplicación."
   },
-  "charts": { "showTable": "Ver como tabla", "showChart": "Ver como gráfica" },
+  "charts": {
+    "showTable": "Ver como tabla",
+    "showChart": "Ver como gráfica"
+  },
   "impact": {
     "low": "Bajo",
     "medium": "Medio",

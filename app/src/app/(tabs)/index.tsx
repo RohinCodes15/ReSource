@@ -7,13 +7,14 @@ import { StatTile } from '../../components/Charts';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { LocationChip } from '../../components/LocationChip';
 import { Footer, Screen } from '../../components/Page';
-import { Icon, AppText, Banner, Card, FadeIn, type IconName, Pill, Skeleton, SourceLine } from '../../components/ui';
+import { Icon, AppButton, AppText, Banner, Card, FadeIn, type IconName, Pill, Skeleton, SourceLine } from '../../components/ui';
 import { ALERT_ICONS, bundledAlerts, bundledResources, bundledServices } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getAlerts, getStats, type Stats } from '../../lib/api';
 import { formatDate, useTranslation } from '../../lib/i18n';
 import { cardSurface, colors, radius, spacing } from '../../theme';
 
+// The Community Board and Community Impact are reached from More.
 // `key` picks the translated title and subtitle: home.<key>Title and home.<key>Subtitle.
 const ACTIONS: { href: string; key: string; icon: IconName }[] = [
   { href: '/map', key: 'map', icon: 'map-marker-radius' },
@@ -23,7 +24,6 @@ const ACTIONS: { href: string; key: string; icon: IconName }[] = [
   { href: '/report', key: 'report', icon: 'clipboard-alert' },
   { href: '/chat', key: 'chat', icon: 'chat-processing' },
   { href: '/reptracker', key: 'reps', icon: 'account-tie' },
-  { href: '/community', key: 'community', icon: 'forum' },
 ];
 
 /** Counts worked out from the bundled data, used when the API is offline. Report counts need the API. */
@@ -62,6 +62,12 @@ export default function HomeScreen() {
 
       <View style={styles.body}>
         <Banner tone="info" icon="school" body={t('home.independent')} testID="independent-notice" />
+        {/* The main thing the app is for, so it comes first. */}
+        <View style={styles.forMe} testID="home-for-me">
+          <AppText variant="h2" heading={2}>{t('home.forMeTitle')}</AppText>
+          <AppText color={colors.text}>{t('home.forMeBody')}</AppText>
+          <AppButton variant="gold" icon="text-box-search" label={t('home.forMeButton')} onPress={() => router.push('/for-me' as never)} testID="home-action-forMe" />
+        </View>
         <LocationChip />
 
         <View style={styles.sectionGap}>
@@ -145,6 +151,7 @@ const styles = StyleSheet.create({
   tagline: { marginTop: spacing.sm, maxWidth: 460 },
   body: { padding: spacing.lg, gap: spacing.lg },
   sectionGap: { gap: spacing.sm },
+  forMe: { ...cardSurface, padding: spacing.lg, gap: spacing.md, borderTopWidth: 4, borderTopColor: colors.gold },
   tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   alert: { ...cardSurface, padding: spacing.lg, gap: spacing.sm, borderStartWidth: 4, borderStartColor: colors.gold },
   alertHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
