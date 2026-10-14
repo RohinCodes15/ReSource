@@ -31,7 +31,20 @@ EFFORT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claud
 # recommended fallback model. Claude Haiku 5.5 has no server-side fallback.
 FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
 # Answers are meant to be short; this also bounds what one question can cost.
-MAX_TOKENS = 2000
+MAX_TOKENS = 1500
+# Includes the latest question. Drop old whole turns instead of rejecting long conversations.
+MAX_HISTORY_CHARS = 8000
+
+
+def bounded_conversation(request: ChatIn) -> list[dict[str, str]]:
+    turns = request.conversation()
+    total = sum(len(turn["content"]) for turn in turns)
+    while total > MAX_HISTORY_CHARS:
+        total -= len(turns.pop(0)["content"])
+    # Anthropic expects a user turn first; never leave an orphan assistant response.
+    while turns and turns[0]["role"] != "user":
+        turns.pop(0)
+    return turns
 
 REFUSAL_TEXT = {
     "en": "I can't help with that. I can answer questions about Fremont city services, budget changes and places to get help.",
@@ -130,7 +143,7 @@ def chat(request: ChatIn) -> ChatOut:
         return _basic(request)
     system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
     try:
-        reply = llm.complete(system, request.conversation())
+        reply = llm.complete(system, bounded_conversation(request))
     except Refused:
         return _refusal(request)
     except Exception as exc:  # the AI service is down or misconfigured: still give a grounded answer
@@ -164,7 +177,7 @@ def chat_stream(request: ChatIn) -> StreamingResponse:
         try:
             system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
             parts: list[str] = []
-            for text in llm.stream(system, request.conversation()):
+            for text in llm.stream(system, bounded_conversation(request)):
                 parts.append(text)
                 yield _event("delta", {"text": text})
             reply = "".join(parts).strip()

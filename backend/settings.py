@@ -22,7 +22,7 @@ load_dotenv(BACKEND_DIR.parent / ".env")
 # Bumped whenever the Privacy Policy or Terms change; stored with each consent record.
 POLICY_VERSION = "2026-10-12"
 DEFAULT_CORS = "http://localhost:8081,http://localhost:19006,http://localhost:3000"
-DEFAULT_MODEL = "claude-opus-5-5"
+DEFAULT_MODEL = "claude-haiku-5-5"
 
 
 def _flag(name: str, default: bool = False) -> bool:
