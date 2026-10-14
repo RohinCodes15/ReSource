@@ -130,7 +130,7 @@ def test_report_rate_limit(client, env):
     restart()
     codes = [client.post("/reports", json=report_body(), headers=ALICE).status_code for _ in range(6)]
     assert codes == [201] * 5 + [429]
-    assert client.post("/reports", json=report_body(), headers=BOB).status_code == 201  # limits are per caller
+    assert client.post("/reports", json=report_body(), headers=BOB).status_code == 429  # changing token cannot bypass IP limit
 
 
 def test_report_photo_rules(client):
