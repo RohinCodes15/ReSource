@@ -98,8 +98,9 @@ export default function ForMeScreen() {
       {shown && (services.loading || resources.loading) && <LoadingList />}
       {shown && !services.loading && !resources.loading && (
         <View style={styles.block} testID="for-me-results">
-          <AppText variant="h2" heading={2} live="polite">{t('forMe.resultsTitle')}</AppText>
-          <AppText variant="caption">{t('forMe.cardArea', { area: tx('area', area ?? 'citywide') })}</AppText>
+          <AppText variant="h2" heading={2}>{t('forMe.resultsTitle')}</AppText>
+          {/* Announced when the summary appears; a heading cannot also be a live region. */}
+          <AppText variant="caption" live="polite">{t('forMe.cardArea', { area: tx('area', area ?? 'citywide') })}</AppText>
           {(services.bundled || resources.bundled) && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
           <Banner tone="info" icon="translate" body={t('forMe.englishNote')} />
 

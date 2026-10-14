@@ -30,7 +30,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
       <View style={styles.cardTop}>
         <View style={styles.cardIcon}><Icon name={RESOURCE_ICONS[item.category] ?? 'hand-heart'} size={22} color={colors.navy} /></View>
         <View style={styles.flex}>
-          <AppText variant="h4" heading={3}>{item.name}</AppText>
+          <AppText variant="h4" heading={2}>{item.name}</AppText>
           <AppText variant="caption">{tx('resourceCategory', item.category)}</AppText>
         </View>
         <Pill

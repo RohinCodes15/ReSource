@@ -146,7 +146,7 @@ export function LocationChip({ compact }: { compact?: boolean }) {
       <Pressable
         onPress={() => setOpen(true)}
         accessibilityRole="button"
-        accessibilityLabel={`${t('location.showingNear', { place: label })}. ${t('location.change')}`}
+        accessibilityLabel={`${t('location.showingNear', { place: label })} ${t('location.change')}`} // the visible text, in order
         testID="location-chip"
         style={({ pressed }) => [styles.chip, compact && styles.chipCompact, pressed && styles.pressed]}
       >

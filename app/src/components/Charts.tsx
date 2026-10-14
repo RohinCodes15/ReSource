@@ -138,10 +138,10 @@ export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPre
   );
   if (onPress) {
     return (
-      <Pressable onPress={onPress} accessibilityRole="button" aria-pressed={selected} accessibilityLabel={`${label}: ${value}`} testID={testID} style={({ pressed }) => [styles.tile, { flexBasis: basis }, selected && styles.tileSelected, pressed && styles.pressed]}>{body}</Pressable>
+      <Pressable onPress={onPress} accessibilityRole="button" aria-pressed={selected} accessibilityLabel={`${value} ${label}`} testID={testID} style={({ pressed }) => [styles.tile, { flexBasis: basis }, selected && styles.tileSelected, pressed && styles.pressed]}>{body}</Pressable>
     );
   }
-  return <View style={[styles.tile, { flexBasis: basis }]} accessible accessibilityLabel={`${label}: ${value}`} testID={testID}>{body}</View>;
+  return <View style={[styles.tile, { flexBasis: basis }]} accessible accessibilityLabel={`${value} ${label}`} testID={testID}>{body}</View>;
 }
 
 const styles = StyleSheet.create({

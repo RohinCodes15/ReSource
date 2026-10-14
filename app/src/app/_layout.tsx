@@ -29,6 +29,24 @@ input:focus-visible, textarea:focus-visible { outline-offset: 0 !important; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
 `;
 
+/**
+ * The four Inter weights. Phones load the full files from the font package. The web build loads
+ * WOFF2 copies cut down to Latin and Vietnamese letters (about 22 KB each instead of 160 KB;
+ * made with `pyftsubset`, see docs/LICENSES.md), because the page stays blank until they arrive.
+ */
+/* eslint-disable @typescript-eslint/no-require-imports */
+const INTER = Platform.OS === 'web'
+  ? {
+      Inter_400Regular: require('../../assets/fonts/Inter_400Regular.woff2'),
+      Inter_500Medium: require('../../assets/fonts/Inter_500Medium.woff2'),
+      Inter_600SemiBold: require('../../assets/fonts/Inter_600SemiBold.woff2'),
+      Inter_700Bold: require('../../assets/fonts/Inter_700Bold.woff2'),
+    }
+  : { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold };
+/* eslint-enable @typescript-eslint/no-require-imports */
+
+const WEB_DESCRIPTION = 'ReSource shows which Fremont, California city services changed with the city budget and where residents can find help. An independent student project, not an official City of Fremont service.';
+
 function useWebPageStyles() {
   useEffect(() => {
     if (Platform.OS !== 'web') return;
@@ -36,7 +54,12 @@ function useWebPageStyles() {
     style.setAttribute('data-resource', 'page');
     style.textContent = WEB_CSS;
     document.head.appendChild(style);
-    return () => style.remove();
+    // Search engines and link previews read this; the exported page has no description of its own.
+    const description = document.createElement('meta');
+    description.name = 'description';
+    description.content = WEB_DESCRIPTION;
+    document.head.appendChild(description);
+    return () => { style.remove(); description.remove(); };
   }, []);
 }
 
@@ -80,7 +103,7 @@ function OfflineBanner() {
 
 export default function RootLayout() {
   // Inter ships inside the app bundle (see `fonts` in theme.ts); nothing is fetched from a font service.
-  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
+  const [fontsLoaded, fontError] = useFonts(INTER);
   const [hydrated, setHydrated] = useState(false);
   const { isRTL } = useTranslation();
   useWebPageStyles();

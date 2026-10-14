@@ -73,7 +73,8 @@ export default function TabsLayout() {
             headerShown: tab.name !== 'index', // Home draws its own hero header
             title: t(`titles.${tab.key}`),
             tabBarLabel: t(`tabs.${tab.key}`),
-            tabBarAccessibilityLabel: t(`titles.${tab.key}`),
+            // The spoken name is the visible label, so voice control ("tap Resources") works.
+            tabBarAccessibilityLabel: t(`tabs.${tab.key}`),
             tabBarButtonTestID: `tab-${tab.key}`,
             tabBarIcon: ({ color, focused }) => <Icon name={focused ? tab.icon : tab.iconOutline} size={24} color={color} />,
           }}
