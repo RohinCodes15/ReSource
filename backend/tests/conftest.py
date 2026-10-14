@@ -40,6 +40,9 @@ def client(env):
     from community_guard import guard
 
     guard.reset()
+    from chat_sessions import sessions
+
+    sessions.reset()
     import main
 
     with TestClient(main.app) as test_client:
@@ -57,6 +60,9 @@ def restart():
     from community_guard import guard
 
     guard.reset()
+    from chat_sessions import sessions
+
+    sessions.reset()
 
 
 def report_body(**overrides):

@@ -162,8 +162,8 @@ def build_system(language: str, lat: float | None, lng: float | None, area: str 
     request_lines = [f"Write your whole reply in {LANGUAGE_NAMES.get(language, 'English')}. Keep organization names, "
                      "street addresses and phone numbers exactly as they appear in the data."]
     if lat is not None and lng is not None:
-        where = f" ({clean(area)})" if area else ""
-        request_lines.append(f"The resident shared an approximate location{where}. Prefer nearby places; distances are in the data.")
+        # area is caller text; it must never become a system instruction.
+        request_lines.append("The resident shared an approximate location. Prefer nearby places; distances are in the data.")
     blocks = [
         # Rules and data first, so the prompt cache can reuse them. They are identical between
         # requests only when no location is shared: a location changes distances and row order.
