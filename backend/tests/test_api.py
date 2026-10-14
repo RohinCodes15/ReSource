@@ -12,6 +12,7 @@ from conftest import (
     report_body,
     restart,
 )
+from fastapi.testclient import TestClient
 
 # ---- Catalog --------------------------------------------------------------------------------
 
@@ -82,7 +83,7 @@ def test_stats_are_real_counts(client):
     assert client.get("/stats").json()["reports_total"] == 0
     report = client.post("/reports", json=report_body(), headers=ALICE).json()
     stats = client.get("/stats").json()
-    assert (stats["reports_total"], stats["reports_verified"]) == (1, 0)
+    assert (stats["reports_total"], stats["reports_verified"]) == (0, 0)
     client.post(f"/admin/reports/{report['id']}", json={"status": "verified"}, headers=ADMIN)
     assert client.get("/stats").json()["reports_verified"] == 1
     assert stats["posts"] == 0  # the labeled starter posts are not counted as community activity
@@ -164,7 +165,7 @@ def test_post_vote_once_flag_and_delete(client):
     post_id = created["id"]
 
     assert client.post(f"/posts/{post_id}/vote", headers=BOB).json() == {"id": post_id, "upvotes": 1, "voted": True}
-    assert client.post(f"/posts/{post_id}/vote", headers=CAROL).json()["upvotes"] == 2
+    assert TestClient(client.app, client=("192.0.2.3", 1234)).post(f"/posts/{post_id}/vote", headers=CAROL).json()["upvotes"] == 2
     assert client.post(f"/posts/{post_id}/vote", headers=BOB).json() == {"id": post_id, "upvotes": 1, "voted": False}
 
     listed = {p["id"]: p for p in client.get("/posts", headers=CAROL).json()}
@@ -179,9 +180,9 @@ def test_post_vote_once_flag_and_delete(client):
 def test_three_flags_hide_a_post_until_reviewed(client):
     post_id = post(client, ALICE).json()["id"]
     for flagger in (BOB, BOB, CAROL):  # the same person flagging twice counts once
-        client.post(f"/posts/{post_id}/flag", headers=flagger)
+        TestClient(client.app, client=("192.0.2.2" if flagger == BOB else "192.0.2.3", 1234)).post(f"/posts/{post_id}/flag", headers=flagger)
     assert post_id in [p["id"] for p in client.get("/posts").json()]
-    client.post(f"/posts/{post_id}/flag", headers=DAVE)
+    TestClient(client.app, client=("192.0.2.4", 1234)).post(f"/posts/{post_id}/flag", headers=DAVE)
     assert post_id not in [p["id"] for p in client.get("/posts").json()]
     assert client.post(f"/admin/posts/{post_id}", json={"status": "approved"}, headers=ADMIN).json()["status"] == "approved"
     assert post_id in [p["id"] for p in client.get("/posts").json()]

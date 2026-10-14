@@ -7,10 +7,11 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
+from community_guard import guard
 from moderation import clean_text, needs_review, scrub_pii
 from routers.public import public_row
 from schemas import FeedbackIn, PostIn, ReportIn
-from security import rate_limit, require_owner
+from security import client_fingerprint, rate_limit, require_owner
 from settings import POLICY_VERSION
 from store import Row, StoreError, get_store, now_iso
 
@@ -150,6 +151,7 @@ def toggle_vote(post_id: str, request: Request) -> dict[str, Any]:
     post = store.get("posts", post_id)
     if post is None or post.get("status") != "approved":
         raise HTTPException(status_code=404, detail="post_not_found")
+    guard.record("vote", post_id, client_fingerprint(request), owner)
     already = store.count("post_votes", {"post_id": post_id, "owner_hash": owner}) > 0
     if already:
         store.delete("post_votes", {"post_id": post_id, "owner_hash": owner})
@@ -167,7 +169,7 @@ def toggle_vote(post_id: str, request: Request) -> dict[str, Any]:
 
 @router.post("/posts/{post_id}/flag", dependencies=[Depends(rate_limit("flag", 10, 3600))])
 def flag_post(post_id: str, request: Request) -> dict[str, Any]:
-    """Report abuse. After three different people flag a post it is hidden until reviewed."""
+    """Hold a post only after flags from three distinct owners AND network buckets."""
     owner = require_owner(request)
     store = get_store()
     post = store.get("posts", post_id)
@@ -180,7 +182,7 @@ def flag_post(post_id: str, request: Request) -> dict[str, Any]:
             # The same flag arrived twice at once and the other request stored it (unique key).
             if store.count("post_flags", {"post_id": post_id, "owner_hash": owner}) == 0:
                 raise
-    flags = store.count("post_flags", {"post_id": post_id})
+    flags = guard.record("flag", post_id, client_fingerprint(request), owner)
     if flags >= FLAGS_BEFORE_REVIEW and post.get("status") == "approved":
         store.update("posts", post_id, {"status": "pending"})
     return {"id": post_id, "flagged": True}

@@ -12,6 +12,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
+from community_guard import guard
 from routers.public import public_row, verified_reports
 from schemas import (
     DeletionRequestStatusIn,
@@ -74,6 +75,7 @@ def moderate_post(post_id: str, body: ModeratePostIn) -> Row:
         raise HTTPException(status_code=404, detail="post_not_found")
     if body.status == "approved":  # an approved post starts again with a clean record
         store.delete("post_flags", {"post_id": post_id})
+        guard.clear_flags(post_id)
     return public_row(row)
 
 
