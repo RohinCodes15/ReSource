@@ -1,4 +1,4 @@
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -9,8 +9,9 @@ import { CookieBanner } from '../components/CookieBanner';
 import { AppText, LinkText } from '../components/ui';
 import { getConfig } from '../lib/api';
 import { applyDocumentLanguage, languageStore, useTranslation } from '../lib/i18n';
+import { watchAuth } from '../lib/supabase';
 import { hydrateStores, offlineStore } from '../state/stores';
-import { colors, spacing } from '../theme';
+import { colors, fonts, spacing } from '../theme';
 
 /**
  * Web-only page styles that React Native styles cannot express:
@@ -24,9 +25,24 @@ body { background: ${colors.background}; }
 :focus-visible { outline: 3px solid ${colors.gold} !important; outline-offset: 2px !important; box-shadow: 0 0 0 2px ${colors.navyDark} !important; }
 input:focus-visible, textarea:focus-visible { outline-offset: 0 !important; }
 .leaflet-container { font-family: inherit; }
+.leaflet-container.leaflet-container { background: #ECE6D8; }
+/* A calmer map: OpenStreetMap's colors turned to warm greys, so the pins carry the color. */
+.resource-tiles { filter: grayscale(0.9) sepia(0.15) brightness(1.04) contrast(0.9); }
 .leaflet-container a { color: ${colors.navy}; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
 `;
+
+/**
+ * Fonts on phones: Inter regular and semibold from the font package, and one cut of Fraunces
+ * (see docs/LICENSES.md). On the web nothing is loaded from here: public/index.html declares the
+ * same three families with font-display: swap, so the page paints at once in a fallback font
+ * instead of staying blank until the files arrive.
+ */
+const NATIVE_FONTS = Platform.OS === 'web'
+  ? {}
+  : { Inter_400Regular, Inter_600SemiBold, Fraunces_600SemiBold: require('../../assets/fonts/Fraunces_600SemiBold.ttf') };
+
+const WEB_DESCRIPTION = 'ReSource shows which Fremont, California city services changed with the city budget and where residents can find help. An independent student project, not an official City of Fremont service.';
 
 function useWebPageStyles() {
   useEffect(() => {
@@ -35,7 +51,12 @@ function useWebPageStyles() {
     style.setAttribute('data-resource', 'page');
     style.textContent = WEB_CSS;
     document.head.appendChild(style);
-    return () => style.remove();
+    // Search engines and link previews read this; the exported page has no description of its own.
+    const description = document.createElement('meta');
+    description.name = 'description';
+    description.content = WEB_DESCRIPTION;
+    document.head.appendChild(description);
+    return () => { style.remove(); description.remove(); };
   }, []);
 }
 
@@ -59,7 +80,7 @@ function SkipLink() {
     'data-testid': 'skip-link',
     style: {
       position: 'absolute', top: focused ? spacing.md : -100, left: spacing.md, zIndex: 3000, backgroundColor: colors.navyDark, color: colors.white,
-      padding: `${spacing.md}px ${spacing.lg}px`, borderRadius: 8, fontFamily: 'Inter_600SemiBold, system-ui, sans-serif', fontSize: 14, textDecoration: 'none',
+      padding: `${spacing.md}px ${spacing.lg}px`, borderRadius: 8, fontFamily: `${fonts.semibold}, system-ui, sans-serif`, fontSize: 14, textDecoration: 'none',
     },
   }, t('common.skipToContent'));
 }
@@ -78,11 +99,12 @@ function OfflineBanner() {
 }
 
 export default function RootLayout() {
-  // Inter ships inside the app bundle (see `fonts` in theme.ts); nothing is fetched from a font service.
-  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
+  // The fonts ship with the app (see `fonts` in theme.ts); nothing is fetched from a font service.
+  const [fontsLoaded, fontError] = useFonts(NATIVE_FONTS);
   const [hydrated, setHydrated] = useState(false);
   const { isRTL } = useTranslation();
   useWebPageStyles();
+  useEffect(watchAuth, []);
 
   useEffect(() => {
     let active = true;
@@ -95,8 +117,8 @@ export default function RootLayout() {
     return () => { active = false; };
   }, []);
 
-  // Hold a plain background until the font and saved settings are ready, so nothing flashes in
-  // the wrong language or typeface. If the font fails to load, carry on with the system font.
+  // Hold a plain background until the saved settings (and, on phones, the fonts) are ready, so
+  // nothing flashes in the wrong language. If a font fails to load, carry on with the system font.
   if ((!fontsLoaded && !fontError) || !hydrated) return <View style={styles.blank} />;
 
   return (

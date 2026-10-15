@@ -1,6 +1,7 @@
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from '../lib/api';
+import { offlineStore } from '../state/stores';
 
 export type DataState<T> = {
   data: T | null;
@@ -52,6 +53,12 @@ export function useApi<T>(fetcher: () => Promise<T>, fallback?: () => T, deps: u
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(fetchNow, deps);
+  // Back online: replace the bundled copy (or the error) with live data straight away.
+  const offline = offlineStore.use();
+  const stale = state.bundled || state.error !== null;
+  useEffect(() => {
+    if (!offline && stale) fetchNow();
+  }, [offline, stale, fetchNow]);
   useFocusEffect(
     useCallback(() => {
       if (lastLoad.current && Date.now() - lastLoad.current > staleMs) fetchNow();

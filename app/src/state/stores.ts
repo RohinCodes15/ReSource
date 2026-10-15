@@ -121,20 +121,26 @@ export const offlineStore = createStore<boolean>(false);
 export const adminTokenStore = createStore<string>('');
 /** Supabase session token when someone has signed in; memory only. */
 export const authTokenStore = createStore<string>('');
+/** Email address of the signed-in account, or '' when signed out; memory only. */
+export const authEmailStore = createStore<string>('');
 
 // ---- Install token -------------------------------------------------------------------------
 
-let installToken: string | null = null;
+let installToken: Promise<string> | null = null;
 
 /**
  * A random id created on this device the first time it is needed. The server stores only a
  * keyed hash of it, which is enough to let you delete your own posts and vote once.
  */
-export async function getInstallToken(): Promise<string> {
-  if (installToken) return installToken;
-  const saved = await readStored<string>('installToken');
-  installToken = saved && /^[A-Za-z0-9_-]{16,64}$/.test(saved) ? saved : Crypto.randomUUID().replace(/-/g, '');
-  if (installToken !== saved) await writeStored('installToken', installToken);
+export function getInstallToken(): Promise<string> {
+  // One shared promise: the first requests of a fresh install start together, and each must
+  // not make up its own token.
+  installToken ??= (async () => {
+    const saved = await readStored<string>('installToken');
+    const token = saved && /^[A-Za-z0-9_-]{16,64}$/.test(saved) ? saved : Crypto.randomUUID().replace(/-/g, '');
+    if (token !== saved) await writeStored('installToken', token);
+    return token;
+  })();
   return installToken;
 }
 
@@ -154,5 +160,5 @@ export async function resetDeviceData(): Promise<void> {
   await clearAllStored();
   installToken = null;
   setOptionalStorageAllowed(false);
-  [...persisted, chatStore, adminTokenStore, authTokenStore].forEach((store) => store.reset());
+  [...persisted, chatStore, adminTokenStore, authTokenStore, authEmailStore].forEach((store) => store.reset());
 }

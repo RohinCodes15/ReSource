@@ -7,7 +7,7 @@ export type MapPin = {
   latitude: number;
   longitude: number;
   label: string;
-  /** Pixels to draw the pin away from its true point, so pins at one address do not stack. */
+  /** Pixels to draw the pin away from its true point, so pins at one address do not stack (phones; the web groups them instead). */
   dx: number;
   dy: number;
 };
@@ -22,5 +22,11 @@ export type ServiceMapProps = {
   you: LatLng | null;
   /** Change this number to make the map return to `center`. */
   recenterKey: number;
-  labels: { map: string; you: string; zoomIn: string; zoomOut: string };
+  labels: {
+    map: string; you: string; zoomIn: string; zoomOut: string;
+    /** Spoken name of a group of pins (web): how many, and which. */
+    cluster: (count: number, names: string) => string;
+    /** Shown over the map when the map images cannot be loaded (web). */
+    tilesFailed: string;
+  };
 };

@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ADMIN_TOKEN } from '../playwright.config';
-import { API, open, prepare, v } from './helpers';
+import { API, mapServiceCount, open, prepare, v } from './helpers';
 
 test.beforeEach(async ({ page }) => { await prepare(page); });
 
@@ -65,7 +65,8 @@ test.describe('location', () => {
       await open(page, '/resources');
       await v(page, 'location-chip').click();
       await v(page, 'use-gps').click();
-      await expect(v(page, 'location-label')).toContainText('your location, near Centerville & Niles');
+      await expect(v(page, 'location-label')).toContainText('your location');
+      await expect(v(page, 'location-label')).not.toContainText('Centerville'); // no guessed neighborhood name
       await expect(page.locator('[data-testid^="resource-res-"]:visible:not([inert] *)').first()).toContainText('Niles Library');
       await open(page, '/chat');
       await expect(v(page, 'location-label')).toContainText('your location');
@@ -128,20 +129,43 @@ test('resources: search, chips, sort, call, directions, website, share and save'
 
 // ---- Map ------------------------------------------------------------------------------------
 
+test('map: a group of pins says how many services it holds and which', async ({ page }) => {
+  await open(page, '/map');
+  const group = page.locator('[data-testid="pin-cluster"][data-members*="svc-human-services"]');
+  await expect(group).toHaveAttribute('role', 'button');
+  await expect(group).toHaveAttribute('aria-label', /services close together: .*Human Services/);
+});
+
+test('map: when the map images fail, the map stays blank with a note and the pins still work', async ({ page }) => {
+  await page.unroute(/tile\.openstreetmap\.org/);
+  await page.route(/tile\.openstreetmap\.org/, (route) => route.abort());
+  await open(page, '/map');
+  await expect(v(page, 'map-tiles-failed')).toContainText('could not load');
+  const shown = await page.evaluate(() => Array.from(document.querySelectorAll('.leaflet-tile')).filter((tile) => getComputedStyle(tile).visibility !== 'hidden').length);
+  expect(shown, 'failed tiles are hidden').toBe(0);
+  await expect.poll(() => mapServiceCount(page)).toBe(11);
+});
+
 test('map: pins, filters, search, list view, details sheet and Find Alternative', async ({ page }) => {
   await open(page, '/map');
-  await expect(page.locator('[data-testid^="pin-svc-"]')).toHaveCount(11);
+  await expect.poll(() => mapServiceCount(page)).toBe(11);
   await v(page, 'map-filter-open').click();
   await expect(v(page, 'map-count')).toContainText('4 services');
-  await expect(page.locator('[data-testid^="pin-svc-"]')).toHaveCount(4);
+  await expect.poll(() => mapServiceCount(page)).toBe(4);
   await v(page, 'map-filter-all').click();
   await v(page, 'map-search').fill('zzz nothing');
   await expect(v(page, 'map-count')).toContainText('0 services');
   await v(page, 'map-search-clear').click();
   await v(page, 'map-recenter').click();
 
+  // Pins close together form a group; selecting it zooms in, then opens the five at City Hall into a ring.
+  const pin = page.locator('[data-testid="pin-svc-human-services"]');
+  for (let i = 0; i < 4 && !(await pin.count()); i += 1) {
+    await page.locator('[data-testid="pin-cluster"][data-members*="svc-human-services"]').click();
+    await page.waitForTimeout(600);
+  }
   // A pin opens the same detail sheet as the list.
-  await page.locator('[data-testid="pin-svc-human-services"]').click();
+  await pin.click();
   await expect(v(page, 'service-detail')).toContainText('10 more positions');
   await page.keyboard.press('Escape');
   await expect(v(page, 'service-detail')).toHaveCount(0);
@@ -168,6 +192,40 @@ test('status dashboard: counts, filters and recent changes', async ({ page }) =>
   await expect(v(page, 'status-count')).toContainText('Showing 1 of 11');
   await v(page, 'toggle-table').click();
   await expect(v(page, 'data-table')).toBeVisible();
+});
+
+// ---- What changed for me ---------------------------------------------------------------------
+
+test('what changed for me: interests give a sourced summary and a printable card with no personal data', async ({ page }) => {
+  await open(page, '/');
+  await v(page, 'home-action-forMe').click();
+  await expect(v(page, 'for-me-screen')).toBeVisible();
+  await v(page, 'for-me-show').click();
+  await expect(v(page, 'for-me-error')).toContainText('at least one');
+
+  await v(page, 'location-chip').click();
+  await v(page, 'zip-input').fill('94538');
+  await v(page, 'use-zip').click();
+  await v(page, 'interest-parks').click();
+  await v(page, 'interest-kids').click();
+  await v(page, 'for-me-show').click();
+
+  // A reduction, with its source link.
+  const parks = v(page, 'for-me-section-parks');
+  await expect(parks).toContainText('Park and street-median capital replacement');
+  await expect(parks.locator('a[href^="https://"]').first()).toBeVisible();
+  // Where the documents show no change, the screen says so instead of implying one.
+  await expect(v(page, 'for-me-nochange-kids')).toContainText('no budget-related change');
+  // Citywide items are always included, and ones in the chosen ZIP area are marked.
+  await expect(v(page, 'for-me-section-everyone')).toContainText('Located in your area');
+
+  await page.evaluate(() => { HTMLIFrameElement.prototype.focus = () => undefined; });
+  await v(page, 'for-me-card').click();
+  const card = await page.locator('iframe[data-print="impact-card"]').getAttribute('srcdoc');
+  expect(card).toContain('My impact card');
+  expect(card).toContain('Park and street-median capital replacement');
+  expect(card).toContain('No personal information is on this card');
+  expect(card).not.toMatch(/resource\.installToken|@gmail|latitude/i);
 });
 
 // ---- Report an Impact ------------------------------------------------------------------------
@@ -210,7 +268,9 @@ test('report: validation at every step, back, consent, success and "your reports
 });
 
 test('report: a double tap on Submit files one report', async ({ page, request }) => {
-  const before = (await (await request.get(`${API}/stats`)).json()).reports_total;
+  // Every report, reviewed or not: the public count only includes verified ones.
+  const filed = async () => ((await (await request.get(`${API}/admin/reports?status=all`, { headers: { 'X-Admin-Token': ADMIN_TOKEN } })).json()) as unknown[]).length;
+  const before = await filed();
   await open(page, '/report');
   await v(page, 'service-option-svc-fire-ops').click();
   await v(page, 'report-next').click();
@@ -220,7 +280,7 @@ test('report: a double tap on Submit files one report', async ({ page, request }
   await tick(page);
   await v(page, 'report-submit').dblclick();
   await expect(v(page, 'report-success')).toBeVisible();
-  expect((await (await request.get(`${API}/stats`)).json()).reports_total).toBe(before + 1);
+  expect(await filed()).toBe(before + 1);
 });
 
 test('report: photo can be picked and removed, and the wrong type is refused', async ({ page }) => {
@@ -326,13 +386,15 @@ test('community: post, one vote per person, report abuse, delete own post', asyn
   await v(page, `vote-${id}`).click();
   await expect(v(page, `votes-${id}`)).toHaveText('1');
 
-  // A second person sees the post, can vote once and can report it, but cannot delete it.
+  // A second person sees the post and can report it, but cannot delete it. Their vote comes from
+  // the same network as the first one, so the server does not count it and the app says why.
   const other = await (await browser.newContext()).newPage();
   await prepare(other);
   await open(other, '/community');
   await expect(v(other, `delete-${id}`)).toHaveCount(0);
   await v(other, `vote-${id}`).click();
-  await expect(v(other, `votes-${id}`)).toHaveText('2');
+  await expect(v(other, 'community-notice')).toContainText('already voted');
+  await expect(v(other, `votes-${id}`)).toHaveText('1');
   await v(other, `flag-${id}`).click();
   await v(other, 'confirm-yes').click();
   await expect(v(other, 'community-notice')).toContainText('reported to a moderator');
@@ -394,6 +456,30 @@ test('chat: Stop cancels a slow answer, and a failed answer can be retried', asy
   await v(page, 'chat-retry').click();
   await expect(v(page, 'chat-assistant').last()).toContainText('TCV Food Bank');
   await expect(v(page, 'chat-failed')).toHaveCount(0);
+});
+
+test('chat: a reload while an answer is being written leaves a retry, not an endless wait', async ({ page }) => {
+  let slow = true;
+  await page.route(`${API}/chat/stream`, async (route) => {
+    if (!slow) return route.continue();
+    await new Promise((resolve) => setTimeout(resolve, 15000));
+    return route.abort().catch(() => undefined);
+  });
+  await open(page, '/chat');
+  // Chat history is only saved when optional storage is accepted.
+  await page.evaluate(() => localStorage.setItem('resource.storageConsent', JSON.stringify({ choice: 'all', decidedAt: '2026-10-12T00:00:00.000Z' })));
+  await open(page, '/chat');
+  await v(page, 'chat-input').fill('Where can I get free food?');
+  await v(page, 'chat-send').click();
+  await expect(v(page, 'chat-stop')).toBeVisible();
+  await page.reload();
+  await expect(v(page, 'chat-failed')).toBeVisible();
+  slow = false;
+  await v(page, 'chat-retry').click();
+  await expect(v(page, 'chat-assistant').last()).toContainText('TCV Food Bank');
+  await v(page, 'chat-input').fill('Is there a low-cost clinic?');
+  await v(page, 'chat-send').click();
+  await expect(v(page, 'chat-assistant').last()).toContainText('Clinic');
 });
 
 // ---- Language, text size, settings ------------------------------------------------------------
@@ -500,8 +586,10 @@ test('admin: wrong passcode, verify a report, impact dashboard and CSV export, l
 
   await v(page, 'segment-services').click();
   await v(page, 'set-svc-age-well-south-reduced').click();
+  await v(page, 'confirm-status').click();
   await expect(v(page, 'admin-service-svc-age-well-south')).toContainText('Reduced');
   await v(page, 'set-svc-age-well-south-open').click();
+  await v(page, 'confirm-status').click();
   await expect(v(page, 'admin-service-svc-age-well-south')).toContainText('Open');
   await v(page, 'segment-posts').click();
   await v(page, 'segment-requests').click();

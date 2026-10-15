@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import csv
 import io
+import re
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
+from community_guard import guard
 from routers.public import public_row, verified_reports
 from schemas import (
     DeletionRequestStatusIn,
@@ -40,6 +42,16 @@ def reports(status: str = Query(default="pending", pattern="^(pending|verified|r
     return [_report_view(r) for r in get_store().list("reports", filters, order="created_at", desc=True, limit=200)]
 
 
+@router.get("/admin/reports/{report_id}/photo")
+def report_photo(report_id: str) -> Response:
+    """The photo attached to a report, so a moderator can look at it before verifying."""
+    report = get_store().get("reports", report_id)
+    data = get_store().read_file(report["photo_path"]) if report and report.get("photo_path") else None
+    if data is None:
+        raise HTTPException(status_code=404, detail="photo_not_found")
+    return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
 @router.post("/admin/reports/{report_id}")
 def moderate_report(report_id: str, body: ModerateReportIn) -> Row:
     row = get_store().update("reports", report_id, {"status": body.status, "reviewed_at": now_iso()})
@@ -64,6 +76,7 @@ def moderate_post(post_id: str, body: ModeratePostIn) -> Row:
         raise HTTPException(status_code=404, detail="post_not_found")
     if body.status == "approved":  # an approved post starts again with a clean record
         store.delete("post_flags", {"post_id": post_id})
+        guard.clear_flags(post_id)
     return public_row(row)
 
 
@@ -102,6 +115,12 @@ def feedback() -> list[Row]:
 
 # ---- Community Impact export (the totals themselves are public: routers/public.py) -----------
 
+def safe_csv_cell(value: Any) -> str:
+    text = "" if value is None else str(value)
+    # Protect every column, including legacy rows and whitespace-prefixed spreadsheet formulas.
+    return "'" + text if re.match(r"^\s*[=+@\-\t\r\n]", text) else text
+
+
 @router.get("/impact/export.csv")
 def impact_export() -> Response:
     """Verified reports as CSV. Contains no identifiers: owner hashes and photos are left out."""
@@ -109,11 +128,8 @@ def impact_export() -> Response:
     writer = csv.writer(buffer)
     writer.writerow(["report_id", "created_at", "service", "area", "impact_level", "description"])
     for row in verified_reports():
-        description = str(row.get("description") or "")
-        # A leading =, +, - or @ would be run as a formula by spreadsheet software.
-        if description[:1] in ("=", "+", "-", "@"):
-            description = "'" + description
-        writer.writerow([row["id"], row.get("created_at"), row.get("service_name"), row.get("area"), row.get("impact_level"), description])
+        writer.writerow([safe_csv_cell(row.get(key)) for key in
+                         ("id", "created_at", "service_name", "area", "impact_level", "description")])
     return Response(
         content=buffer.getvalue(),
         media_type="text/csv; charset=utf-8",

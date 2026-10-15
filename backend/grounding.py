@@ -19,8 +19,6 @@ LANGUAGE_NAMES: dict[str, str] = {
     "fa": "Dari (Afghan Persian, written in Persian script)",
     "zh": "Mandarin Chinese (Simplified characters)",
     "vi": "Vietnamese",
-    "hi": "Hindi",
-    "pa": "Punjabi (Gurmukhi script)",
 }
 MAX_ROWS_PER_KIND = 40
 
@@ -36,8 +34,8 @@ memory, even if you believe you know them.
 calling 211 (free referrals, 24 hours) or the City of Fremont at (510) 284-4000. Do not guess.
 3. When you mention a service or resource, give its name exactly as written, with its phone \
 number and address when the data has them.
-4. End every answer with a final line that starts with "Sources:" and lists the exact names of \
-the services, resources or documents you used. If you used none, write "Sources: none".
+4. Write plain text only. No markdown: no asterisks for bold, no # headings, no tables. A list \
+line may start with "- ". Do not end with a list of sources: the app shows the sources itself.
 5. Keep answers short and in plain words. Many residents read on a phone and some are reading \
 in a second language. Be kind: people asking may be worried about losing something they rely on.
 6. If someone may be in danger or describes a medical emergency, tell them first to call 911. \
@@ -164,10 +162,11 @@ def build_system(language: str, lat: float | None, lng: float | None, area: str 
     request_lines = [f"Write your whole reply in {LANGUAGE_NAMES.get(language, 'English')}. Keep organization names, "
                      "street addresses and phone numbers exactly as they appear in the data."]
     if lat is not None and lng is not None:
-        where = f" ({clean(area)})" if area else ""
-        request_lines.append(f"The resident shared an approximate location{where}. Prefer nearby places; distances are in the data.")
+        # area is caller text; it must never become a system instruction.
+        request_lines.append("The resident shared an approximate location. Prefer nearby places; distances are in the data.")
     blocks = [
-        # Rules and data first and unchanged between requests, so the prompt cache can reuse them.
+        # Rules and data first, so the prompt cache can reuse them. They are identical between
+        # requests only when no location is shared: a location changes distances and row order.
         {"type": "text", "text": RULES + "\n\n" + "\n".join(data), "cache_control": {"type": "ephemeral"}},
         {"type": "text", "text": "\n".join(request_lines)},
     ]
@@ -193,12 +192,29 @@ CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "Legal": ("legal", "lawyer", "immigration", "citizenship", "abogado", "inmigración", "inmigracion", "律师", "移民", "حقوقی", "مهاجرت", "luật sư", "di trú"),
     "Library": ("library", "wifi", "wi-fi", "computer", "biblioteca", "图书馆", "کتابخانه", "thư viện"),
     "Crisis": ("suicide", "crisis", "kill myself", "suicidio", "自杀", "خودکشی", "tự tử"),
-    "Referral": ("help", "referral", "where do i", "ayuda", "帮助", "کمک", "giúp"),
+    "Referral": ("help", "referral", "where do i", "ayuda", "帮助", "کمک", "giúp",
+                 "children", "kids", "niños", "孩子", "کودکان", "con tôi"),
 }
 EMERGENCY_HINTS = ("emergency", "911", "overdose", "bleeding", "can't breathe", "emergencia", "紧急", "急救", "اضطراری", "khẩn cấp", "cấp cứu")
-SERVICE_HINTS = ("cut", "closed", "close", "reduc", "budget", "service", "police", "fire", "street", "pavement", "pothole", "park",
-                 "recorte", "cerrado", "presupuesto", "servicio", "削减", "关闭", "预算", "服务", "بودجه", "خدمات", "بسته", "ngân sách", "dịch vụ", "đóng cửa", "cắt giảm")
-COUNCIL_HINTS = ("council", "mayor", "vote", "representative", "district", "concejal", "alcalde", "voto", "议员", "市长", "投票", "شورا", "شهردار", "رأی", "hội đồng", "thị trưởng", "bỏ phiếu")
+SERVICE_HINTS = ("cut", "closed", "close", "reduc", "budget", "service",
+                 "recort", "cerrado", "presupuesto", "servicio", "削减", "关闭", "预算", "服务", "بودجه", "خدمات", "بسته", "ngân sách", "dịch vụ", "đóng cửa", "cắt giảm")
+# A question about one department gets that department's rows, not every reduction.
+# Each entry: (words in the question, words in the service name). A trailing space means the
+# whole word, so "fire " does not match "fired" and "park " does not match "parking".
+TOPIC_HINTS: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {
+    "police": (("police", "policía", "policia", "警察", "پولیس", "cảnh sát"), ("police", "detention")),
+    "fire": (("fire ", "firefighter", "bomberos", "消防", "آتش‌نشانی", "cứu hỏa"), ("fire",)),
+    "streets": (("street", "pavement", "pothole", "road ", "roads ", "calle", "bache", "pavimento", "道路", "路面", "سرک", "جاده", "đường phố"), ("street", "pavement")),
+    "parks": (("park ", "parks ", "parque", "公园", "پارک", "công viên"), ("park",)),
+}
+# Words in resource names that are too common to mean the person named that resource.
+GENERIC_NAME_WORDS = frozenset((
+    "fremont", "city", "county", "area", "bay", "community", "health", "library", "services", "service", "center", "clinic",
+    "resource", "family", "food", "bank", "senior", "institute", "league", "volunteers", "mobile", "pantry", "crisis",
+    "lifeline", "suicide", "immigration", "alameda", "the", "and", "for",
+    "centers", "clinics", "resources", "nonprofit", "nonprofits", "support",
+))
+COUNCIL_HINTS = ("council", "mayor", "vote", "representative", "district", "concejal", "alcalde", "voto", "议员", "市长", "投票", "شورا", "شهردار", "رأی", "نماینده", "hội đồng", "thị trưởng", "bỏ phiếu", "nghị viên")
 
 BASIC_TEXT: dict[str, dict[str, str]] = {
     "en": {"found": "Here is what the ReSource data says:", "services": "City services with reported reductions:",
@@ -254,8 +270,13 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
 
     categories = [c for c, hints in CATEGORY_HINTS.items() if c not in ("Referral", "Crisis") and _has(q, hints)]
     picked = [r for r in resources if r["category"] in categories][:4]
-    named = [r for r in resources if any(len(w) > 3 and w in q for w in re.findall(r"[a-z0-9]+", r["name"].lower())
-                                         if w not in ("fremont", "city", "county", "area", "community", "health", "library"))]
+    words = set(re.findall(r"[a-z0-9]+", q))
+    named = []
+    for resource in resources:
+        name_words = set(re.findall(r"[a-z0-9]+", resource["name"].lower()))
+        distinctive = {word for word in name_words - GENERIC_NAME_WORDS if len(word) >= 3}
+        if distinctive & words:
+            named.append(resource)
     for row in named:
         if row not in picked:
             picked.append(row)
@@ -268,9 +289,15 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
             lines.append("• " + " · ".join(bit for bit in bits if bit))
             sources.append(r["name"])
 
-    if _has(q, SERVICE_HINTS) and not picked:
+    reduced = [s for s in services if s.get("status") != "open"]
+    spaced = " " + re.sub(r"[^\w\s]", " ", q) + " "
+    topic_words = [word for hints, name_words in TOPIC_HINTS.values() if _has(spaced, hints) for word in name_words]
+    if topic_words:
+        reduced = [s for s in reduced if any(word in s["name"].lower() for word in topic_words)]
+    # A resource that merely shares a word with the question must not hide the list of reductions.
+    if reduced and (topic_words or (_has(q, SERVICE_HINTS) and not categories)):
         lines.append(text["services"])
-        for s in [s for s in services if s.get("status") != "open"][:6]:
+        for s in reduced[:6]:
             lines.append(f"• {s['name']}: {s['summary']}")
             sources.append(s["name"])
 
