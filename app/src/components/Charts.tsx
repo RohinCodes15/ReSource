@@ -12,7 +12,7 @@
 import { PropsWithChildren, ReactNode, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from '../lib/i18n';
-import { colors, radius, spacing } from '../theme';
+import { colors, fonts, radius, spacing } from '../theme';
 import { Icon, AppText, Card, type IconName, LinkText } from './ui';
 
 /** Low, medium, high impact: one hue, light to dark. */
@@ -127,6 +127,36 @@ export function StackedBarList({ items, series, totalLabel }: { items: StackItem
   );
 }
 
+/**
+ * Shares of one whole, as one bar split into parts with a ruled key underneath. Parts are drawn
+ * in navy from dark to light in the order given (largest first), and the last part, "Other",
+ * in a warm grey. Every part is at least 3:1 against the page, and each key row carries its
+ * label and percentage as text, so the bar itself is never the only way to read it.
+ */
+export const SHARE_RAMP = ['#12284B', '#375A9B', '#6A86B8', '#8F8470'] as const;
+
+export function ShareBar({ items, label, testID }: { items: { label: string; percent: number }[]; label: string; testID?: string }) {
+  const color = (i: number) => (i === items.length - 1 && items.length > 1 ? SHARE_RAMP[SHARE_RAMP.length - 1] : SHARE_RAMP[Math.min(i, SHARE_RAMP.length - 2)]);
+  return (
+    <View style={styles.shares} testID={testID}>
+      <View style={styles.shareBar} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {items.map((item, i) => (
+          <View key={item.label} style={[styles.shareSegment, { flexGrow: item.percent, backgroundColor: color(i) }, i === 0 && styles.shareStart, i === items.length - 1 && styles.shareEnd]} />
+        ))}
+      </View>
+      <View role="list" aria-label={label} accessibilityLabel={label}>
+        {items.map((item, i) => (
+          <View key={item.label} role="listitem" style={[styles.shareRow, i > 0 && styles.shareRowRule]} accessible accessibilityLabel={`${item.label}: ${item.percent}%`}>
+            <View style={[styles.swatch, { backgroundColor: color(i) }]} />
+            <AppText variant="body" color={colors.text} style={styles.flex}>{item.label}</AppText>
+            <AppText variant="h3" color={colors.navy} style={styles.figure}>{item.percent}%</AppText>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /** A single headline number with its label. Used instead of a chart when one figure is the point. */
 export function StatTile({ value, label, icon, tone = 'navy', basis = 140, onPress, selected, testID }: { value: string; label: string; icon?: IconName; tone?: 'navy' | 'status'; /** Narrowest the tile gets before the row wraps. */ basis?: number; onPress?: () => void; /** For a tile that works as a filter: whether its filter is on. */ selected?: boolean; testID?: string; color?: string }) {
   const body = (
@@ -168,5 +198,13 @@ const styles = StyleSheet.create({
   tableHead: { backgroundColor: colors.navyLight, borderTopWidth: 0 },
   cell: { flex: 1, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm, justifyContent: 'center' },
   cellFirst: { flex: 1.6 },
+  shares: { gap: spacing.md },
+  shareBar: { flexDirection: 'row', height: 28, gap: 2 },
+  shareSegment: { height: 28, minWidth: 6 },
+  shareStart: { borderTopStartRadius: 4, borderBottomStartRadius: 4 },
+  shareEnd: { borderTopEndRadius: 4, borderBottomEndRadius: 4 },
+  shareRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
+  shareRowRule: { borderTopWidth: 1, borderTopColor: colors.border },
+  figure: { fontFamily: fonts.display, fontVariant: ['tabular-nums'] },
   tile: { flexGrow: 1, flexBasis: 140, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, padding: spacing.md, gap: 2 },
 });
