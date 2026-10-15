@@ -11,7 +11,6 @@ Everything below was read from the installed packages on October 13, 2026 (`pack
 | **dependencies** |  |  |
 | @expo-google-fonts/inter | 0.4.2 | MIT AND OFL-1.1 |
 | @expo/metro-runtime | 57.0.16 | MIT |
-| @expo/vector-icons | 15.1.1 | MIT |
 | @react-native-async-storage/async-storage | 2.2.0 | MIT |
 | @supabase/supabase-js | 2.117.3 | MIT |
 | expo | 57.0.27 | MIT |
@@ -20,7 +19,6 @@ Everything below was read from the installed packages on October 13, 2026 (`pack
 | expo-crypto | 57.0.3 | MIT |
 | expo-font | 57.0.4 | MIT |
 | expo-image-picker | 57.0.20 | MIT |
-| expo-linear-gradient | 57.0.2 | MIT |
 | expo-linking | 57.0.12 | MIT |
 | expo-localization | 57.0.2 | MIT |
 | expo-location | 57.0.20 | MIT |
@@ -34,6 +32,7 @@ Everything below was read from the installed packages on October 13, 2026 (`pack
 | react-native-maps | 1.27.2 | MIT |
 | react-native-safe-area-context | 5.7.0 | MIT |
 | react-native-screens | 4.26.2 | MIT |
+| react-native-svg | 15.15.4 | MIT |
 | react-native-web | 0.21.4 | MIT |
 | **devDependencies** |  |  |
 | @axe-core/playwright | 4.13.0 | MPL-2.0 |
@@ -71,7 +70,8 @@ Everything below was read from the installed packages on October 13, 2026 (`pack
 | --- | --- | --- |
 | Fraunces (one cut: weight 600, optical size 48, softness 50, no "wonky" letters) | SIL Open Font License 1.1, copyright 2018 The Fraunces Project Authors. No Reserved Font Name is declared, so modified copies may keep the name. | Headlines and large figures. Downloaded on October 14, 2026 from `github.com/google/fonts/ofl/fraunces` (the variable font), then fixed to one static cut with `fontTools.varLib.instancer`. Phones use `app/assets/fonts/Fraunces_600SemiBold.ttf` (Latin and Vietnamese, 64 KB); the web uses `app/public/fonts/Fraunces_600SemiBold.woff2` (20 KB), made with `fontTools.subset`. The license text sits beside both copies (`OFL-Fraunces.txt`). |
 | Inter (two weights: 400 and 600) | SIL Open Font License 1.1, copyright 2020 The Inter Project Authors. No Reserved Font Name is declared (checked in `LICENSE_FONT` of `@expo-google-fonts/inter`), so modified copies may keep the name. | Body text, labels and buttons. Phones use the full files from `@expo-google-fonts/inter`. The web uses WOFF2 copies in `app/public/fonts/`, made with `pyftsubset` and limited to Latin and Vietnamese letters, with the license beside them (`OFL-Inter.txt`). |
-| Material Community Icons | Published by the Pictogrammers project; bundled by `@expo/vector-icons` (MIT). The icon set's own license was not read for this audit. | Used for every icon in the app. |
+| Lucide icons 1.57.0 | ISC License, copyright 2026 Lucide Icons and Contributors; the icons derived from Feather are under the MIT License, copyright 2013-present Cole Bemis. Read from the `LICENSE` file of the `lucide-static` package on October 14, 2026. | Every icon in the app. The drawing data of the 142 icons used is copied into `app/src/components/icons.ts` (generated from `lucide-static`'s `icon-nodes.json`), and the full license text sits beside it in `app/src/components/LICENSE-lucide.txt`. No icon font is downloaded. Replaced Material Community Icons and `@expo/vector-icons`, which are no longer used. |
+| Drawings of Fremont places | Made for this project (MIT, with the code) | Mission Peak, the NILES hillside sign and Lake Elizabeth, in `app/src/components/illustrations/`. Drawn as SVG from general knowledge of the places, not traced from any photograph or map. |
 | App icon and splash | Made for this project | Navy `#1B3A6B` and gold `#F5A623`. |
 
 ## Maps and data

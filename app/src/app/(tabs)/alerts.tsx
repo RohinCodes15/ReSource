@@ -192,7 +192,7 @@ export default function AlertsScreen() {
       {bundled && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
 
       {loading ? <LoadingList /> : error ? <ErrorState onRetry={reload} /> : shown.length === 0 ? (
-        <EmptyState icon="bell-check-outline" title={t('alerts.emptyTitle')} body={t('alerts.emptyBody')} />
+        <EmptyState art="lake" icon="bell-check-outline" title={t('alerts.emptyTitle')} body={t('alerts.emptyBody')} />
       ) : shown.map((alert) => {
         const look = SEVERITY[alert.severity];
         const isRead = prefs.read.includes(alert.id);
