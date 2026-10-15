@@ -11,7 +11,7 @@ const fill = (text: string) => text.replace(/\{creator\}/g, PROJECT.creator).rep
 /**
  * Renders a legal document. The full text is English; readers of other languages get a
  * plain-language summary in their language first, with a note saying so. (Legal text should
- * not be machine-translated without review; see docs/I18N_REVIEW.md.)
+ * not be machine-translated without review.)
  */
 export function LegalDocument({ titleKey, summaryKey, sections, testID }: { titleKey: string; summaryKey: string; sections: LegalSection[]; testID: string }) {
   const { t, language, locale } = useTranslation();

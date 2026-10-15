@@ -12,6 +12,7 @@ from conftest import (
     report_body,
     restart,
 )
+from fastapi.testclient import TestClient
 
 # ---- Catalog --------------------------------------------------------------------------------
 
@@ -82,7 +83,7 @@ def test_stats_are_real_counts(client):
     assert client.get("/stats").json()["reports_total"] == 0
     report = client.post("/reports", json=report_body(), headers=ALICE).json()
     stats = client.get("/stats").json()
-    assert (stats["reports_total"], stats["reports_verified"]) == (1, 0)
+    assert (stats["reports_total"], stats["reports_verified"]) == (0, 0)
     client.post(f"/admin/reports/{report['id']}", json={"status": "verified"}, headers=ADMIN)
     assert client.get("/stats").json()["reports_verified"] == 1
     assert stats["posts"] == 0  # the labeled starter posts are not counted as community activity
@@ -130,7 +131,7 @@ def test_report_rate_limit(client, env):
     restart()
     codes = [client.post("/reports", json=report_body(), headers=ALICE).status_code for _ in range(6)]
     assert codes == [201] * 5 + [429]
-    assert client.post("/reports", json=report_body(), headers=BOB).status_code == 201  # limits are per caller
+    assert client.post("/reports", json=report_body(), headers=BOB).status_code == 429  # changing token cannot bypass IP limit
 
 
 def test_report_photo_rules(client):
@@ -142,7 +143,14 @@ def test_report_photo_rules(client):
     assert client.post(url, files={"photo": ("street.png", png_bytes(), "image/png")}, headers=BOB).status_code == 404
     assert client.post(url, files={"photo": ("notes.txt", b"not an image", "image/png")}, headers=ALICE).status_code == 415
     assert client.post(url, files={"photo": ("big.png", b"0" * (5 * 1024 * 1024 + 1), "image/png")}, headers=ALICE).status_code == 413
+    # 30,000,000 pixels of one color is a tiny file but a huge bitmap: refused before decoding.
+    assert client.post(url, files={"photo": ("huge.png", png_bytes((6000, 5000)), "image/png")}, headers=ALICE).status_code == 413
+    # A moderator can look at the photo; nobody else can.
+    assert client.get(f"/admin/reports/{report['id']}/photo").status_code == 403
+    seen = client.get(f"/admin/reports/{report['id']}/photo", headers=ADMIN)
+    assert seen.status_code == 200 and seen.headers["content-type"] == "image/jpeg" and seen.content[:2] == b"\xff\xd8"
     assert client.delete(url, headers=ALICE).json()["has_photo"] is False
+    assert client.get(f"/admin/reports/{report['id']}/photo", headers=ADMIN).status_code == 404
 
 
 # ---- Community board --------------------------------------------------------------------------
@@ -157,7 +165,7 @@ def test_post_vote_once_flag_and_delete(client):
     post_id = created["id"]
 
     assert client.post(f"/posts/{post_id}/vote", headers=BOB).json() == {"id": post_id, "upvotes": 1, "voted": True}
-    assert client.post(f"/posts/{post_id}/vote", headers=CAROL).json()["upvotes"] == 2
+    assert TestClient(client.app, client=("192.0.2.3", 1234)).post(f"/posts/{post_id}/vote", headers=CAROL).json()["upvotes"] == 2
     assert client.post(f"/posts/{post_id}/vote", headers=BOB).json() == {"id": post_id, "upvotes": 1, "voted": False}
 
     listed = {p["id"]: p for p in client.get("/posts", headers=CAROL).json()}
@@ -172,9 +180,9 @@ def test_post_vote_once_flag_and_delete(client):
 def test_three_flags_hide_a_post_until_reviewed(client):
     post_id = post(client, ALICE).json()["id"]
     for flagger in (BOB, BOB, CAROL):  # the same person flagging twice counts once
-        client.post(f"/posts/{post_id}/flag", headers=flagger)
+        TestClient(client.app, client=("192.0.2.2" if flagger == BOB else "192.0.2.3", 1234)).post(f"/posts/{post_id}/flag", headers=flagger)
     assert post_id in [p["id"] for p in client.get("/posts").json()]
-    client.post(f"/posts/{post_id}/flag", headers=DAVE)
+    TestClient(client.app, client=("192.0.2.4", 1234)).post(f"/posts/{post_id}/flag", headers=DAVE)
     assert post_id not in [p["id"] for p in client.get("/posts").json()]
     assert client.post(f"/admin/posts/{post_id}", json={"status": "approved"}, headers=ADMIN).json()["status"] == "approved"
     assert post_id in [p["id"] for p in client.get("/posts").json()]
@@ -247,31 +255,31 @@ def test_public_deletion_request_and_admin_follow_up(client):
     assert closed["contact_email"] is None and closed["completed_at"]
 
 
-def test_email_alerts_are_off_until_configured_and_unsubscribe_is_one_click(client, env):
+def test_email_alerts_collect_nothing_while_there_is_no_sender_and_unsubscribe_still_works(client, env):
     body = {"email": "Resident@Example.com", "categories": ["budget"], "areas": [], **CONSENT}
-    assert client.post("/email/subscribe", json=body, headers=ALICE).json()["detail"] == "email_not_configured"
-
     env.setenv("SMTP_HOST", "smtp.example.test")
     env.setenv("EMAIL_FROM", "alerts@example.test")
     env.setenv("PUBLIC_API_URL", "https://api.example.test")
     restart()
-    assert client.post("/email/subscribe", json={**body, "consent": False}, headers=ALICE).status_code == 422
-    assert client.post("/email/subscribe", json=body, headers=ALICE).status_code == 201
-    assert client.post("/email/subscribe", json=body, headers=ALICE).status_code == 201  # same address: updated, not duplicated
+    assert client.get("/config").json()["email_enabled"] is False
+    assert client.post("/email/subscribe", json=body, headers=ALICE).json()["detail"] == "email_not_configured"
 
     import store
     from routers.account import unsubscribe_url
 
-    rows = store.get_store().list("email_subscriptions")
-    assert len(rows) == 1 and rows[0]["email"] == "resident@example.com"
-    link = unsubscribe_url(rows[0]["id"])
+    assert store.get_store().list("email_subscriptions") == []
+    # An address stored by an earlier version can still be removed with its link.
+    row = store.get_store().insert("email_subscriptions", {"email": "resident@example.com", "categories": [], "areas": [], "owner_hash": "x"})
+    link = unsubscribe_url(row["id"])
     assert link.startswith("https://api.example.test/email/unsubscribe?token=")
     token = link.split("token=")[1]
 
     assert client.get("/email/unsubscribe", params={"token": token + "x"}).status_code == 400
     assert client.post("/email/unsubscribe", params={"token": "garbage"}).status_code == 400
     page = client.get("/email/unsubscribe", params={"token": token})
-    assert page.status_code == 200 and "unsubscribed" in page.text.lower()
+    assert page.status_code == 200 and "Confirm unsubscribe" in page.text
+    assert store.get_store().list("email_subscriptions")
+    assert client.post("/email/unsubscribe", params={"token": token}).json() == {"unsubscribed": True}
     assert store.get_store().list("email_subscriptions") == []
     assert client.post("/email/unsubscribe", params={"token": token}).json() == {"unsubscribed": True}  # repeat is harmless
 
@@ -331,3 +339,16 @@ def test_admin_service_status_update_survives_a_restart(client):
     assert client.get("/services/svc-age-well-lake").json()["status"] == "closed"
     assert client.get("/stats").json()["services_closed"] == 1
     assert client.post("/admin/services/svc-nope", json={"status": "open"}, headers=ADMIN).status_code == 404
+
+
+def test_delete_and_export_cover_what_was_posted_before_signing_in(client, monkeypatch):
+    import security
+
+    before = client.post("/posts", json={"body": "Posted before I had an account.", "area": "94538", **CONSENT}, headers=ALICE).json()
+    # The same device, now signed in: requests carry both the account and the install token.
+    monkeypatch.setattr(security, "signed_in_user", lambda request: {"id": "user-1", "role": None})
+    client.post("/posts", json={"body": "Posted after signing in to my account.", "area": "94538", **CONSENT}, headers=ALICE)
+    assert len(client.get("/me/export", headers=ALICE).json()["data"]["posts"]) == 2
+    assert client.delete("/me", headers=ALICE).json()["deleted"]["posts"] == 2
+    monkeypatch.undo()
+    assert before["id"] not in [post["id"] for post in client.get("/posts").json()]

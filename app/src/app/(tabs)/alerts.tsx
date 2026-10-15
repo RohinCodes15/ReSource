@@ -4,13 +4,13 @@ import { ALERT_CATEGORIES, AREA_CODES } from '../../../../shared/constants';
 import type { Alert, AlertCategory, AreaCode } from '../../../../shared/types';
 import { BrowseOnly, ConsentFields, useConsent } from '../../components/ConsentFields';
 import { Screen } from '../../components/Page';
-import { Icon, AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, Field, LinkText, LoadingList, Pill, Segmented, SourceLine, Toggle } from '../../components/ui';
+import { Icon, AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, Eyebrow, Field, LinkText, LoadingList, Pill, Rule, Segmented, SourceLine, Toggle } from '../../components/ui';
 import { ALERT_ICONS, bundledAlerts } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { ApiError, deleteSubscription, emailSubscribe, getAlerts, getConfig, saveSubscription } from '../../lib/api';
 import { formatDate, useTranslation } from '../../lib/i18n';
 import { ageStore, alertPrefsStore, type AlertPrefs, locationStore } from '../../state/stores';
-import { cardSurface, colors, spacing } from '../../theme';
+import { colors, spacing } from '../../theme';
 
 const SEVERITY = {
   critical: { color: colors.dangerDark, bg: colors.dangerLight, icon: 'alert-octagon' },
@@ -104,14 +104,19 @@ export default function AlertsScreen() {
 
   async function unsubscribe() {
     alertPrefsStore.set((current) => ({ ...current, subscribed: false, notifications: false }));
-    setNotice({ tone: 'info', text: t('alerts.unsubscribed') });
-    await deleteSubscription().catch(() => undefined);
+    try {
+      await deleteSubscription();
+      setNotice({ tone: 'info', text: t('alerts.unsubscribed') });
+    } catch {
+      setNotice({ tone: 'warning', text: t('alerts.unsubscribedOffline') });
+    }
   }
 
   async function setNotifications(on: boolean) {
     if (!on) { alertPrefsStore.set((current) => ({ ...current, notifications: false })); return; }
     const outcome = await askToNotify();
-    alertPrefsStore.set((current) => ({ ...current, notifications: outcome === 'granted' }));
+    // Updates already on the list are not news: only ones that arrive later are announced.
+    alertPrefsStore.set((current) => ({ ...current, notifications: outcome === 'granted', notified: Array.from(new Set([...current.notified, ...alerts.map((alert) => alert.id)])) }));
     setNotice(outcome === 'granted' ? { tone: 'success', text: t('alerts.notifyOn') } : { tone: 'warning', text: t(outcome === 'denied' ? 'alerts.notifyDenied' : 'alerts.notifyUnsupported') });
   }
 
@@ -177,8 +182,9 @@ export default function AlertsScreen() {
         {notice && <Banner tone={notice.tone} body={notice.text} live testID="alerts-notice" />}
       </Card>
 
+      <Rule strong />
       <View style={styles.feedHead}>
-        <AppText variant="h3" heading={2} style={styles.flex}>{t('alerts.feedTitle')}</AppText>
+        <AppText variant="h2" heading={2} style={styles.flex}>{t('alerts.feedTitle')}</AppText>
         {unread > 0 && <LinkText label={t('alerts.markAllRead')} onPress={() => markRead(alerts.map((alert) => alert.id))} testID="mark-all-read" />}
       </View>
       <Segmented label={t('alerts.viewLabel')} value={view} onChange={setView}
@@ -187,19 +193,22 @@ export default function AlertsScreen() {
       {bundled && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
 
       {loading ? <LoadingList /> : error ? <ErrorState onRetry={reload} /> : shown.length === 0 ? (
-        <EmptyState icon="bell-check-outline" title={t('alerts.emptyTitle')} body={t('alerts.emptyBody')} />
+        <EmptyState art="lake" icon="bell-check-outline" title={t('alerts.emptyTitle')} body={t('alerts.emptyBody')} />
       ) : shown.map((alert) => {
         const look = SEVERITY[alert.severity];
         const isRead = prefs.read.includes(alert.id);
         return (
-          <View key={alert.id} style={[styles.alert, !isRead && styles.alertUnread]} testID={`alert-${alert.id}`}>
+          <View key={alert.id} style={styles.alert} testID={`alert-${alert.id}`}>
+            <View style={styles.meta}>
+              {!isRead && <View style={styles.unreadDot} aria-hidden />}
+              <Eyebrow color={isRead ? colors.muted : colors.goldDark}>{formatDate(alert.published_at, locale)}{!isRead ? ` · ${t('alerts.new')}` : ''}</Eyebrow>
+            </View>
+            <AppText variant="h3" heading={3}>{alert.title}</AppText>
             <View style={styles.meta}>
               <Pill label={tx('alertCategory', alert.category)} icon={ALERT_ICONS[alert.category]} color={colors.navy} bg={colors.navyLight} />
               <Pill label={tx('severity', alert.severity)} icon={look.icon} color={look.color} bg={look.bg} />
-              {!isRead && <Pill label={t('alerts.new')} icon="circle" color={colors.goldDark} bg={colors.goldLight} />}
+              <AppText variant="caption">{tx('area', alert.area)}</AppText>
             </View>
-            <AppText variant="h4" heading={3}>{alert.title}</AppText>
-            <AppText variant="caption">{formatDate(alert.published_at, locale)} · {tx('area', alert.area)}</AppText>
             <AppText variant="bodySmall" color={colors.text}>{alert.body}</AppText>
             <SourceLine title={alert.source_title} url={alert.source_url} retrieved={alert.retrieved} />
             {isRead ? (
@@ -222,8 +231,9 @@ const styles = StyleSheet.create({
   action: { flexGrow: 1, flexBasis: 180 },
   email: { gap: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   feedHead: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.sm },
-  alert: { ...cardSurface, padding: spacing.lg, gap: spacing.sm },
-  alertUnread: { borderStartWidth: 4, borderStartColor: colors.gold },
-  meta: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  // Each update is a ruled entry, newest first, like a page of short news items.
+  alert: { paddingTop: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  meta: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.gold },
   readRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
 });

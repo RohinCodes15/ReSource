@@ -1,74 +1,96 @@
 # ReSource
 
-ReSource is an Expo app for helping Fremont residents navigate local services and community support. The service changes, alerts, posts, and council vote examples in this demo are illustrative and are not official city notices or vote records. Verify current service details with the listed organization or the City of Fremont before relying on them.
+ReSource is a free app that helps Fremont, California residents see which city services changed with the city budget, find other places to get help, report how a change affects them, and contact their council members. It runs on the web, iOS and Android from one Expo codebase, with a FastAPI backend.
 
-## Run the mobile app
+ReSource is an independent student project. It is not an official City of Fremont service, and the City has not reviewed or endorsed it. Budget facts come from City of Fremont public documents and resource listings come from each organization's own website; every item in the app shows its source and the date it was last checked. Confirm details with the organization before relying on them.
 
-```sh
-cd app
-npm install
-npx expo start
-```
+## Run it
 
-For a physical phone, set `EXPO_PUBLIC_API_URL` to the development computer's LAN address, for example `http://192.168.1.20:8000`. Android emulators use `http://10.0.2.2:8000`; iOS simulators use `http://localhost:8000`.
-
-## Run the API
+Nothing needs to be configured. With no environment files the API serves the data bundled in `shared/data/`, keeps anything people submit in `backend/.local_state/`, and answers chat questions with a direct lookup of that data.
 
 ```sh
+# 1. API
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --port 8000
+
+# 2. App (in a second terminal)
+cd app
+npm install
+npx expo start        # press w for the web, or scan the code with Expo Go
 ```
 
-The API serves `/services`, `/services/{id}`, `/resources`, `/report`, `/chat`, and `/stats`. Copy the root `.env.example` to `.env` and set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `ANTHROPIC_API_KEY`. Apply `backend/database/schema.sql` and then `backend/database/seed.sql` in the Supabase SQL editor. Keep the service-role key on the server only. Claude chat uses the separate `ANTHROPIC_API_KEY`; `OPENAI_API_KEY` is included in the environment template as requested, but is not used by the Claude route. Copy `app/.env.example` to `app/.env` for Expo's public variables.
+On a physical phone, copy `app/.env.example` to `app/.env` and set `EXPO_PUBLIC_API_URL` to your computer's address on the local network, for example `http://192.168.1.20:8000`.
 
-## AI chat
+## Optional settings
 
-`POST /chat` lives in `backend/routers/chat.py`. Each request carries the conversation so far and the resident's language:
+Every setting is optional. `backend/.env.example` and `app/.env.example` list them all with a comment on each.
 
-```json
-{
-  "messages": [{ "role": "user", "content": "¿Dónde puedo conseguir comida gratis?" }],
-  "language": "es",
-  "latitude": 37.55,
-  "longitude": -121.98
-}
-```
+| To get | Set |
+| --- | --- |
+| Admin tools (moderating reports and posts, the CSV export) | `ADMIN_TOKEN` in `backend/.env` |
+| AI answers in chat, grounded in the same data | `ANTHROPIC_API_KEY` in `backend/.env` |
+| A hosted database in place of local files | `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env`, after applying `backend/database/schema.sql`, `rls_policies.sql` and `seed.sql` |
+| Sign-in by email link (web only) | `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `app/.env` |
+| The map in an Android build | `GOOGLE_MAPS_ANDROID_KEY` at build time; without it an Android build shows the service list |
 
-- `messages` is the whole chat session, oldest first, ending with the new user message. This is how the assistant remembers earlier turns. The older `message` + `history` shape is still accepted.
-- `language` is one of `en`, `es`, `fa` (Dari), `zh` (Mandarin), `vi`. The assistant replies in it.
-- The system prompt is built from the `services` and `resources` tables in Supabase. Without Supabase it uses the sample files in `backend/data/` and tells the resident the data is a sample.
-- The model is set by `CLAUDE_MODEL` (default `claude-opus-5-5`). Without `ANTHROPIC_API_KEY` the route returns 503.
+The service-role key and the admin token belong on the server only. Nothing in `app/.env` is secret: every `EXPO_PUBLIC_*` value ships inside the app.
+
+Without `ADMIN_TOKEN` nobody can moderate, so reports stay "Waiting for review"; the app says so on the Admin screen.
+
+## What is in the app
+
+- **Budget Impact Map and Service Status**: the city services ReSource tracks, each marked open, reduced or closed, with its source.
+- **Resource Finder**: food, clinics, housing, legal help, libraries and referral lines, sorted by distance.
+- **Budget Transparency**: the figures behind the reductions, each linked to the City document it was read from.
+- **Report an Impact and Community Impact**: residents describe how a change affects them; totals of the reports a moderator has verified are public.
+- **Rep Tracker**: the mayor and council members, with contact details and a letter draft.
+- **Ask ReSource**: a chat assistant that answers only from the app's data.
+- **Alerts and Community Board**: updates by topic and area, and short tips from neighbors.
+
+No account is needed. Location stays on the device. Reports and posts are stored without a name, and "Delete my data" in Settings removes them from the server.
 
 ## Languages
 
-The app is available in English, Spanish, Dari, Mandarin and Vietnamese. Pick a language with the flag button in the Home header.
+English, Spanish, Dari, Chinese and Vietnamese, chosen in Settings or from the language button on Home. All five have the same strings in `app/src/locales/`. The translations were written by an AI model and have not yet been reviewed by native speakers. Budget figures, service descriptions and the full legal text are shown in English.
 
-- Strings: `app/locales/en.json`, `es.json`, `fa.json`, `zh.json`, `vi.json` (same keys in each).
-- Hook: `useTranslation()` from `app/lib/i18n.ts` returns `t('home.tagline')`, the current `language`, and `isRTL` (true for Dari).
-- Translated so far: the tab bar, screen titles, Home, and AI Chat. The other screens still show English; their strings are already in the locale files under `report`, `resources`, `alerts`, `reps`, and `community`.
-- The translations were machine-written. Have a native speaker review them, Dari especially, before release.
+## Checks
+
+```sh
+cd app
+npm run check                          # typecheck, lint, translations, contrast, alt text, storage, claims, unit tests
+npm run build:web && npm run e2e       # end-to-end tests against the exported web build
+
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest
+```
 
 ## Budget data scraper
 
-Three scripts, run in order:
+`scraper/` holds three scripts that look for budget documents on fremont.gov, pull candidate cuts out of the PDFs, and preview an upload:
 
 ```sh
 pip install -r scraper/requirements.txt
-python scraper/scrape_budget.py             # 1. find budget pages, download budget PDFs
-python scraper/parse_budget.py              # 2. extract cuts into CSV and JSON
-python scraper/upload_to_supabase.py --dry-run   # 3. preview, then run without --dry-run
+python scraper/scrape_budget.py
+python scraper/parse_budget.py
+python scraper/upload_to_supabase.py --dry-run
 ```
 
-| Script | Reads | Writes |
-| --- | --- | --- |
-| `scrape_budget.py` | fremont.gov pages mentioning budget, fiscal, cuts, reduction | `scraper/data/found_pages.json`, `scraper/data/pdfs/` |
-| `parse_budget.py` | `scraper/data/pdfs/*.pdf` | `scraper/data/budget_cuts.csv`, `scraper/data/budget_cuts.json` |
-| `upload_to_supabase.py` | `scraper/data/budget_cuts.json` | rows in the Supabase `services` table |
+PDF extraction is a best guess, and on the current documents the parser finds no itemised service cuts. The data in the app was entered by hand from the source documents. Check any parser output against the source before it is published.
 
-- The crawler obeys `robots.txt`, waits between requests, and stops at `--max-pages` (default 80). PDFs over `--max-pdf-mb` (default 40) are skipped; the full adopted budget book is larger than that.
-- The CSV columns are `service, department, original_budget, new_budget, cut_amount, cut_percent, effective_date, status`.
-- The upload matches existing services by name: matches are updated, the rest inserted. It needs `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
-- PDF extraction is a best guess. Check `budget_cuts.csv` against the source documents before uploading or publishing any figure. On the budget presentation and mid-year report the parser currently finds no itemised service cuts.
+## Layout
+
+| Folder | Contents |
+| --- | --- |
+| `app/` | The Expo app: screens in `src/app/`, translations in `src/locales/`, end-to-end tests in `e2e/` |
+| `backend/` | The FastAPI service, its tests and the database schema |
+| `shared/` | Data files and types used by both |
+| `scraper/` | The budget document scripts |
+| `docs/HUMAN_TODO.md` | Steps only the project's creator can take |
+
+## License
+
+MIT. See `LICENSE`.

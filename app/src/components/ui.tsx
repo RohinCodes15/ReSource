@@ -1,23 +1,39 @@
 /** Shared building blocks used by every screen, so text, cards, buttons and fields look and behave the same. */
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ComponentProps, PropsWithChildren, ReactNode, useEffect, useId, useState } from 'react';
+import { PropsWithChildren, ReactNode, useEffect, useId, useState } from 'react';
 import {
   AccessibilityInfo, ActivityIndicator, Animated, Platform, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View, ViewStyle,
 } from 'react-native';
+import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 import { formatDate, useTranslation } from '../lib/i18n';
 import { openUrl } from '../lib/platform';
 import { textScaleStore } from '../state/stores';
 import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing, statusTone, type, type TextVariant } from '../theme';
+import { ICONS, type IconName, type IconNode } from './icons';
+import { Illustration, type SceneName } from './illustrations';
 
-export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type { IconName };
+
+const ICON_PARTS: Record<IconNode[0], React.ComponentType<object>> = {
+  path: Path, circle: Circle, rect: Rect, line: Line, polyline: Polyline, polygon: Polygon, ellipse: Ellipse,
+} as never;
 
 /**
- * An icon from the bundled Material Design Icons font. Icons here are always decorative: the
- * label or text beside them carries the meaning, so the glyph is hidden from screen readers
- * (otherwise they would read out a private-use character).
+ * An icon from the app's one line set (Lucide, see icons.ts), drawn as SVG. Icons are always
+ * decorative here: the label or text beside them carries the meaning, so they are hidden from
+ * screen readers.
  */
-export function Icon(props: ComponentProps<typeof MaterialCommunityIcons>) {
-  return <MaterialCommunityIcons aria-hidden accessibilityElementsHidden importantForAccessibility="no" {...props} />;
+export function Icon({ name, size = 24, color = colors.text, style }: { name: IconName; size?: number; color?: string; style?: StyleProp<ViewStyle> }) {
+  const icon = ICONS[name] as { n: IconNode[]; b?: 1; f?: 1 };
+  return (
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[{ width: size, height: size }, style]}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill={icon.f ? color : 'none'} stroke={color} strokeWidth={icon.b ? 2.4 : 1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        {icon.n.map(([tag, attrs], i) => {
+          const Part = ICON_PARTS[tag];
+          return <Part key={i} {...attrs} />;
+        })}
+      </Svg>
+    </View>
+  );
 }
 
 /** Animations run on the native thread on phones; the web has no native driver. */
@@ -80,6 +96,8 @@ export function AppText({ variant = 'body', color, heading, center, style, live,
       style={[
         base,
         { fontSize: base.fontSize * scale, lineHeight: base.lineHeight * scale, writingDirection: isRTL ? 'rtl' : 'ltr' },
+        // Tracking pulls Persian letters apart and breaks their joins, so right-to-left text has none.
+        isRTL ? styles.noTracking : null,
         color ? { color } : null,
         center ? styles.center : null,
         style,
@@ -90,13 +108,39 @@ export function AppText({ variant = 'body', color, heading, center, style, live,
   );
 }
 
-/** White rounded card with the standard shadow. */
+/** A quiet panel a shade lighter than the page, with a hairline edge and no shadow. Use it for
+ *  things a person fills in or that must read as one unit; elsewhere prefer whitespace and <Rule>. */
 export function Card({ children, style, testID }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; testID?: string }>) {
   return <View testID={testID} style={[styles.card, style]}>{children}</View>;
 }
 
+/** A thin horizontal line between sections, in place of a box around each one. */
+export function Rule({ strong, style }: { strong?: boolean; style?: StyleProp<ViewStyle> }) {
+  return <View aria-hidden style={[styles.rule, strong && styles.ruleStrong, style]} />;
+}
+
+/**
+ * A titled part of a screen: a strong rule, then the heading, then the content. Used instead of
+ * a box around each part, so screens read like a well-set page rather than a stack of cards.
+ */
+export function Section({ title, subtitle, level = 2, children, style, testID }: PropsWithChildren<{ title: string; subtitle?: string; level?: 2 | 3; style?: StyleProp<ViewStyle>; testID?: string }>) {
+  return (
+    <View style={[styles.sectionBlock, style]} testID={testID}>
+      <Rule strong />
+      <AppText variant={level === 2 ? 'h2' : 'h3'} heading={level}>{title}</AppText>
+      {!!subtitle && <AppText variant="bodySmall" color={colors.text}>{subtitle}</AppText>}
+      {children}
+    </View>
+  );
+}
+
+/** The small spaced label above a section, like the head of a ledger column. */
+export function Eyebrow({ children, color, testID }: PropsWithChildren<{ color?: string; testID?: string }>) {
+  return <AppText variant="eyebrow" color={color} testID={testID}>{children}</AppText>;
+}
+
 /** Fades and slides its children in when the screen first shows (skipped with reduced motion). */
-export function FadeIn({ children, delay = 0, style }: PropsWithChildren<{ delay?: number; style?: StyleProp<ViewStyle> }>) {
+export function FadeIn({ children, delay = 0, style, testID }: PropsWithChildren<{ delay?: number; style?: StyleProp<ViewStyle>; testID?: string }>) {
   const reduced = useReducedMotion();
   const [progress] = useState(() => new Animated.Value(0));
   useEffect(() => {
@@ -104,7 +148,7 @@ export function FadeIn({ children, delay = 0, style }: PropsWithChildren<{ delay
     Animated.timing(progress, { toValue: 1, duration: 320, delay, useNativeDriver: NATIVE_DRIVER }).start();
   }, [progress, delay, reduced]);
   const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [10, 0] });
-  return <Animated.View style={[style, { opacity: progress, transform: [{ translateY }] }]}>{children}</Animated.View>;
+  return <Animated.View testID={testID} style={[style, { opacity: progress, transform: [{ translateY }] }]}>{children}</Animated.View>;
 }
 
 /** Grey placeholder shown while data loads. It pulses unless motion is reduced. */
@@ -421,14 +465,14 @@ export function Banner({ tone = 'info', title, body, children, live, icon, testI
   );
 }
 
-/** Message for an empty list, with an optional action. */
-export function EmptyState({ icon, title, body, action }: { icon: IconName; title: string; body?: string; action?: ReactNode }) {
+/** Message for an empty list, with an optional action. `art` shows a drawing of a Fremont place instead of the icon. */
+export function EmptyState({ icon, art, title, body, action }: { icon: IconName; art?: SceneName; title: string; body?: string; action?: ReactNode }) {
   return (
     <View style={styles.empty} testID="empty-state">
-      <View style={styles.emptyIcon}><Icon name={icon} size={32} color={colors.navy} /></View>
-      <AppText variant="h4" center>{title}</AppText>
+      {art ? <Illustration name={art} width={216} height={126} /> : <View style={styles.emptyIcon}><Icon name={icon} size={32} color={colors.navy} /></View>}
+      <AppText variant="h2" center>{title}</AppText>
       {!!body && <AppText variant="bodySmall" center style={styles.emptyBody}>{body}</AppText>}
-      {action}
+      {!!action && <View style={styles.emptyAction}>{action}</View>}
     </View>
   );
 }
@@ -498,6 +542,9 @@ export function Segmented<T extends string>({ options, value, onChange, label }:
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
+  noTracking: { letterSpacing: 0 },
+  rule: { height: StyleSheet.hairlineWidth * 2, backgroundColor: colors.border },
+  ruleStrong: { height: 2, backgroundColor: colors.text },
   stack: { gap: spacing.md },
   stackSmall: { gap: spacing.sm },
   card: { ...cardSurface, padding: spacing.lg },
@@ -515,7 +562,7 @@ const styles = StyleSheet.create({
   iconAction: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
   iconActionGold: { backgroundColor: colors.goldLight },
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', minHeight: 24, maxWidth: '100%' },
-  linkText: { textDecorationLine: 'underline', fontFamily: fonts.medium, flexShrink: 1 },
+  linkText: { textDecorationLine: 'underline', flexShrink: 1 },
   chip: { minHeight: MIN_TOUCH, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong, flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipOn: { backgroundColor: colors.navy, borderColor: colors.navy },
   field: { gap: 6 },
@@ -538,7 +585,9 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.xl, gap: spacing.sm },
   emptyIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   emptyBody: { maxWidth: 320, marginBottom: spacing.sm },
+  emptyAction: { alignSelf: 'center' },
   section: { gap: spacing.xs },
+  sectionBlock: { gap: spacing.md },
   source: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: 2 },
   segmented: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, padding: 3, alignSelf: 'flex-start' },
   segment: { minHeight: 38, paddingHorizontal: spacing.lg, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },

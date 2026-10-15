@@ -8,7 +8,7 @@ import { Icon, AppButton, AppText, Banner, Chip, LinkText, Pill } from '../../co
 import { ApiError, sendChat } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { ageStore, type ChatMessage, chatStore, locationStore } from '../../state/stores';
-import { cardSurface, colors, fonts, MIN_TOUCH, radius, SCREEN_PADDING, spacing } from '../../theme';
+import { colors, fonts, MIN_TOUCH, radius, SCREEN_PADDING, spacing } from '../../theme';
 
 // Starter questions shown before the first message, translated under "chat" in the locale files.
 const SUGGESTIONS = ['chat.s1', 'chat.s2', 'chat.s3', 'chat.s4'];
@@ -28,6 +28,13 @@ export default function ChatScreen() {
   const listRef = useRef<FlatList<ChatMessage>>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  // An empty answer with no request behind it is left over from a reload or a closed app while
+  // the answer was being written. Offer "Try again" instead of waiting forever.
+  useEffect(() => {
+    if (abortRef.current || !messages.some((m) => m.role === 'assistant' && !m.failed && m.content === '')) return;
+    chatStore.set((all) => all.map((m) => (m.role === 'assistant' && !m.failed && m.content === '' ? { ...m, failed: true } : m)));
+  }, [messages]);
+
   // Keep the newest message in view as it grows.
   const lastText = messages[messages.length - 1]?.content ?? '';
   useEffect(() => {
@@ -43,13 +50,13 @@ export default function ChatScreen() {
     setError(null);
     setInput('');
     setBusy(true);
+    const controller = new AbortController();
+    abortRef.current = controller;
     const answerId = newId();
-    const earlier = chatStore.get().filter((m) => !m.failed && m.id !== retryOf);
+    const earlier = chatStore.get().filter((m) => !m.failed && m.id !== retryOf && m.content.trim().length > 0);
     const base = retryOf ? earlier : [...earlier, { id: newId(), role: 'user' as const, content: question }];
     chatStore.set([...base, { id: answerId, role: 'assistant', content: '' }]);
     const update = (changes: Partial<ChatMessage>) => chatStore.set((all) => all.map((m) => (m.id === answerId ? { ...m, ...changes } : m)));
-    const controller = new AbortController();
-    abortRef.current = controller;
     try {
       const result = await sendChat(
         {
@@ -176,15 +183,16 @@ const styles = StyleSheet.create({
   list: { padding: spacing.lg, gap: spacing.md },
   intro: { gap: spacing.md, marginBottom: spacing.sm },
   bubble: { maxWidth: '88%', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderRadius: radius.xl, gap: spacing.sm },
-  // Your messages in navy at the end of the row; the assistant in white at the start.
+  // Your messages in navy at the end of the row; the assistant's answers as notes set off by a
+  // rule at the start, like a quotation from the record, not a second chat bubble.
   user: { alignSelf: 'flex-end', backgroundColor: colors.navy, borderBottomEndRadius: 6 },
-  assistant: { ...cardSurface, borderRadius: radius.xl, alignSelf: 'flex-start', borderBottomStartRadius: 6 },
-  failed: { borderWidth: 1.5, borderColor: colors.dangerDark },
+  assistant: { alignSelf: 'flex-start', borderRadius: 0, paddingVertical: spacing.xs, paddingHorizontal: spacing.lg, borderStartWidth: 3, borderStartColor: colors.navy },
+  failed: { borderStartColor: colors.dangerDark, backgroundColor: colors.dangerLight, borderRadius: radius.sm },
   meta: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  composer: { backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: SCREEN_PADDING, paddingVertical: spacing.md, gap: spacing.sm },
+  composer: { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: SCREEN_PADDING, paddingVertical: spacing.md, gap: spacing.sm },
   chips: { gap: spacing.sm },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  input: { flex: 1, minHeight: 48, borderRadius: radius.pill, backgroundColor: colors.background, borderWidth: 1.5, borderColor: colors.borderStrong, paddingHorizontal: spacing.lg, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
+  input: { flex: 1, minHeight: 48, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong, paddingHorizontal: spacing.lg, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
   send: { width: 48, height: 48, minWidth: MIN_TOUCH, borderRadius: 24, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
   sendDisabled: { backgroundColor: colors.borderStrong },
   stop: { backgroundColor: colors.dangerDark },

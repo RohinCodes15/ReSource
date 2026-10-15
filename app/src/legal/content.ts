@@ -17,7 +17,7 @@ export const PRIVACY: LegalSection[] = [
     body: [[
       'You can use ReSource without an account and without giving your name.',
       'We do not sell your information and we do not share it for advertising. There are no ads, no analytics and no trackers in this app.',
-      'Your location stays on your device. Reports and posts are stored without your name, and you can delete them at any time.',
+      'Your location stays on your device, except that a rounded position is sent with a question to the assistant if you have set a location. Reports and posts are stored without your name, and you can delete them at any time.',
       'If you are under 13, you can read everything but you cannot send us anything.',
     ]],
   },
@@ -36,7 +36,7 @@ export const PRIVACY: LegalSection[] = [
         'Community posts: your post text, the area you picked, the time, the number of upvotes and any abuse reports about it.',
         'Alert settings: the topics and areas you follow, and whether you turned on notifications.',
         'Email alerts, only if this deployment offers them and you sign up: your email address, so we can send the alerts you asked for.',
-        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). These go to our server and then to our AI provider to write an answer. Our server does not save your chat messages. Chat history is kept on your own device only if you accept optional storage.',
+        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). These go to our server and then to our AI provider to write an answer. Our server keeps the current conversation in memory for up to ten minutes so the assistant can follow it, and never writes chat messages to its database. Chat history is kept on your own device only if you accept optional storage.',
         'Feedback: the message you type, with no identifier attached.',
         'A data deletion request: your email address and what you wrote, so we can find the data and answer you. We delete the email address once the request is finished.',
         'Consent records: what you agreed to, which version of this policy, and when, next to your scrambled install token.',
@@ -110,7 +110,10 @@ export const PRIVACY: LegalSection[] = [
     heading: 'Changes to this policy',
     body: [
       'If we change what we collect or how we use it, we will update this page, change the effective date, and add a line to the change log below.',
-      ['2026-10-12: first version.'],
+      [
+        '2026-10-12: first version.',
+        '2026-10-13: clarified that the server holds a conversation in memory for up to ten minutes, and that the rounded position sent with a chat message is the one exception to location staying on your device.',
+      ],
     ],
   },
   {
@@ -199,8 +202,10 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
   {
     group: 'Fonts and icons',
     items: [
-      { name: 'Inter', use: 'The app typeface, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
-      { name: 'Material Design Icons', use: 'All icons, through @expo/vector-icons.', license: 'Apache License 2.0', url: 'https://pictogrammers.com/library/mdi/' },
+      { name: 'Fraunces', use: 'Headlines and large figures. One weight, cut down to Latin and Vietnamese letters and bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/undercasetype/Fraunces' },
+      { name: 'Inter', use: 'Body text, labels and buttons, in two weights, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
+      { name: 'Lucide icons', use: 'Every icon in the app, drawn from Lucide 1.57.0 (some derived from Feather). Copied into the app as drawing data, so no icon font is downloaded.', license: 'ISC License (Feather parts: MIT License)', url: 'https://lucide.dev/license' },
+      { name: 'Drawings of Fremont places', use: 'Mission Peak, the NILES sign above Niles, and Lake Elizabeth in Central Park, in headers and empty lists. Drawn for this project.', license: 'Part of ReSource, MIT License', url: 'https://github.com/RohinCodes15/ReSource' },
     ],
   },
   {
@@ -223,6 +228,7 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
     group: 'Software',
     items: [
       { name: 'Expo and React Native', use: 'The app framework.', license: 'MIT', url: 'https://expo.dev/' },
+      { name: 'react-native-svg', use: 'Draws the icons and illustrations on phones and the web.', license: 'MIT', url: 'https://github.com/software-mansion/react-native-svg' },
       { name: 'FastAPI', use: 'The server framework.', license: 'MIT', url: 'https://fastapi.tiangolo.com/' },
       { name: 'Supabase client libraries', use: 'Database, storage and optional sign-in.', license: 'MIT', url: 'https://supabase.com/' },
       { name: 'Anthropic SDK and Claude', use: 'The assistant\'s AI model, used under Anthropic\'s terms.', license: 'MIT (SDK)', url: 'https://www.anthropic.com/' },

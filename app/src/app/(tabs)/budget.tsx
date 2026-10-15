@@ -1,13 +1,14 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import type { Budget, BudgetTable } from '../../../../shared/types';
-import { BarList, ChartCard, DataTable, StatTile } from '../../components/Charts';
+import { BarList, ChartCard, DataTable, LedgerRow, ShareBar } from '../../components/Charts';
+import { Illustration } from '../../components/illustrations';
 import { Screen } from '../../components/Page';
-import { AppText, Banner, Card, ErrorState, LoadingList, SourceLine } from '../../components/ui';
+import { AppText, Banner, ErrorState, Eyebrow, LoadingList, Rule, Section, SourceLine } from '../../components/ui';
 import { bundledBudget } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getBudget } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
-import { colors, spacing } from '../../theme';
+import { colors, MAX_CONTENT_WIDTH, SCREEN_PADDING, spacing } from '../../theme';
 
 /**
  * Budget Transparency: where the reductions come from, with the City document behind every
@@ -15,6 +16,9 @@ import { colors, spacing } from '../../theme';
  */
 export default function BudgetScreen() {
   const { t, locale } = useTranslation();
+  const { width } = useWindowDimensions();
+  // Mission Peak keeps its own 4:1 shape: the full column on a phone, at most 360px wide.
+  const peakWidth = Math.min(360, Math.min(width, MAX_CONTENT_WIDTH) - SCREEN_PADDING * 2);
   const { data, loading, error, reload } = useApi(getBudget, () => bundledBudget);
 
   if (loading) return <Screen title={t('titles.budget')}><LoadingList /></Screen>;
@@ -31,18 +35,20 @@ export default function BudgetScreen() {
 
   return (
     <Screen title={t('titles.budget')} testID="budget-screen">
-      <AppText variant="bodySmall" color={colors.text}>{t('budget.intro')}</AppText>
+      <Illustration name="peak" width={peakWidth} height={peakWidth / 4} />
+      <AppText color={colors.text} style={styles.measure}>{t('budget.intro')}</AppText>
       <Banner tone="info" icon="translate" body={t('budget.englishNote')} />
 
-      <View style={styles.block}>
-        <AppText variant="h3" heading={2}>{t('budget.keyNumbers')}</AppText>
-        {budget.headline.map((item) => (
-          <Card key={item.id} style={styles.fact} testID={`headline-${item.id}`}>
-            <View style={styles.tileRow}><StatTile value={formatMoney(item.amount)} label={item.label} /></View>
-            {source(item.source, item.page)}
-          </Card>
-        ))}
-      </View>
+      <Section title={t('budget.keyNumbers')}>
+        <View>
+          {budget.headline.map((item, i) => (
+            <View key={item.id}>
+              {i > 0 && <Rule />}
+              <LedgerRow value={formatMoney(item.amount)} label={item.label} source={source(item.source, item.page)} testID={`headline-${item.id}`} />
+            </View>
+          ))}
+        </View>
+      </Section>
 
       <ChartCard
         title={t('budget.reductionsTitle')}
@@ -71,7 +77,7 @@ export default function BudgetScreen() {
         footer={source(shares.source, shares.page)}
         testID="chart-shares"
       >
-        <BarList max={100} items={shares.items.map((s) => ({ label: s.label, value: s.percent, display: `${s.percent}%` }))} />
+        <ShareBar items={shares.items} label={t('budget.sharesTitle')} />
       </ChartCard>
 
       <ChartCard
@@ -85,44 +91,55 @@ export default function BudgetScreen() {
       </ChartCard>
 
       {[budget.revenue, budget.staffing].map((section) => (
-        <Card key={section.caption} style={styles.block}>
-          <AppText variant="h4" heading={3}>{section.caption}</AppText>
+        <Section key={section.caption} title={section.caption} level={3}>
           <DataTable caption={section.caption} {...table(section)} />
           {!!section.note && <AppText variant="caption">{section.note}</AppText>}
           {source(section.source, section.page)}
-        </Card>
+        </Section>
       ))}
 
-      <View style={styles.block}>
-        <AppText variant="h3" heading={2}>{t('budget.contextTitle')}</AppText>
-        {budget.context.map((item) => (
-          <Card key={item.id} style={styles.fact}>
+      <Section title={t('budget.contextTitle')}>
+        {budget.context.map((item, i) => (
+          <View key={item.id} style={styles.fact}>
+            {i > 0 && <Rule />}
             <AppText color={colors.text}>{item.text}</AppText>
             {source(item.source, item.page)}
-          </Card>
+          </View>
         ))}
-      </View>
+      </Section>
 
-      <View style={styles.block}>
-        <AppText variant="h3" heading={2}>{t('budget.timelineTitle')}</AppText>
-        {budget.timeline.map((event) => (
-          <Card key={event.date + event.title} style={styles.fact}>
-            <AppText variant="caption">{formatDate(event.date, locale)}</AppText>
-            <AppText variant="h4" heading={3}>{event.title}</AppText>
-            <AppText variant="bodySmall" color={colors.text}>{event.text}</AppText>
-            {source(event.source)}
-          </Card>
-        ))}
-      </View>
+      <Section title={t('budget.timelineTitle')}>
+        {/* A line down the side with a mark for each event, newest at the bottom. */}
+        <View role="list" accessibilityLabel={t('budget.timelineTitle')}>
+          {budget.timeline.map((event, i) => (
+            <View key={event.date + event.title} role="listitem" style={styles.event}>
+              <View style={styles.rail} aria-hidden>
+                <View style={[styles.dot, i === budget.timeline.length - 1 && styles.dotLast]} />
+                {i < budget.timeline.length - 1 && <View style={styles.line} />}
+              </View>
+              <View style={styles.eventBody}>
+                <Eyebrow>{formatDate(event.date, locale)}</Eyebrow>
+                <AppText variant="h4" heading={3}>{event.title}</AppText>
+                <AppText variant="bodySmall" color={colors.text}>{event.text}</AppText>
+                {source(event.source)}
+              </View>
+            </View>
+          ))}
+        </View>
+      </Section>
       <AppText variant="caption">{t('budget.notEndorsed')}</AppText>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  block: { gap: spacing.md },
+  measure: { maxWidth: 600 },
   fact: { gap: spacing.sm },
-  // A row, so the tile's flex basis sets its width and not its height.
-  tileRow: { flexDirection: 'row' },
   sources: { gap: spacing.xs },
+  event: { flexDirection: 'row', gap: spacing.md },
+  rail: { width: 14, alignItems: 'center' },
+  dot: { width: 12, height: 12, borderRadius: 6, marginTop: 3, borderWidth: 2, borderColor: colors.navy, backgroundColor: colors.background },
+  dotLast: { backgroundColor: colors.gold, borderColor: colors.goldDark },
+  line: { flex: 1, width: 2, backgroundColor: colors.rule, marginVertical: 2 },
+  eventBody: { flex: 1, gap: spacing.xs, paddingBottom: spacing.xl },
 });

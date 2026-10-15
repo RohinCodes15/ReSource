@@ -1,0 +1,36 @@
+# ReSource on one machine with no accounts:  docker compose up --build
+#   Web app  http://localhost:8080
+#   API      http://localhost:8000/health
+# Nothing needs to be set. To try admin tools or AI answers, put ADMIN_TOKEN and/or
+# ANTHROPIC_API_KEY in a .env file next to this one (see .env.example).
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      CORS_ORIGINS: http://localhost:8080
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - resource-state:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: deployment/web.Dockerfile
+      args:
+        EXPO_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  resource-state:

@@ -102,3 +102,32 @@ export async function saveTextFile(filename: string, text: string, mime: string)
     return 'failed';
   }
 }
+
+/**
+ * Prints a self-contained HTML page from a hidden frame, so the print-out is exactly that page
+ * and not the app around it. Web only; returns false where there is no browser print dialog.
+ */
+export function printHtml(html: string, marker: string): boolean {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return false;
+  try {
+    document.querySelectorAll(`iframe[data-print="${marker}"]`).forEach((old) => old.remove());
+    const frame = document.createElement('iframe');
+    frame.setAttribute('data-print', marker);
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('tabindex', '-1');
+    frame.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden';
+    frame.onload = () => {
+      try {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      } catch {
+        // The browser refused to print: the card stays on screen for the person to read.
+      }
+    };
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+    return true;
+  } catch {
+    return false;
+  }
+}

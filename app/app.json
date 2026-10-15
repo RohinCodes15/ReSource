@@ -24,10 +24,20 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "themeColor": "#1B3A6B",
+      "backgroundColor": "#F6F2E9"
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "web": true,
+            "default": "development"
+          }
+        }
+      ],
       [
         "expo-location",
         {
@@ -41,7 +51,17 @@
         }
       ],
       "expo-font",
-      "expo-localization"
-    ]
+      "expo-localization",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#1B3A6B"
+        }
+      ]
+    ],
+    "description": "See which Fremont, California city services changed with the city budget, and where to find help. An independent student project."
   }
 }

@@ -58,7 +58,9 @@ def verified_reports() -> list[Row]:
 def _breakdown(rows: list[Row], key: str) -> list[dict[str, Any]]:
     groups: dict[str, Counter] = {}
     for row in rows:
-        groups.setdefault(row.get(key) or "unknown", Counter())[row["impact_level"]] += 1
+        # Free-text names may contain personal details from old versions. Aggregate them as Other.
+        name = "Other" if key == "service_name" and not row.get("service_id") else row.get(key) or "unknown"
+        groups.setdefault(name, Counter())[row["impact_level"]] += 1
     out = [{"key": name, "total": sum(counts.values()), **{level: counts.get(level, 0) for level in IMPACT_LEVELS}}
            for name, counts in groups.items()]
     return sorted(out, key=lambda item: (-item["total"], item["key"]))
@@ -142,7 +144,7 @@ def stats() -> dict[str, int]:
     store = get_store()
     services = store.list("services")
     return {
-        "reports_total": store.count("reports"),
+        "reports_total": store.count("reports", {"status": "verified"}),
         "reports_verified": store.count("reports", {"status": "verified"}),
         "posts": store.count("posts", {"status": "approved", "is_sample": False}),
         "services_tracked": len(services),
@@ -207,7 +209,7 @@ def list_posts(request: Request, sort: str = Query(default="top", pattern="^(top
     voted = {vote["post_id"] for vote in store.list("post_votes", {"owner_hash": owner})} if owner else set()
     posts = []
     for post in store.list("posts", {"status": "approved"}):
-        posts.append({**public_row(post), "mine": bool(owner) and post.get("owner_hash") == owner, "voted": post["id"] in voted})
+        posts.append({**public_row(post), "upvotes_approximate": True, "mine": bool(owner) and post.get("owner_hash") == owner, "voted": post["id"] in voted})
     if sort == "top":
         posts.sort(key=lambda p: (p.get("upvotes") or 0, p.get("created_at") or ""), reverse=True)
     else:

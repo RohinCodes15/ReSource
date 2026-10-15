@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { BrowseOnly, ConsentFields, useConsent } from '../../components/ConsentFields';
 import { Screen } from '../../components/Page';
 import { AppButton, AppText, Banner, Card, Field } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
-import { supabase } from '../../lib/supabase';
-import { ageStore, authTokenStore } from '../../state/stores';
+import { signInAvailable, supabase } from '../../lib/supabase';
+import { ageStore, authEmailStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 /**
@@ -18,34 +18,23 @@ export default function SignInScreen() {
   const age = ageStore.use();
   const consent = useConsent();
   const [email, setEmail] = useState('');
-  const [signedInAs, setSignedInAs] = useState<string | null>(null);
+  const signedInAs = authEmailStore.use(); // kept current by watchAuth in the root layout
   const [notice, setNotice] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    if (!supabase) return;
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSignedInAs(session?.user.email ?? null);
-      authTokenStore.set(session?.access_token ?? '');
-    });
-    return () => data.subscription.unsubscribe();
-  }, []);
 
   async function sendLink() {
     const valid = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim());
     setEmailError(valid ? null : t('alerts.emailInvalid'));
     if (!supabase || !valid || !consent.check() || sending) return;
     setSending(true);
-    const redirect = Platform.OS === 'web' ? window.location.origin : undefined;
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: redirect } });
+    const { error } = await supabase.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/sign-in` } });
     setNotice(error ? { tone: 'warning', text: t('signIn.failed') } : { tone: 'success', text: t('signIn.sent') });
     setSending(false);
   }
 
   async function signOut() {
     await supabase?.auth.signOut();
-    authTokenStore.set('');
     setNotice({ tone: 'success', text: t('signIn.signedOut') });
   }
 
@@ -54,6 +43,8 @@ export default function SignInScreen() {
       <AppText color={colors.text}>{t('signIn.intro')}</AppText>
       {!supabase ? (
         <Banner tone="info" icon="account-off-outline" title={t('signIn.offTitle')} body={t('settings.accountOff')} testID="sign-in-off" />
+      ) : !signInAvailable ? (
+        <Banner tone="info" icon="web" body={t('signIn.webOnly')} testID="sign-in-web-only" />
       ) : signedInAs ? (
         <Card style={styles.block}>
           <AppText>{t('signIn.signedInAs', { email: signedInAs })}</AppText>

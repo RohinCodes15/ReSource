@@ -11,7 +11,7 @@ import { getResources } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { directionsUrl, shareText, telUrl } from '../../lib/platform';
 import { favoritesStore, toggleFavorite, useOrigin } from '../../state/stores';
-import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
+import { colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
 import { formatMiles, sortByDistance } from '../../utils/geo';
 
 type Row = Resource & { distance: number | null };
@@ -30,7 +30,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
       <View style={styles.cardTop}>
         <View style={styles.cardIcon}><Icon name={RESOURCE_ICONS[item.category] ?? 'hand-heart'} size={22} color={colors.navy} /></View>
         <View style={styles.flex}>
-          <AppText variant="h4" heading={3}>{item.name}</AppText>
+          <AppText variant="h3" heading={2}>{item.name}</AppText>
           <AppText variant="caption">{tx('resourceCategory', item.category)}</AppText>
         </View>
         <Pill
@@ -71,7 +71,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
 export default function ResourcesScreen() {
   const { t, tx } = useTranslation();
   const router = useRouter();
-  const params = useLocalSearchParams<{ categories?: string; from?: string }>();
+  const params = useLocalSearchParams<{ categories?: string; from?: string; at?: string }>();
   const { data, loading, error, reload } = useApi(getResources, () => bundledResources);
   const { origin } = useOrigin();
   const favorites = favoritesStore.use();
@@ -81,10 +81,12 @@ export default function ResourcesScreen() {
   const [sort, setSort] = useState<'near' | 'name'>('near');
   const [notice, setNotice] = useState('');
 
-  // Arriving from "Find Alternative" on the map pre-selects that service's categories.
+  // Arriving from "Find Alternative" on the map pre-selects that service's categories. `at` changes
+  // on every press, so pressing it again for the same service selects them again.
+  const arrival = `${params.at ?? ''}|${params.categories ?? ''}`;
   const [seenParam, setSeenParam] = useState<string | undefined>(undefined);
-  if (params.categories !== seenParam) {
-    setSeenParam(params.categories);
+  if (arrival !== seenParam) {
+    setSeenParam(arrival);
     setSelected(params.categories ? params.categories.split(',').filter(Boolean) : []);
   }
 
@@ -129,7 +131,7 @@ export default function ResourcesScreen() {
         )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        <Chip label={t('common.all')} selected={selected.length === 0 && !savedOnly} onPress={() => { setSelected([]); setSavedOnly(false); }} testID="chip-all" />
+        <Chip label={t('common.all')} selected={selected.length === 0 && !savedOnly} onPress={() => { setSelected([]); setSavedOnly(false); if (params.from) router.setParams({ from: '' } as never); }} testID="chip-all" />
         <Chip label={t('resources.saved', { count: favorites.length })} icon="bookmark" selected={savedOnly} onPress={() => setSavedOnly(!savedOnly)} testID="chip-saved" />
         {categories.map((category) => (
           <Chip key={category} label={tx('resourceCategory', category)} icon={RESOURCE_ICONS[category]} selected={selected.includes(category)} onPress={() => toggle(category)} testID={`chip-${category}`} />
@@ -155,7 +157,7 @@ export default function ResourcesScreen() {
         ListEmptyComponent={
           loading ? <View style={styles.pad}><LoadingList /></View>
             : error ? <ErrorState onRetry={reload} />
-              : <EmptyState icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
+              : <EmptyState art="niles" icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
         }
         ListFooterComponent={<View style={styles.pad}><Footer /></View>}
         renderItem={({ item }) => <ResourceCard item={item} saved={favorites.includes(item.id)} onShared={setNotice} />}
@@ -175,11 +177,12 @@ const styles = StyleSheet.create({
   clear: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
   chips: { gap: spacing.sm, paddingVertical: 2 },
   sortRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md },
-  card: { ...cardSurface, marginHorizontal: spacing.lg, marginBottom: spacing.md, padding: spacing.lg, gap: spacing.sm },
+  // Each place is a ruled entry, not a box: a hairline above, room around it.
+  card: { marginHorizontal: spacing.lg, paddingVertical: spacing.xl, gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, flexWrap: 'wrap' },
-  cardIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
+  cardIcon: { width: 28, paddingTop: 2, alignItems: 'center' },
   facts: { gap: 2 },
-  actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.xs },
   // The buttons stay together at the end of the row, and wrap as a group on a narrow phone.
   actionIcons: { flexDirection: 'row', gap: spacing.xs, marginStart: 'auto' },
 });
