@@ -658,7 +658,9 @@
     "signedInAs": "Đã đăng nhập bằng {{email}}",
     "signOut": "Đăng xuất",
     "signedOut": "Quý vị đã đăng xuất.",
-    "webOnly": "Đăng nhập bằng liên kết qua email chỉ hoạt động trên bản web của ReSource. Quý vị không cần tài khoản: mọi thứ trong ứng dụng này đều hoạt động mà không cần tài khoản."
+    "webOnly": "Đăng nhập bằng liên kết qua email chỉ hoạt động trên bản web của ReSource. Quý vị không cần tài khoản: mọi thứ trong ứng dụng này đều hoạt động mà không cần tài khoản.",
+    "google": "Tiếp tục với Google",
+    "googleFailed": "Không thể bắt đầu đăng nhập bằng Google. Vui lòng thử lại."
   },
   "storage": {
     "bannerTitle": "Lưu trữ trên thiết bị của quý vị",
