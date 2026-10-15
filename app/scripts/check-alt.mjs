@@ -1,4 +1,4 @@
-// Fails the build when an <Image> or <img> has no text alternative.
+// Fails the build when an <Image>, <img> or <Svg> has no text alternative.
 // An image passes with accessibilityLabel / alt / aria-label, or when it is explicitly marked
 // decorative (aria-hidden, accessible={false}, accessibilityElementsHidden, alt="").
 import { readdirSync, readFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ const problems = [];
 let images = 0;
 for (const file of walk(join(root, 'src'))) {
   const source = readFileSync(file, 'utf8');
-  for (const match of source.matchAll(/<(Image|img|ImageBackground)\b[^>]*>/gs)) {
+  for (const match of source.matchAll(/<(Image|img|ImageBackground|Svg)\b[^>]*>/gs)) {
     images += 1;
     if (!OK.test(match[0])) {
       const line = source.slice(0, match.index).split('\n').length;

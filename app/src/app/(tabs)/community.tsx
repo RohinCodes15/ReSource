@@ -113,7 +113,7 @@ export default function CommunityScreen() {
       {bundled && <AppText variant="caption">{t('community.offline')}</AppText>}
 
       {loading ? <LoadingList /> : error ? <ErrorState onRetry={reload} /> : posts.length === 0 ? (
-        <EmptyState icon="forum-outline" title={t('community.emptyTitle')} body={t('community.emptyBody')} />
+        <EmptyState art="lake" icon="forum-outline" title={t('community.emptyTitle')} body={t('community.emptyBody')} />
       ) : posts.map((post) => (
         <Card key={post.id} style={styles.post} testID={`post-${post.id}`}>
           <Pressable

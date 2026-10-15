@@ -76,7 +76,7 @@ export default function TabsLayout() {
             // The spoken name is the visible label, so voice control ("tap Resources") works.
             tabBarAccessibilityLabel: t(`tabs.${tab.key}`),
             tabBarButtonTestID: `tab-${tab.key}`,
-            tabBarIcon: ({ color, focused }) => <Icon name={focused ? tab.icon : tab.iconOutline} size={24} color={color} />,
+            tabBarIcon: ({ color, focused }) => <Icon name={focused ? tab.icon : tab.iconOutline} size={24} color={String(color)} />,
           }}
         />
       ))}

@@ -7,13 +7,14 @@ import type { Budget } from '../../../../shared/types';
 import { ShareBar } from '../../components/Charts';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { LocationChip } from '../../components/LocationChip';
+import { Illustration } from '../../components/illustrations';
 import { Footer, Screen } from '../../components/Page';
 import { AppButton, AppText, Eyebrow, FadeIn, Icon, type IconName, Rule, Skeleton, SourceLine } from '../../components/ui';
 import { ALERT_ICONS, bundledAlerts, bundledBudget, bundledResources, bundledServices } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getAlerts, getBudget, getStats, type Stats } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
-import { colors, MIN_TOUCH, radius, spacing } from '../../theme';
+import { colors, MAX_CONTENT_WIDTH, MIN_TOUCH, radius, spacing } from '../../theme';
 
 // The Community Board and Community Impact are reached from More.
 // `key` picks the translated title and subtitle: home.<key>Title and home.<key>Subtitle.
@@ -104,6 +105,8 @@ export default function HomeScreen() {
         <AppText color={colors.text} style={styles.tagline}>{t('home.tagline')}</AppText>
         <AppText variant="caption" testID="independent-notice">{t('home.independent')}</AppText>
       </View>
+      {/* Mission Peak, the ridge most of Fremont sees every day. */}
+      <Illustration name="peak" width={Math.min(width, MAX_CONTENT_WIDTH)} height={88} />
 
       <View style={styles.body}>
         {/* The hero: one real figure from the City's budget, and where that money goes. */}
@@ -233,11 +236,11 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 0, gap: 0, paddingBottom: spacing.xxl },
-  masthead: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.sm },
+  masthead: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, gap: spacing.sm },
   mastheadTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   wordmark: { fontSize: 34, lineHeight: 40 },
   tagline: { maxWidth: 520, fontSize: 19, lineHeight: 27 },
-  body: { paddingHorizontal: spacing.lg, gap: spacing.huge },
+  body: { paddingHorizontal: spacing.lg, paddingTop: spacing.xxxl, gap: spacing.huge },
   hero: { gap: spacing.huge },
   heroWide: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xxxl },
   half: { flex: 1 },

@@ -68,7 +68,7 @@ function Dashboard() {
       <AppText variant="caption">{t('impact.generated', { date: formatDate(data.generated_at, locale) })}</AppText>
 
       {data.verified_total === 0 ? (
-        <EmptyState icon="chart-box-outline" title={t('impact.emptyTitle')} body={t('impact.emptyBody')} />
+        <EmptyState art="lake" icon="chart-box-outline" title={t('impact.emptyTitle')} body={t('impact.emptyBody')} />
       ) : (
         <>
           <ChartCard
