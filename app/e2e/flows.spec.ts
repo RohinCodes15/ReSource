@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { ADMIN_TOKEN } from '../playwright.config';
-import { API, open, prepare, v } from './helpers';
+import { API, mapServiceCount, open, prepare, v } from './helpers';
 
 test.beforeEach(async ({ page }) => { await prepare(page); });
 
@@ -129,20 +129,43 @@ test('resources: search, chips, sort, call, directions, website, share and save'
 
 // ---- Map ------------------------------------------------------------------------------------
 
+test('map: a group of pins says how many services it holds and which', async ({ page }) => {
+  await open(page, '/map');
+  const group = page.locator('[data-testid="pin-cluster"][data-members*="svc-human-services"]');
+  await expect(group).toHaveAttribute('role', 'button');
+  await expect(group).toHaveAttribute('aria-label', /services close together: .*Human Services/);
+});
+
+test('map: when the map images fail, the map stays blank with a note and the pins still work', async ({ page }) => {
+  await page.unroute(/tile\.openstreetmap\.org/);
+  await page.route(/tile\.openstreetmap\.org/, (route) => route.abort());
+  await open(page, '/map');
+  await expect(v(page, 'map-tiles-failed')).toContainText('could not load');
+  const shown = await page.evaluate(() => Array.from(document.querySelectorAll('.leaflet-tile')).filter((tile) => getComputedStyle(tile).visibility !== 'hidden').length);
+  expect(shown, 'failed tiles are hidden').toBe(0);
+  await expect.poll(() => mapServiceCount(page)).toBe(11);
+});
+
 test('map: pins, filters, search, list view, details sheet and Find Alternative', async ({ page }) => {
   await open(page, '/map');
-  await expect(page.locator('[data-testid^="pin-svc-"]')).toHaveCount(11);
+  await expect.poll(() => mapServiceCount(page)).toBe(11);
   await v(page, 'map-filter-open').click();
   await expect(v(page, 'map-count')).toContainText('4 services');
-  await expect(page.locator('[data-testid^="pin-svc-"]')).toHaveCount(4);
+  await expect.poll(() => mapServiceCount(page)).toBe(4);
   await v(page, 'map-filter-all').click();
   await v(page, 'map-search').fill('zzz nothing');
   await expect(v(page, 'map-count')).toContainText('0 services');
   await v(page, 'map-search-clear').click();
   await v(page, 'map-recenter').click();
 
+  // Pins close together form a group; selecting it zooms in, then opens the five at City Hall into a ring.
+  const pin = page.locator('[data-testid="pin-svc-human-services"]');
+  for (let i = 0; i < 4 && !(await pin.count()); i += 1) {
+    await page.locator('[data-testid="pin-cluster"][data-members*="svc-human-services"]').click();
+    await page.waitForTimeout(600);
+  }
   // A pin opens the same detail sheet as the list.
-  await page.locator('[data-testid="pin-svc-human-services"]').click();
+  await pin.click();
   await expect(v(page, 'service-detail')).toContainText('10 more positions');
   await page.keyboard.press('Escape');
   await expect(v(page, 'service-detail')).toHaveCount(0);

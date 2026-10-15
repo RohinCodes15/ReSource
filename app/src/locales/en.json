@@ -258,14 +258,16 @@
     "count": "{{count}} services shown",
     "none": "No services match these filters.",
     "noneBody": "Try a different search or choose All.",
-    "pinsNote": "Pin positions are approximate. Several services share City Hall, so their pins are spread around it.",
+    "pinsNote": "Pin positions are approximate. Pins that sit close together are grouped; select a group to see each one.",
     "osmCredit": "Map data © OpenStreetMap contributors.",
     "details": "Details",
     "reduction": "Budget reduction: {{amount}}",
     "effective": "In effect since {{date}}",
     "approximate": "Map position is approximate. Directions use the street address.",
     "findAlternative": "Find Alternative",
-    "reportImpact": "Report an impact"
+    "reportImpact": "Report an impact",
+    "cluster": "{{count}} services close together: {{names}}. Select to see each one.",
+    "tilesFailed": "The map images could not load. The pins still show where each service is."
   },
   "resources": {
     "searchPlaceholder": "Search food, clinics, housing",

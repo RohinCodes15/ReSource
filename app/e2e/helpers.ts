@@ -26,11 +26,21 @@ export async function answerStorageBanner(page: Page, choice: 'all' | 'essential
   }, choice);
 }
 
-const TILE = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+// One pixel of the map's paper color (#ECE6D8), stretched over each tile: a quiet blank map.
+const TILE = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN48+wGAAVsAquswEprAAAAAElFTkSuQmCC', 'base64');
 
 /** Map tiles come from OpenStreetMap; tests answer those requests locally instead. */
 export async function stubTiles(page: Page) {
   await page.route(/tile\.openstreetmap\.org/, (route) => route.fulfill({ status: 200, contentType: 'image/png', body: TILE }));
+}
+
+/** Services on the web map: single pins plus the services inside each group of pins. */
+export async function mapServiceCount(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const single = document.querySelectorAll('[data-testid^="pin-svc-"]').length;
+    const grouped = Array.from(document.querySelectorAll('[data-testid="pin-cluster"]')).reduce((sum, el) => sum + Number(el.getAttribute('data-count')), 0);
+    return single + grouped;
+  });
 }
 
 /** Makes every API call fail, as if the server were down. */

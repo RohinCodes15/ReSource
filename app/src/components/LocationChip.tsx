@@ -123,7 +123,7 @@ export function LocationSheet({ visible, onClose }: { visible: boolean; onClose:
           testID="zip-input"
         />
         <AppButton variant="outline" icon="map-marker-check" label={t('location.useZip')} onPress={useZip} testID="use-zip" />
-        {outsideZip && <AppButton variant="gold" icon="city" label={t('location.useCenter')} onPress={useCenter} testID="use-center-offer" />}
+        {outsideZip && <AppButton variant="navy" icon="city" label={t('location.useCenter')} onPress={useCenter} testID="use-center-offer" />}
       </View>
 
       <View style={styles.block}>

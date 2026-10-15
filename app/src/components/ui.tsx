@@ -119,13 +119,28 @@ export function Rule({ strong, style }: { strong?: boolean; style?: StyleProp<Vi
   return <View aria-hidden style={[styles.rule, strong && styles.ruleStrong, style]} />;
 }
 
+/**
+ * A titled part of a screen: a strong rule, then the heading, then the content. Used instead of
+ * a box around each part, so screens read like a well-set page rather than a stack of cards.
+ */
+export function Section({ title, subtitle, level = 2, children, style, testID }: PropsWithChildren<{ title: string; subtitle?: string; level?: 2 | 3; style?: StyleProp<ViewStyle>; testID?: string }>) {
+  return (
+    <View style={[styles.sectionBlock, style]} testID={testID}>
+      <Rule strong />
+      <AppText variant={level === 2 ? 'h2' : 'h3'} heading={level}>{title}</AppText>
+      {!!subtitle && <AppText variant="bodySmall" color={colors.text}>{subtitle}</AppText>}
+      {children}
+    </View>
+  );
+}
+
 /** The small spaced label above a section, like the head of a ledger column. */
 export function Eyebrow({ children, color, testID }: PropsWithChildren<{ color?: string; testID?: string }>) {
   return <AppText variant="eyebrow" color={color} testID={testID}>{children}</AppText>;
 }
 
 /** Fades and slides its children in when the screen first shows (skipped with reduced motion). */
-export function FadeIn({ children, delay = 0, style }: PropsWithChildren<{ delay?: number; style?: StyleProp<ViewStyle> }>) {
+export function FadeIn({ children, delay = 0, style, testID }: PropsWithChildren<{ delay?: number; style?: StyleProp<ViewStyle>; testID?: string }>) {
   const reduced = useReducedMotion();
   const [progress] = useState(() => new Animated.Value(0));
   useEffect(() => {
@@ -133,7 +148,7 @@ export function FadeIn({ children, delay = 0, style }: PropsWithChildren<{ delay
     Animated.timing(progress, { toValue: 1, duration: 320, delay, useNativeDriver: NATIVE_DRIVER }).start();
   }, [progress, delay, reduced]);
   const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [10, 0] });
-  return <Animated.View style={[style, { opacity: progress, transform: [{ translateY }] }]}>{children}</Animated.View>;
+  return <Animated.View testID={testID} style={[style, { opacity: progress, transform: [{ translateY }] }]}>{children}</Animated.View>;
 }
 
 /** Grey placeholder shown while data loads. It pulses unless motion is reduced. */
@@ -572,6 +587,7 @@ const styles = StyleSheet.create({
   emptyBody: { maxWidth: 320, marginBottom: spacing.sm },
   emptyAction: { alignSelf: 'center' },
   section: { gap: spacing.xs },
+  sectionBlock: { gap: spacing.md },
   source: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: 2 },
   segmented: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, padding: 3, alignSelf: 'flex-start' },
   segment: { minHeight: 38, paddingHorizontal: spacing.lg, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },

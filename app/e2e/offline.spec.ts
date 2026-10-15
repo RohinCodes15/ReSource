@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { API, blockApi, expectNoSidewaysScroll, open, prepare, ROUTES, trackErrors, v } from './helpers';
+import { API, blockApi, expectNoSidewaysScroll, mapServiceCount, open, prepare, ROUTES, trackErrors, v } from './helpers';
 
 // Everything here runs with the API unreachable. The app must keep working from its bundled data.
 test.beforeEach(async ({ page }) => {
@@ -25,7 +25,7 @@ test('offline: a banner appears and every screen still shows content', async ({ 
   await open(page, '/resources');
   await expect(page.locator('[data-testid^="resource-res-"]:visible:not([inert] *)')).toHaveCount(14);
   await open(page, '/map');
-  await expect(page.locator('[data-testid^="pin-svc-"]')).toHaveCount(11);
+  await expect.poll(() => mapServiceCount(page)).toBe(11);
   await open(page, '/reptracker');
   await expect(page.locator('[data-testid^="member-"]:visible:not([inert] *)')).toHaveCount(7);
   await open(page, '/budget');
@@ -67,13 +67,14 @@ for (const [device, size] of [['mobile', { width: 390, height: 844 }], ['desktop
     test.skip(!process.env.SCREENSHOTS, 'run with `npm run screenshots`');
     test.setTimeout(180_000);
     await page.unroute(`${API}/**`); // online: undo the block this file applies to every other test
+    await page.unroute(/tile\.openstreetmap\.org/); // and show the real map, not the test stand-in
     const folder = join(__dirname, '..', '..', 'submission', 'screenshots', device);
     mkdirSync(folder, { recursive: true });
     await page.setViewportSize(size);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const [path, name] of ROUTES) {
       await open(page, path);
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(path === '/map' ? 2500 : 400); // the map images come from OpenStreetMap
       await expectNoSidewaysScroll(page, `${name} (${device})`);
       await page.screenshot({ path: join(folder, `${name}.png`), fullPage: false });
     }

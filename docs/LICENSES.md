@@ -78,8 +78,8 @@ Everything below was read from the installed packages on October 13, 2026 (`pack
 
 | Source | License or terms | How ReSource complies |
 | --- | --- | --- |
-| OpenStreetMap map tiles (web) | Data © OpenStreetMap contributors, Open Database License. The public tile server has a usage policy for light use. | The map shows the attribution. For real traffic set `EXPO_PUBLIC_MAP_TILE_URL` to a hosted tile provider. |
-| Leaflet | BSD-2-Clause | Used to draw the web map. |
+| OpenStreetMap map tiles (web) | Data © OpenStreetMap contributors, Open Database License. The public tile server has a usage policy for light use, which requires a Referer header. | The map shows the attribution, and its tile requests send the site's origin as the Referer (the rest of the site sends none). The tiles are shown in muted colors with a CSS filter; the map data is unchanged. For real traffic set `EXPO_PUBLIC_MAP_TILE_URL` to a hosted tile provider. |
+| Leaflet | BSD-2-Clause | Used to draw the web map. Its stylesheet is copied to `app/public/leaflet/leaflet-1.9.4.css` (with the license beside it, `LICENSE.txt`) so it loads only when a map opens. |
 | Apple Maps and Google Maps (phones) | Each platform's own terms | Through `react-native-maps`. Android needs a Google Maps key (`docs/HUMAN_TODO.md`). |
 | City of Fremont documents | Public records | Cited with a link on every figure. Citing them does not imply endorsement. |
 | U.S. Census Bureau Gazetteer | Public domain (U.S. government work) | Source of the ZIP code area centers. |

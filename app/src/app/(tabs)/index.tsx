@@ -1,10 +1,9 @@
 import { useRouter } from 'expo-router';
-import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { APP_NAME } from '../../../../shared/constants';
 import type { Budget } from '../../../../shared/types';
-import { ShareBar } from '../../components/Charts';
+import { LedgerRow, ShareBar } from '../../components/Charts';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { LocationChip } from '../../components/LocationChip';
 import { Illustration } from '../../components/illustrations';
@@ -14,7 +13,7 @@ import { ALERT_ICONS, bundledAlerts, bundledBudget, bundledResources, bundledSer
 import { useApi } from '../../hooks/useData';
 import { getAlerts, getBudget, getStats, type Stats } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
-import { colors, MAX_CONTENT_WIDTH, MIN_TOUCH, radius, spacing } from '../../theme';
+import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '../../theme';
 
 // The Community Board and Community Impact are reached from More.
 // `key` picks the translated title and subtitle: home.<key>Title and home.<key>Subtitle.
@@ -42,27 +41,6 @@ function bundledStats(): Stats {
     services_closed: bundledServices.filter((s) => s.status === 'closed').length,
     resources: bundledResources.length,
   };
-}
-
-/** One line of the ledger: a large figure, what it counts, and where it came from. */
-function LedgerRow({ value, label, onPress, source, testID }: { value: string; label: string; onPress?: () => void; source?: ReactNode; testID: string }) {
-  const { dirIcon } = useTranslation();
-  const body = (
-    <>
-      <AppText variant="h1" color={colors.navy} style={styles.ledgerValue} testID={`${testID}-value`}>{value}</AppText>
-      <View style={styles.ledgerText}>
-        <AppText color={colors.text}>{label}</AppText>
-        {source}
-      </View>
-      {onPress && <Icon name={dirIcon('chevron-right')} size={20} color={colors.navy} />}
-    </>
-  );
-  if (!onPress) return <View style={styles.ledgerRow} testID={testID}>{body}</View>;
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${value} ${label}`} testID={testID} style={({ pressed }) => [styles.ledgerRow, pressed && styles.pressed]}>
-      {body}
-    </Pressable>
-  );
 }
 
 export default function HomeScreen() {
@@ -149,11 +127,11 @@ export default function HomeScreen() {
               {s && reduced > 0 && (
                 <LedgerRow value={String(reduced)} label={t('home.cutServices', { total: s.services_tracked })} onPress={() => router.push('/status' as never)} testID="stat-reduced" />
               )}
-              {budget.headline.filter((item) => CUT_FIGURES.includes(item.id)).map((item) => (
-                <View key={item.id}>
+              {budget.headline.filter((item) => CUT_FIGURES.includes(item.id)).map((item, i) => (
+                <FadeIn key={item.id} delay={80 * (i + 1)}>
                   <Rule />
                   <LedgerRow value={formatMoney(item.amount)} label={item.label} source={sourceFor(item.source, item.page)} testID={`home-fact-${item.id}`} />
-                </View>
+                </FadeIn>
               ))}
               {/* Shown only once there is something to count: "0 verified" tells a resident nothing. */}
               {s && s.reports_verified > 0 && (
@@ -253,9 +231,6 @@ const styles = StyleSheet.create({
   section: { gap: spacing.md },
   ledger: { gap: 0 },
   skeletonGap: { marginTop: spacing.sm },
-  ledgerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.md, minHeight: MIN_TOUCH },
-  ledgerValue: { width: 112, fontVariant: ['tabular-nums'] },
-  ledgerText: { flex: 1, gap: spacing.xs },
   latest: { gap: spacing.sm },
   latestHead: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm },
   latestFoot: { flexDirection: 'row', alignItems: 'center', gap: 2 },

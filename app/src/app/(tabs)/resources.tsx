@@ -11,7 +11,7 @@ import { getResources } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
 import { directionsUrl, shareText, telUrl } from '../../lib/platform';
 import { favoritesStore, toggleFavorite, useOrigin } from '../../state/stores';
-import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
+import { colors, fonts, MIN_TOUCH, radius, spacing } from '../../theme';
 import { formatMiles, sortByDistance } from '../../utils/geo';
 
 type Row = Resource & { distance: number | null };
@@ -30,7 +30,7 @@ const ResourceCard = memo(function ResourceCard({ item, saved, onShared }: { ite
       <View style={styles.cardTop}>
         <View style={styles.cardIcon}><Icon name={RESOURCE_ICONS[item.category] ?? 'hand-heart'} size={22} color={colors.navy} /></View>
         <View style={styles.flex}>
-          <AppText variant="h4" heading={2}>{item.name}</AppText>
+          <AppText variant="h3" heading={2}>{item.name}</AppText>
           <AppText variant="caption">{tx('resourceCategory', item.category)}</AppText>
         </View>
         <Pill
@@ -177,11 +177,12 @@ const styles = StyleSheet.create({
   clear: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
   chips: { gap: spacing.sm, paddingVertical: 2 },
   sortRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md },
-  card: { ...cardSurface, marginHorizontal: spacing.lg, marginBottom: spacing.md, padding: spacing.lg, gap: spacing.sm },
+  // Each place is a ruled entry, not a box: a hairline above, room around it.
+  card: { marginHorizontal: spacing.lg, paddingVertical: spacing.xl, gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, flexWrap: 'wrap' },
-  cardIcon: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
+  cardIcon: { width: 28, paddingTop: 2, alignItems: 'center' },
   facts: { gap: 2 },
-  actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  actions: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm, paddingTop: spacing.xs },
   // The buttons stay together at the end of the row, and wrap as a group on a narrow phone.
   actionIcons: { flexDirection: 'row', gap: spacing.xs, marginStart: 'auto' },
 });

@@ -95,7 +95,7 @@ export default function RepsScreen() {
             </View>
           </View>
           <View style={styles.actions}>
-            <AppButton variant="gold" icon="pencil" label={t('reps.write')} accessibilityLabel={t('reps.writeTo', { name: member.name })} onPress={() => setWriting(member)} style={styles.action} testID={`write-${member.id}`} />
+            <AppButton variant="navy" icon="pencil" label={t('reps.write')} accessibilityLabel={t('reps.writeTo', { name: member.name })} onPress={() => setWriting(member)} style={styles.action} testID={`write-${member.id}`} />
             <AppButton variant="outline" icon="phone" label={member.phone} accessibilityLabel={t('common.callNumber', { phone: member.phone })} href={telUrl(member.phone)} style={styles.action} testID={`call-${member.id}`} />
             <AppButton variant="outline" icon="email" label={member.email} accessibilityLabel={`${t('common.email')}: ${member.email}`} href={`mailto:${member.email}`} style={styles.action} testID={`email-${member.id}`} />
           </View>
