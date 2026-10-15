@@ -258,14 +258,16 @@
     "count": "{{count}} servicios mostrados",
     "none": "Ningún servicio coincide con estos filtros.",
     "noneBody": "Pruebe otra búsqueda o elija Todos.",
-    "pinsNote": "La posición de los marcadores es aproximada. Varios servicios comparten el Ayuntamiento, por eso sus marcadores se reparten alrededor.",
+    "pinsNote": "La posición de los marcadores es aproximada. Los marcadores muy cercanos se agrupan; seleccione un grupo para ver cada uno.",
     "osmCredit": "Datos del mapa © colaboradores de OpenStreetMap.",
     "details": "Detalles",
     "reduction": "Reducción del presupuesto: {{amount}}",
     "effective": "Vigente desde el {{date}}",
     "approximate": "La posición en el mapa es aproximada. Las indicaciones usan la dirección.",
     "findAlternative": "Buscar alternativa",
-    "reportImpact": "Reportar un impacto"
+    "reportImpact": "Reportar un impacto",
+    "cluster": "{{count}} servicios muy cerca entre sí: {{names}}. Seleccione para ver cada uno.",
+    "tilesFailed": "No se pudieron cargar las imágenes del mapa. Los marcadores siguen mostrando dónde está cada servicio."
   },
   "resources": {
     "searchPlaceholder": "Buscar comida, clínicas, vivienda",

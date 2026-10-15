@@ -25,6 +25,9 @@ body { background: ${colors.background}; }
 :focus-visible { outline: 3px solid ${colors.gold} !important; outline-offset: 2px !important; box-shadow: 0 0 0 2px ${colors.navyDark} !important; }
 input:focus-visible, textarea:focus-visible { outline-offset: 0 !important; }
 .leaflet-container { font-family: inherit; }
+.leaflet-container.leaflet-container { background: #ECE6D8; }
+/* A calmer map: OpenStreetMap's colors turned to warm greys, so the pins carry the color. */
+.resource-tiles { filter: grayscale(0.9) sepia(0.15) brightness(1.04) contrast(0.9); }
 .leaflet-container a { color: ${colors.navy}; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; } }
 `;

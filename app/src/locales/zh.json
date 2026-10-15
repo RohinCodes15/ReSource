@@ -258,14 +258,16 @@
     "count": "显示 {{count}} 项服务",
     "none": "没有符合这些筛选条件的服务。",
     "noneBody": "请换一个搜索词，或选择“全部”。",
-    "pinsNote": "标记位置为大致位置。有几项服务都在市政厅，所以它们的标记分散在周围。",
+    "pinsNote": "标记位置为大致位置。相近的标记会合并成一组；选择一组即可逐一查看。",
     "osmCredit": "地图数据 © OpenStreetMap 贡献者。",
     "details": "详情",
     "reduction": "预算削减：{{amount}}",
     "effective": "自 {{date}} 起生效",
     "approximate": "地图位置为大致位置。路线按街道地址导航。",
     "findAlternative": "查找替代服务",
-    "reportImpact": "报告影响"
+    "reportImpact": "报告影响",
+    "cluster": "{{count}} 项服务位置相近：{{names}}。选择即可逐一查看。",
+    "tilesFailed": "地图图片无法加载。标记仍显示每项服务的位置。"
   },
   "resources": {
     "searchPlaceholder": "搜索食物、诊所、住房",
