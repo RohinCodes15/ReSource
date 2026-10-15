@@ -9,7 +9,8 @@
     "resources": "Trợ giúp",
     "alerts": "Thông báo",
     "chat": "Hỏi",
-    "more": "Thêm"
+    "more": "Thêm",
+    "moreHint": "trang và cài đặt"
   },
   "titles": {
     "home": "ReSource",

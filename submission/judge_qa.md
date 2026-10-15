@@ -65,7 +65,7 @@ No names, no precise location, no device id. Report and post text with emails, p
 Every form asks the person to confirm they are 13 or older. Choosing "I am under 13" puts the app in browse-only mode: every form is replaced by a notice and nothing is sent. Honest limit: this is a self-declared age and the wording should be reviewed by an adult who knows COPPA; that is on the to-do list.
 
 **17. How accessible is it?**
-An automated scan (axe-core) runs on all 22 screens in the test suite with no serious violations; keyboard use, focus handling, 200% text and color contrast are tested; Lighthouse accessibility is 100. Honest limits: nobody has gone through it with a screen reader, the phone apps were not audited, and load time on a slow phone scores 66 to 70 (`docs/ACCESSIBILITY.md`).
+An automated scan (axe-core) runs on all 22 screens in the test suite with no serious violations; keyboard use, focus handling, 200% text and color contrast are tested; Lighthouse accessibility is 100. Honest limits: nobody has gone through it with a screen reader, the phone apps were not audited, and load time on a slow phone scores 69 to 80 depending on the screen (`docs/ACCESSIBILITY.md`).
 
 ## The work
 
