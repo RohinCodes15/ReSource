@@ -17,6 +17,8 @@ import { colors, MAX_CONTENT_WIDTH, SCREEN_PADDING, spacing } from '../../theme'
 export default function BudgetScreen() {
   const { t, locale } = useTranslation();
   const { width } = useWindowDimensions();
+  // Mission Peak keeps its own 4:1 shape: the full column on a phone, at most 360px wide.
+  const peakWidth = Math.min(360, Math.min(width, MAX_CONTENT_WIDTH) - SCREEN_PADDING * 2);
   const { data, loading, error, reload } = useApi(getBudget, () => bundledBudget);
 
   if (loading) return <Screen title={t('titles.budget')}><LoadingList /></Screen>;
@@ -33,7 +35,7 @@ export default function BudgetScreen() {
 
   return (
     <Screen title={t('titles.budget')} testID="budget-screen">
-      <Illustration name="peak" width={Math.min(width, MAX_CONTENT_WIDTH) - SCREEN_PADDING * 2} height={64} />
+      <Illustration name="peak" width={peakWidth} height={peakWidth / 4} />
       <AppText color={colors.text} style={styles.measure}>{t('budget.intro')}</AppText>
       <Banner tone="info" icon="translate" body={t('budget.englishNote')} />
 

@@ -9,7 +9,8 @@
     "resources": "资源",
     "alerts": "提醒",
     "chat": "提问",
-    "more": "更多"
+    "more": "更多",
+    "moreHint": "页面和设置"
   },
   "titles": {
     "home": "ReSource",

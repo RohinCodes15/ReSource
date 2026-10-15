@@ -7,7 +7,7 @@ import { ART } from './palette';
  */
 export default function MissionPeak({ width, height }: { width: number; height: number }) {
   return (
-    <Svg width={width} height={height} viewBox="0 0 400 100" preserveAspectRatio="xMidYMax slice" aria-hidden>
+    <Svg width={width} height={height} viewBox="0 0 400 100" aria-hidden>
       <Circle cx={318} cy={30} r={11} fill={ART.sunFill} stroke={ART.sun} strokeWidth={1.5} />
       {/* The range: a long climb from the left, the summit, then a gentler fall to the south. */}
       <Path

@@ -9,7 +9,8 @@
     "resources": "Resources",
     "alerts": "Alerts",
     "chat": "Ask",
-    "more": "More"
+    "more": "More",
+    "moreHint": "pages and settings"
   },
   "titles": {
     "home": "ReSource",

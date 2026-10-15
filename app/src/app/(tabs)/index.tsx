@@ -27,6 +27,9 @@ const ACTIONS: { href: string; key: string; icon: IconName }[] = [
   { href: '/reptracker', key: 'reps', icon: 'account-tie' },
 ];
 
+/** Width of the Mission Peak drawing beside the masthead on a wide screen (its shape is 4:1). */
+const PEAK_WIDE = 340;
+
 /** The money figures listed under "What has been cut so far", by their id in budget.json. */
 const CUT_FIGURES = ['ops_cut', 'maint_cut'];
 
@@ -73,18 +76,26 @@ export default function HomeScreen() {
 
   return (
     <Screen title={APP_NAME} contentStyle={styles.content} footer={false} testID="home-screen">
-      <View style={[styles.masthead, { paddingTop: insets.top + spacing.lg }]}>
-        <View style={styles.mastheadTop}>
-          <AppText variant="h1" heading={1} color={colors.navy} accessibilityLabel={APP_NAME} style={styles.wordmark}>
-            {APP_NAME}<AppText variant="h1" color={colors.gold} style={styles.wordmark}>.</AppText>
-          </AppText>
-          <LanguageSelector />
+      <View style={[styles.masthead, wide && styles.mastheadWide, { paddingTop: insets.top + spacing.lg }]}>
+        <View style={styles.mastheadText}>
+          <View style={styles.mastheadTop}>
+            <AppText variant="h1" heading={1} color={colors.navy} accessibilityLabel={APP_NAME} style={styles.wordmark}>
+              {APP_NAME}<AppText variant="h1" color={colors.gold} style={styles.wordmark}>.</AppText>
+            </AppText>
+            {!wide && <LanguageSelector />}
+          </View>
+          <AppText color={colors.text} style={styles.tagline}>{t('home.tagline')}</AppText>
+          <AppText variant="caption" testID="independent-notice">{t('home.independent')}</AppText>
         </View>
-        <AppText color={colors.text} style={styles.tagline}>{t('home.tagline')}</AppText>
-        <AppText variant="caption" testID="independent-notice">{t('home.independent')}</AppText>
+        {wide && (
+          <View style={styles.mastheadSide}>
+            <LanguageSelector />
+            {/* Mission Peak, the ridge most of Fremont sees every day. */}
+            <Illustration name="peak" width={PEAK_WIDE} height={PEAK_WIDE / 4} />
+          </View>
+        )}
       </View>
-      {/* Mission Peak, the ridge most of Fremont sees every day. */}
-      <Illustration name="peak" width={Math.min(width, MAX_CONTENT_WIDTH)} height={88} />
+      {!wide && <Illustration name="peak" width={Math.min(width, MAX_CONTENT_WIDTH)} height={Math.round(Math.min(width, MAX_CONTENT_WIDTH) / 4)} />}
 
       <View style={styles.body}>
         {/* The hero: one real figure from the City's budget, and where that money goes. */}
@@ -214,7 +225,10 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   content: { padding: 0, gap: 0, paddingBottom: spacing.xxl },
-  masthead: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, gap: spacing.sm },
+  masthead: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md },
+  mastheadWide: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.xxl, paddingBottom: 0 },
+  mastheadText: { flex: 1, gap: spacing.sm, paddingBottom: spacing.md },
+  mastheadSide: { alignItems: 'flex-end', gap: spacing.lg },
   mastheadTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md },
   wordmark: { fontSize: 34, lineHeight: 40 },
   tagline: { maxWidth: 520, fontSize: 19, lineHeight: 27 },

@@ -56,9 +56,25 @@ The choices that shaped ReSource and the reasoning behind each, so that the crea
 
 **Checks that fail the build.** Translations in step, contrast, alt text, a single storage module, no unsupported claims. Each exists because the review in `review/` found that mistake once.
 
-**Per-screen scripts and small web fonts.** The web build loads each screen when it is opened and uses 22 KB font files. Load time on a slow phone is still the weakest measurement (`docs/ACCESSIBILITY.md`).
+**Per-screen scripts and few, small web fonts.** The web build loads each screen when it is opened. It uses three font files of about 21 KB each, declared in `app/public/index.html` with `font-display: swap`, so the page never waits for them. Load time on a slow phone is still the weakest measurement (`docs/ACCESSIBILITY.md`).
 
 **One color for magnitude in charts.** Bars are navy; the only multi-color chart is the impact breakdown, whose three levels are ordered, so it uses one hue from light to dark. Every bar carries its value as text and every chart has a table view.
+
+## Design
+
+**A civic ledger, not a dashboard.** The app is about public money, so it is set like a well-made public document: warm paper, ink, thin rules between sections, and large figures set in a serif (Fraunces) with plain Inter for everything else. Boxes are kept for things a person fills in. This replaced a column of identical white cards under a gradient header, which looked like every other template.
+
+**The first thing on Home is a real figure.** The General Fund for FY 2026/27 ($289.1M of $427.1M across all funds) and where it goes, read from the City's presentation with its page cited. A resident sees what the budget is before being asked anything. The figure comes from the copy of the data bundled with the app, so it shows even before the server answers.
+
+**No empty counts.** "0 impact reports verified" told a resident nothing and looked broken, so a count of zero, or one that cannot be known offline, is not shown at all.
+
+**Gold means "do this".** Navy carries the app. Gold is kept for the one main action on a screen ("See my summary", "Follow these updates", "Send"), so it always points somewhere.
+
+**Drawings of real Fremont places, drawn for the app.** Mission Peak, the NILES sign above Niles and Lake Elizabeth, as simple line drawings. Photographs would have needed per-image licenses and would weigh far more. Each drawing is its own small script, loaded only when shown.
+
+**One icon set, drawn as SVG.** Lucide's line icons replaced Material Design Icons. They match the thin rules of the design, and storing the 142 icons used as drawing data removed a 1 MB icon font from the web download.
+
+**A quieter map.** The map tiles are shown in warm greys so the pins carry the color, pins that sit close together on screen are grouped with a count, and a map image that fails to load is hidden with a note instead of leaving a blank or colored block.
 
 ## Decisions left for the creator
 

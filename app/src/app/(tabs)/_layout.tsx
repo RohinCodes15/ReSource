@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { Icon, type IconName } from '../../components/ui';
@@ -20,6 +20,8 @@ const TABS: { name: string; key: string; icon: IconName; iconOutline: IconName }
 // Eight tabs would not fit a 360px phone, so the bar holds six and the rest live here.
 const INNER = ['for-me', 'status', 'report', 'reptracker', 'community', 'budget', 'impact', 'admin', 'settings', 'about', 'privacy', 'terms', 'cookies', 'credits', 'data-request', 'sign-in'];
 const INNER_TITLES: Record<string, string> = { 'for-me': 'forMe', reptracker: 'reps', 'data-request': 'dataRequest', 'sign-in': 'signIn' };
+
+const TAB_LABEL = { fontFamily: fonts.semibold, fontSize: 10, lineHeight: 14, letterSpacing: -0.2 } as const;
 
 function BackButton() {
   const router = useRouter();
@@ -60,7 +62,7 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.muted,
         tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 4 }],
         // 10px with tight tracking: each tab has 50px for its label on a 360px phone, and "Resources" must fit.
-        tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 10, lineHeight: 14, letterSpacing: -0.2 },
+        tabBarLabelStyle: TAB_LABEL,
         // The bar has a fixed height; the label stays one size so six tabs always fit.
         tabBarAllowFontScaling: false,
       }}
@@ -72,9 +74,17 @@ export default function TabsLayout() {
           options={{
             headerShown: tab.name !== 'index', // Home draws its own hero header
             title: t(`titles.${tab.key}`),
-            tabBarLabel: t(`tabs.${tab.key}`),
-            // The spoken name is the visible label, so voice control ("tap Resources") works.
-            tabBarAccessibilityLabel: t(`tabs.${tab.key}`),
+            tabBarLabel: tab.key === 'more'
+              // "More" alone does not say where it goes, so the link also carries words that are
+              // read aloud but not shown. The spoken name still starts with the visible word.
+              ? ({ color }) => (
+                <Text style={[styles.tabLabel, { color }]} numberOfLines={1}>
+                  {t('tabs.more')}<Text style={styles.visuallyHidden}>{` ${t('tabs.moreHint')}`}</Text>
+                </Text>
+              )
+              : t(`tabs.${tab.key}`),
+            // The spoken name starts with the visible label, so voice control ("tap Resources") works.
+            tabBarAccessibilityLabel: tab.key === 'more' ? `${t('tabs.more')} ${t('tabs.moreHint')}` : t(`tabs.${tab.key}`),
             tabBarButtonTestID: `tab-${tab.key}`,
             tabBarIcon: ({ color, focused }) => <Icon name={focused ? tab.icon : tab.iconOutline} size={24} color={String(color)} />,
           }}
@@ -92,6 +102,9 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
+  tabLabel: { ...TAB_LABEL, textAlign: 'center' },
+  // Present for screen readers and link text, invisible on screen.
+  visuallyHidden: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0 },
   tabBar: { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, elevation: 0, shadowOpacity: 0 },
   headerButton: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', marginStart: 6, marginEnd: 2 },
   // The language button ends on the same line as the screen content below it.

@@ -1,6 +1,36 @@
 # Final report
 
-State of ReSource on October 13, 2026, on branch `fix-round`. Written for Rohin. It says what was done, what was checked and how, what was not checked, and what to do next, in order.
+State of ReSource on October 14, 2026, on branch `fix-round`. Written for Rohin. It says what was done, what was checked and how, what was not checked, and what to do next, in order. The design pass of October 14 is described first; everything after it is from October 13 unless marked.
+
+## Design pass, October 14
+
+The app worked but looked like a template. It now looks like a careful public document about Fremont's money. The reasons for each choice are in `docs/DECISIONS.md` under "Design".
+
+| Step | What changed | Commit |
+| --- | --- | --- |
+| 1. Foundations | Fraunces (one weight) for headlines and large figures, Inter cut to two weights. Warm paper background, ink text, thin rules instead of card shadows. Fonts declared in `app/public/index.html`, so the page no longer waits for them. Credits and `docs/LICENSES.md` updated. | `6f3cfc4` |
+| 2. Home | The hero is the FY 2026/27 General Fund, $289.1M of $427.1M across all funds, with a labeled bar of where it goes (Police 45%, Fire 27%, Maintenance 15%, Other 13%) and links to pages 2 and 7 of the City's presentation. "What changed for me?" is the one gold button. "At a glance" became "What has been cut so far": 7 of 11 services reduced or closed, $3.8M and $3M with their sources. A count of zero (such as verified reports today) is not shown. Home copy rewritten in all five languages. | `eb31595` |
+| 3. Fremont identity | Line drawings of Mission Peak, the NILES sign above Niles, and Lake Elizabeth, each loaded separately. Every icon is now one line set (Lucide, ISC license), drawn as SVG; the 1 MB Material icon font is gone. | `31d51b4` |
+| 4. Map and the rest | The red map was the test suite's stand-in tile, a 1×1 image stretched over the map; screenshots now use the real map. Map tiles now send the site's address, which OpenStreetMap requires. A failed tile is hidden and a note appears; tiles are shown in warm greys; nearby pins are grouped with a count. What Changed for Me, Budget (including a drawn timeline), Resources, Alerts, Ask and More use the new type, rules and spacing. The bar and figures animate briefly, never with reduced motion. | `960e4e6` |
+| 5. Verification | The checks below, screenshots regenerated, docs updated. | this commit |
+
+Verified on October 14, 2026:
+
+| What | Command | Result |
+| --- | --- | --- |
+| Types, lint, translations, contrast, alt text, storage, claims, unit tests | `cd app && npm run check` | Exit 0. 5 languages × 625 keys; 25 contrast pairs; 6 images and drawings; 68 files against 18 claim rules; 17 unit tests |
+| End-to-end and axe, against the production build and the real API | `npm run build:web && npm run e2e` | 45 passed, 2 skipped by design (the screenshot tests); 0 serious or critical axe violations, including right-to-left |
+| Backend tests (unchanged code; one test pins lines of `community.tsx`) | `cd backend && .venv/bin/python -m pytest -q` | 138 passed |
+| Lighthouse 12, Home, phone profile, old and new builds on the same machine | `npx lighthouse http://localhost:4173/` | Before (`ed7e7b9`): Performance 56, 66, 70. After: 79, 80, 80. Accessibility, Best Practices and SEO 100 |
+| Lighthouse 12, What Changed for Me and Budget | same | Phone 73 and 69; desktop 98 to 99 on all three |
+| Screenshots | `npm run screenshots` | 46 images, online, with real map tiles |
+
+Not verified in the design pass:
+
+- **Phones.** Fraunces, the SVG icons and drawings use `react-native-svg` and `expo-font`, which run on iOS and Android, but no phone build was made. On phones, pins at one address are still spread in a ring, not grouped.
+- **The drawings' accuracy.** They were drawn from general knowledge of the places, not traced from photographs. Look at them as someone who knows Fremont.
+- **The new Home copy in Spanish, Dari, Vietnamese and Chinese.** Written by an AI model, like the rest of the translations.
+- **Real-world map traffic.** OpenStreetMap's public tile server is for light use; set `EXPO_PUBLIC_MAP_TILE_URL` before a launch.
 
 ## The three things to know first
 
@@ -50,11 +80,10 @@ All run on October 13, 2026 on macOS.
 - **The 2026 contest rulebook PDF.** It could not be read. The AI rule is from search results quoting the 2025 rules; the video and form requirements are from the CA-17 page.
 - **Codex's backend security fixes**, beyond the passing test suite and their commit messages.
 - **That every source page still says what the data says.** They were read on October 12 and not re-opened.
-- **The licenses of Inter's modified copies and of the icon set** (see `docs/LICENSES.md`).
 
 ## Known limitations
 
-1. Load time on a slow phone is the weakest measurement (Lighthouse Performance 66 to 70).
+1. Load time on a slow phone is the weakest measurement (Lighthouse Performance 69 to 80 on the phone profile, after the design pass).
 2. Open security findings: S4, S9, S11, S13 and parts of S12, S14, S15 (`docs/SECURITY.md`).
 3. The data is a hand-entered snapshot from October 12, 2026. Nothing updates it.
 4. Email alerts are switched off. Notifications only fire when the app is opened.
