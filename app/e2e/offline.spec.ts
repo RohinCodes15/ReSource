@@ -15,8 +15,9 @@ test('offline: a banner appears and every screen still shows content', async ({ 
   const errors = trackErrors(page, NETWORK_NOISE);
   await open(page, '/');
   await expect(v(page, 'offline-banner')).toContainText('Offline mode');
-  await expect(v(page, 'stat-tracked-value')).toHaveText('11');
-  await expect(v(page, 'stat-reports-value')).toHaveText('—'); // never a made-up number
+  await expect(v(page, 'stat-reduced')).toContainText('of the 11 City services');
+  await expect(page.locator('[data-testid="stat-reports"]')).toHaveCount(0); // never a made-up number
+  await expect(v(page, 'home-hero-value')).toHaveText('$289.1M'); // the hero needs no connection
   for (const [path, name] of ROUTES) {
     await open(page, path);
     await expect(page.locator('[data-testid="error-state"]:visible:not([inert] *)'), name).toHaveCount(0);

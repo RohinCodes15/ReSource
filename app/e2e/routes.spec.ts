@@ -82,8 +82,22 @@ test('home shows real counts from the database and the independent-project notic
   await prepare(page);
   const stats = await (await request.get('http://localhost:8000/stats')).json();
   await open(page, '/');
-  await expect(v(page, 'stat-tracked-value')).toHaveText(String(stats.services_tracked));
-  await expect(v(page, 'stat-resources-value')).toHaveText(String(stats.resources));
-  await expect(v(page, 'stat-reports-value')).toHaveText(String(stats.reports_verified));
+  await expect(v(page, 'stat-reduced-value')).toHaveText(String(stats.services_reduced + stats.services_closed));
+  await expect(v(page, 'stat-reduced')).toContainText(`of the ${stats.services_tracked} City services`);
+  await expect(v(page, 'stat-resources-value')).toContainText(String(stats.resources));
+  // A count of zero says nothing to a resident, so it is not shown at all.
+  if (stats.reports_verified > 0) await expect(v(page, 'stat-reports-value')).toHaveText(String(stats.reports_verified));
+  else await expect(page.locator('[data-testid="stat-reports"]')).toHaveCount(0);
   await expect(v(page, 'independent-notice')).toContainText('not an official City of Fremont service');
+});
+
+test('home leads with the General Fund figure, its source, and where it goes', async ({ page }) => {
+  await prepare(page);
+  await open(page, '/');
+  await expect(v(page, 'home-hero-value')).toHaveText('$289.1M');
+  await expect(v(page, 'home-hero')).toContainText('$427.1M');
+  await expect(v(page, 'home-hero').getByRole('link', { name: /Proposed Budget presentation, May 12, 2026, page 7/ })).toBeVisible();
+  for (const [label, percent] of [['Police', 45], ['Fire', 27], ['Maintenance', 15], ['Other', 13]]) {
+    await expect(v(page, 'home-shares')).toContainText(`${label}${percent}%`);
+  }
 });
