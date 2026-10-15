@@ -658,7 +658,9 @@
     "signedInAs": "Sesión iniciada como {{email}}",
     "signOut": "Cerrar sesión",
     "signedOut": "Cerró la sesión.",
-    "webOnly": "Iniciar sesión con un enlace por correo solo funciona en la versión web de ReSource. No necesita una cuenta: todo en esta aplicación funciona sin ella."
+    "webOnly": "Iniciar sesión con un enlace por correo solo funciona en la versión web de ReSource. No necesita una cuenta: todo en esta aplicación funciona sin ella.",
+    "google": "Continuar con Google",
+    "googleFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo."
   },
   "storage": {
     "bannerTitle": "Almacenamiento en su dispositivo",
