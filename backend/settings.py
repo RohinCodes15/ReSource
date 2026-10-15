@@ -22,7 +22,7 @@ load_dotenv(BACKEND_DIR.parent / ".env")
 # Bumped whenever the Privacy Policy or Terms change; stored with each consent record.
 POLICY_VERSION = "2026-10-12"
 DEFAULT_CORS = "http://localhost:8081,http://localhost:19006,http://localhost:3000"
-DEFAULT_MODEL = "claude-opus-5-5"
+DEFAULT_MODEL = "claude-haiku-5-5"
 
 
 def _flag(name: str, default: bool = False) -> bool:
@@ -44,6 +44,7 @@ class Settings:
     state_dir: Path
     trust_proxy: bool
     rate_limit_enabled: bool
+    chat_global_daily_limit: int
     smtp_host: str
     smtp_port: int
     smtp_user: str
@@ -62,7 +63,8 @@ class Settings:
 
     @property
     def email_enabled(self) -> bool:
-        return bool(self.smtp_host and self.email_from and self.public_api_url)
+        # No sender or double opt-in exists. The subscription endpoint is disabled too.
+        return False
 
 
 def _owner_salt(state_dir: Path, service_role_key: str) -> str:
@@ -90,6 +92,9 @@ def _owner_salt(state_dir: Path, service_role_key: str) -> str:
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    chat_global_daily_limit = int(os.getenv("CHAT_GLOBAL_DAILY_LIMIT", "2000"))
+    if chat_global_daily_limit < 1:
+        raise ValueError("CHAT_GLOBAL_DAILY_LIMIT must be a positive integer")
     state_dir = Path(os.getenv("LOCAL_STATE_DIR", BACKEND_DIR / ".local_state"))
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     origins = tuple(o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", DEFAULT_CORS).split(",") if o.strip())
@@ -106,6 +111,7 @@ def get_settings() -> Settings:
         state_dir=state_dir,
         trust_proxy=_flag("TRUST_PROXY"),
         rate_limit_enabled=_flag("RATE_LIMIT_ENABLED", True),
+        chat_global_daily_limit=chat_global_daily_limit,
         smtp_host=os.getenv("SMTP_HOST", "").strip(),
         smtp_port=int(os.getenv("SMTP_PORT", "587") or 587),
         smtp_user=os.getenv("SMTP_USER", "").strip(),

@@ -3,20 +3,24 @@ from __future__ import annotations
 
 import io
 import uuid
+import warnings
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
+from community_guard import guard
 from moderation import clean_text, needs_review, scrub_pii
 from routers.public import public_row
 from schemas import FeedbackIn, PostIn, ReportIn
-from security import rate_limit, require_owner
+from security import client_fingerprint, rate_limit, require_owner
 from settings import POLICY_VERSION
-from store import Row, get_store, now_iso
+from store import Row, StoreError, get_store, now_iso
 
 router = APIRouter(tags=["contribute"])
 
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
+# A small file can still decode to a huge bitmap (one flat color compresses to almost nothing).
+MAX_PHOTO_PIXELS = 25_000_000
 PHOTO_FORMATS = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}
 FLAGS_BEFORE_REVIEW = 3
 
@@ -38,12 +42,18 @@ def create_report(report: ReportIn, request: Request) -> Row:
     owner = require_owner(request)
     store = get_store()
     service_name = clean_text(report.service_name)
+    name_removed = []
     if report.service_id:
         service = store.get("services", report.service_id)
         if service is None:
             raise HTTPException(status_code=422, detail="unknown_service")
         service_name = service["name"]
+    else:
+        service_name, name_removed = scrub_pii(service_name)
+        service_name = service_name[:160]
     description, removed = scrub_pii(clean_text(report.description))
+    removed = list(dict.fromkeys([*name_removed, *removed]))
+    description = description[:1000]
     row = store.insert("reports", {
         "service_id": report.service_id,
         "service_name": service_name,
@@ -67,7 +77,7 @@ def my_reports(request: Request) -> list[Row]:
 
 
 @router.post("/reports/{report_id}/photo", dependencies=[Depends(rate_limit("photo", 10, 3600))])
-async def attach_photo(report_id: str, request: Request, photo: UploadFile = File(...)) -> dict[str, Any]:
+def attach_photo(report_id: str, request: Request, photo: UploadFile = File(...)) -> dict[str, Any]:
     """Optional photo for a report the caller just filed. JPEG, PNG or WebP, at most 5 MB.
 
     The image is decoded and re-encoded as JPEG, which removes embedded metadata such as the
@@ -78,19 +88,28 @@ async def attach_photo(report_id: str, request: Request, photo: UploadFile = Fil
     report = store.get("reports", report_id)
     if report is None or report.get("owner_hash") != owner:
         raise HTTPException(status_code=404, detail="report_not_found")
-    data = await photo.read(MAX_PHOTO_BYTES + 1)
+    # A plain `def`: FastAPI runs it in a worker thread, so decoding does not stall other requests.
+    data = photo.file.read(MAX_PHOTO_BYTES + 1)
     if len(data) > MAX_PHOTO_BYTES:
         raise HTTPException(status_code=413, detail="photo_too_large")
     try:
         from PIL import Image, ImageOps
 
-        image = Image.open(io.BytesIO(data))
+        Image.MAX_IMAGE_PIXELS = MAX_PHOTO_PIXELS
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            image = Image.open(io.BytesIO(data))
         if image.format not in PHOTO_FORMATS:
             raise ValueError(image.format)
+        # The size comes from the file header, before any pixels are decoded.
+        if image.width * image.height > MAX_PHOTO_PIXELS:
+            raise HTTPException(status_code=413, detail="photo_too_large")
         image = ImageOps.exif_transpose(image).convert("RGB")
         image.thumbnail((1600, 1600))
         buffer = io.BytesIO()
         image.save(buffer, format="JPEG", quality=82)
+    except (Image.DecompressionBombWarning, Image.DecompressionBombError) as exc:
+        raise HTTPException(status_code=413, detail="photo_too_large") from exc
     except HTTPException:
         raise
     except Exception as exc:
@@ -144,11 +163,17 @@ def toggle_vote(post_id: str, request: Request) -> dict[str, Any]:
     post = store.get("posts", post_id)
     if post is None or post.get("status") != "approved":
         raise HTTPException(status_code=404, detail="post_not_found")
+    guard.record("vote", post_id, client_fingerprint(request), owner)
     already = store.count("post_votes", {"post_id": post_id, "owner_hash": owner}) > 0
     if already:
         store.delete("post_votes", {"post_id": post_id, "owner_hash": owner})
     else:
-        store.insert("post_votes", {"post_id": post_id, "owner_hash": owner})
+        try:
+            store.insert("post_votes", {"post_id": post_id, "owner_hash": owner})
+        except StoreError:
+            # Two taps arrived together and the other one stored the vote first (unique key).
+            if store.count("post_votes", {"post_id": post_id, "owner_hash": owner}) == 0:
+                raise
     upvotes = store.count("post_votes", {"post_id": post_id})
     store.update("posts", post_id, {"upvotes": upvotes})
     return {"id": post_id, "upvotes": upvotes, "voted": not already}
@@ -156,15 +181,20 @@ def toggle_vote(post_id: str, request: Request) -> dict[str, Any]:
 
 @router.post("/posts/{post_id}/flag", dependencies=[Depends(rate_limit("flag", 10, 3600))])
 def flag_post(post_id: str, request: Request) -> dict[str, Any]:
-    """Report abuse. After three different people flag a post it is hidden until reviewed."""
+    """Hold a post only after flags from three distinct owners AND network buckets."""
     owner = require_owner(request)
     store = get_store()
     post = store.get("posts", post_id)
     if post is None:
         raise HTTPException(status_code=404, detail="post_not_found")
     if store.count("post_flags", {"post_id": post_id, "owner_hash": owner}) == 0:
-        store.insert("post_flags", {"post_id": post_id, "owner_hash": owner})
-    flags = store.count("post_flags", {"post_id": post_id})
+        try:
+            store.insert("post_flags", {"post_id": post_id, "owner_hash": owner})
+        except StoreError:
+            # The same flag arrived twice at once and the other request stored it (unique key).
+            if store.count("post_flags", {"post_id": post_id, "owner_hash": owner}) == 0:
+                raise
+    flags = guard.record("flag", post_id, client_fingerprint(request), owner)
     if flags >= FLAGS_BEFORE_REVIEW and post.get("status") == "approved":
         store.update("posts", post_id, {"status": "pending"})
     return {"id": post_id, "flagged": True}

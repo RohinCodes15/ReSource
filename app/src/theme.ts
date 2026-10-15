@@ -8,12 +8,12 @@
  *   - `borderStrong` is for the edge of anything a person operates (inputs, checkboxes).
  */
 export const colors = {
-  // Brand
+  // Brand. Navy carries the app; gold is kept for the one main action on a screen and small accents.
   navy: '#1B3A6B',
   navyDark: '#12284B',
-  navyLight: '#EAF0F8',
+  navyLight: '#E8EDF4',
   gold: '#F5A623',
-  goldLight: '#FEF3DC',
+  goldLight: '#FBEFD5',
   goldDark: '#7A4F00',
   // Status: the *Dark shades are for text and icons, the base shades for fills.
   success: '#22C55E',
@@ -25,21 +25,23 @@ export const colors = {
   danger: '#EF4444',
   dangerLight: '#FEE2E2',
   dangerDark: '#B91C1C',
-  // Surfaces and text
-  background: '#F8F9FC',
-  surface: '#FFFFFF',
-  text: '#0F172A',
-  muted: '#55637A',
-  border: '#E2E8F0',
-  borderStrong: '#7B8AA0',
+  // Surfaces and text: warm paper, ink, and hairline rules in place of shadows.
+  background: '#F6F2E9',
+  surface: '#FFFDF8',
+  text: '#1A2233',
+  muted: '#575C66',
+  border: '#DCD3C1',
+  /** A slightly darker hairline for rules that separate sections. Decorative, so no contrast minimum. */
+  rule: '#C9BFAB',
+  borderStrong: '#857C6C',
   white: '#FFFFFF',
   onNavyMuted: '#C9D6EA',
-  overlay: 'rgba(15, 23, 42, 0.55)',
+  overlay: 'rgba(26, 34, 51, 0.55)',
 } as const;
 
-/** Spacing scale: 4, 8, 12, 16, 20, 24, 32, 48. */
-export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 48 } as const;
-export const radius = { sm: 8, md: 12, lg: 16, xl: 20, pill: 999 } as const;
+/** Spacing scale: 4, 8, 12, 16, 20, 24, 32, 48, 64. */
+export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32, huge: 48, giant: 64 } as const;
+export const radius = { sm: 6, md: 10, lg: 14, xl: 20, pill: 999 } as const;
 
 /** Every screen uses the same horizontal padding. */
 export const SCREEN_PADDING = spacing.lg;
@@ -47,40 +49,53 @@ export const MAX_CONTENT_WIDTH = 820;
 /** Smallest comfortable tap target (WCAG 2.5.5 / platform guidelines). */
 export const MIN_TOUCH = 44;
 
-/** Inter, bundled with the app and loaded in app/src/app/_layout.tsx. Pick the weight by family. */
+/**
+ * Two families, three files. Fraunces (one weight) sets headlines and big figures; Inter (regular
+ * and semibold) sets everything else. On the web the files are declared in public/index.html;
+ * on phones they are loaded in app/src/app/_layout.tsx. See docs/LICENSES.md.
+ */
 export const fonts = {
+  display: 'Fraunces_600SemiBold',
   regular: 'Inter_400Regular',
-  medium: 'Inter_500Medium',
   semibold: 'Inter_600SemiBold',
-  bold: 'Inter_700Bold',
 } as const;
 
-/** Type scale. Sizes are multiplied by the person's text-size setting inside <AppText>. */
+/**
+ * Type scale. `fontWeight` repeats what the family name says: neither family has Persian or
+ * Chinese glyphs, so those scripts fall back to a system font, which only knows the weight.
+ * Sizes are multiplied by the person's text-size setting inside <AppText>.
+ */
 export const type = {
-  h1: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.6, color: colors.text },
-  h2: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 28, letterSpacing: -0.3, color: colors.text },
-  h3: { fontFamily: fonts.semibold, fontSize: 18, lineHeight: 24, color: colors.text },
-  h4: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, color: colors.text },
-  body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: colors.text },
-  bodySmall: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 21, color: colors.muted },
-  label: { fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20, color: colors.text },
-  caption: { fontFamily: fonts.medium, fontSize: 12, lineHeight: 17, color: colors.muted },
+  /** The one big figure on a screen. */
+  display: { fontFamily: fonts.display, fontWeight: '600', fontSize: 52, lineHeight: 58, letterSpacing: -1.2, color: colors.navy },
+  h1: { fontFamily: fonts.display, fontWeight: '600', fontSize: 32, lineHeight: 38, letterSpacing: -0.6, color: colors.text },
+  h2: { fontFamily: fonts.display, fontWeight: '600', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: colors.text },
+  h3: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 18, lineHeight: 24, color: colors.text },
+  h4: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 16, lineHeight: 22, color: colors.text },
+  body: { fontFamily: fonts.regular, fontWeight: '400', fontSize: 16, lineHeight: 24, color: colors.text },
+  bodySmall: { fontFamily: fonts.regular, fontWeight: '400', fontSize: 14, lineHeight: 21, color: colors.muted },
+  label: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 14, lineHeight: 20, color: colors.text },
+  caption: { fontFamily: fonts.regular, fontWeight: '400', fontSize: 12, lineHeight: 17, color: colors.muted },
+  /** Small capitals-style label above a section, like a ledger column head. */
+  eyebrow: { fontFamily: fonts.semibold, fontWeight: '600', fontSize: 12, lineHeight: 16, letterSpacing: 1.1, textTransform: 'uppercase', color: colors.muted },
 } as const;
 export type TextVariant = keyof typeof type;
 
-/** The one card shadow used everywhere. */
+/** Only for things that float above the page (sheets, the storage banner). Cards have no shadow. */
 export const shadow = {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.06,
-  shadowRadius: 12,
-  elevation: 3,
+  shadowColor: '#1A2233',
+  shadowOffset: { width: 0, height: 6 },
+  shadowOpacity: 0.12,
+  shadowRadius: 18,
+  elevation: 6,
 } as const;
 
+/** A quiet panel: a shade lighter than the paper, with a hairline edge. Used sparingly. */
 export const cardSurface = {
   backgroundColor: colors.surface,
-  borderRadius: radius.lg,
-  ...shadow,
+  borderRadius: radius.md,
+  borderWidth: 1,
+  borderColor: colors.border,
 } as const;
 
 export type StatusTone = { key: string; icon: 'check-circle' | 'minus-circle' | 'close-circle'; glyph: string; color: string; bg: string; text: string };
@@ -106,6 +121,7 @@ export const CONTRAST_PAIRS: { name: string; fg: string; bg: string; kind?: 'lar
   { name: 'muted text on card', fg: colors.muted, bg: colors.surface },
   { name: 'muted text on navy tint', fg: colors.muted, bg: colors.navyLight },
   { name: 'navy text on card', fg: colors.navy, bg: colors.surface },
+  { name: 'navy figure on background', fg: colors.navy, bg: colors.background },
   { name: 'navy text on navy tint', fg: colors.navy, bg: colors.navyLight },
   { name: 'white text on navy', fg: colors.white, bg: colors.navy },
   { name: 'white text on dark navy', fg: colors.white, bg: colors.navyDark },
@@ -114,6 +130,8 @@ export const CONTRAST_PAIRS: { name: string; fg: string; bg: string; kind?: 'lar
   { name: 'dark navy text on gold button', fg: colors.navyDark, bg: colors.gold },
   { name: 'dark gold text on card', fg: colors.goldDark, bg: colors.surface },
   { name: 'dark gold text on gold tint', fg: colors.goldDark, bg: colors.goldLight },
+  { name: 'dark gold text on background', fg: colors.goldDark, bg: colors.background },
+  { name: 'error text on background', fg: colors.dangerDark, bg: colors.background },
   { name: 'open status text', fg: colors.successDark, bg: colors.successLight },
   { name: 'reduced status text', fg: colors.warningDark, bg: colors.warningLight },
   { name: 'closed status text', fg: colors.dangerDark, bg: colors.dangerLight },

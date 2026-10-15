@@ -8,14 +8,19 @@ Needs two environment variables (put them in the project's .env file):
     SUPABASE_SERVICE_ROLE_KEY   server-side key; never ship it in the mobile app
 
 Run:
-    python scraper/upload_to_supabase.py --dry-run   # show what would change, write nothing
-    python scraper/upload_to_supabase.py
+    python scraper/upload_to_supabase.py            # show what would change, write nothing
+    python scraper/upload_to_supabase.py --write    # write, after you checked every row by hand
+
+The parser's output is a best guess from PDF text, and its map position is a City Hall
+placeholder. Nothing here may reach the public table until a person has checked each row
+against the source document, which is why writing has to be asked for.
 """
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -52,8 +57,10 @@ def load_records() -> list[dict]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Upsert parsed budget cuts into Supabase.")
-    parser.add_argument("--dry-run", action="store_true", help="report what would change without writing")
+    parser.add_argument("--write", action="store_true", help="write to Supabase (default: only report what would change)")
+    parser.add_argument("--dry-run", action="store_true", help="the default; kept so older commands still work")
     args = parser.parse_args()
+    args.dry_run = args.dry_run or not args.write
 
     records = load_records()
     if not records:
@@ -61,7 +68,8 @@ def main() -> int:
         return 0
     db = connect()
 
-    # The table's only unique key is its generated id, so match existing rows by name.
+    # `services.id` is a text key with no default. Existing rows are matched by name; a new row
+    # gets an id made from its name.
     existing = db.table(TABLE).select("id,name").execute().data or []
     id_by_name = {row["name"].strip().lower(): row["id"] for row in existing}
 
@@ -76,7 +84,8 @@ def main() -> int:
                 if row_id:
                     db.table(TABLE).update(record).eq("id", row_id).execute()
                 else:
-                    db.table(TABLE).insert(record).execute()
+                    slug = re.sub(r"[^a-z0-9]+", "-", record["name"].lower()).strip("-")[:48]
+                    db.table(TABLE).insert({"id": f"svc-{slug}", **record}).execute()
             except Exception as exc:
                 failed += 1
                 print(f"failed to {action} {record['name']}: {exc}", file=sys.stderr)

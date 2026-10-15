@@ -41,6 +41,39 @@ test('axe: dialogs and right-to-left pass too', async ({ page }) => {
   }
 });
 
+test('axe: screens that only appear after an action pass too', async ({ page }) => {
+  await prepare(page);
+  const serious = async (label: string) => {
+    const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).exclude('.leaflet-pane').analyze();
+    return results.violations.filter((item) => item.impact === 'serious' || item.impact === 'critical').map((item) => `${label}: ${item.id}: ${item.nodes[0].html.slice(0, 160)}`);
+  };
+  const found: string[] = [];
+
+  await open(page, '/for-me');
+  await v(page, 'interest-parks').click();
+  await v(page, 'interest-kids').click();
+  await v(page, 'interest-health').click();
+  await v(page, 'for-me-show').click();
+  await expect(v(page, 'for-me-results')).toBeVisible();
+  found.push(...(await serious('for-me results')));
+
+  await open(page, '/chat');
+  await v(page, 'suggestion-s2').click();
+  await expect(v(page, 'chat-sources')).toBeVisible();
+  found.push(...(await serious('chat answer')));
+
+  await open(page, '/report');
+  await v(page, 'report-next').click(); // shows the validation message
+  found.push(...(await serious('report error')));
+
+  await open(page, '/map');
+  await v(page, 'map-filter-reduced').click();
+  await page.getByRole('radio', { name: 'List' }).click();
+  found.push(...(await serious('map list')));
+
+  expect(found, found.join('\n')).toEqual([]);
+});
+
 test('text can be enlarged to 200% without losing content', async ({ page }) => {
   await prepare(page);
   // A 640px-wide window at 200% zoom has the same layout as a 320px-wide one (WCAG 1.4.10).
