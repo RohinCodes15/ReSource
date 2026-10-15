@@ -56,3 +56,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Browser-automation scratch files
+.playwright-mcp/
