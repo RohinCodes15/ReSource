@@ -204,7 +204,8 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
     items: [
       { name: 'Fraunces', use: 'Headlines and large figures. One weight, cut down to Latin and Vietnamese letters and bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/undercasetype/Fraunces' },
       { name: 'Inter', use: 'Body text, labels and buttons, in two weights, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
-      { name: 'Material Design Icons', use: 'All icons, through @expo/vector-icons.', license: 'Apache License 2.0', url: 'https://pictogrammers.com/library/mdi/' },
+      { name: 'Lucide icons', use: 'Every icon in the app, drawn from Lucide 1.57.0 (some derived from Feather). Copied into the app as drawing data, so no icon font is downloaded.', license: 'ISC License (Feather parts: MIT License)', url: 'https://lucide.dev/license' },
+      { name: 'Drawings of Fremont places', use: 'Mission Peak, the NILES sign above Niles, and Lake Elizabeth in Central Park, in headers and empty lists. Drawn for this project.', license: 'Part of ReSource, MIT License', url: 'https://github.com/RohinCodes15/ReSource' },
     ],
   },
   {
@@ -227,6 +228,7 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
     group: 'Software',
     items: [
       { name: 'Expo and React Native', use: 'The app framework.', license: 'MIT', url: 'https://expo.dev/' },
+      { name: 'react-native-svg', use: 'Draws the icons and illustrations on phones and the web.', license: 'MIT', url: 'https://github.com/software-mansion/react-native-svg' },
       { name: 'FastAPI', use: 'The server framework.', license: 'MIT', url: 'https://fastapi.tiangolo.com/' },
       { name: 'Supabase client libraries', use: 'Database, storage and optional sign-in.', license: 'MIT', url: 'https://supabase.com/' },
       { name: 'Anthropic SDK and Claude', use: 'The assistant\'s AI model, used under Anthropic\'s terms.', license: 'MIT (SDK)', url: 'https://www.anthropic.com/' },

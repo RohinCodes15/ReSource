@@ -166,7 +166,7 @@ export default function MapScreen() {
           keyExtractor={(s) => s.id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={controls}
-          ListEmptyComponent={<EmptyState icon="map-search-outline" title={t('map.none')} body={t('map.noneBody')} />}
+          ListEmptyComponent={<EmptyState art="niles" icon="map-search-outline" title={t('map.none')} body={t('map.noneBody')} />}
           ListFooterComponent={<Footer />}
           renderItem={({ item }) => (
             <Card style={styles.listCard}>

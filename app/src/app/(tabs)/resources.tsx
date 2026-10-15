@@ -157,7 +157,7 @@ export default function ResourcesScreen() {
         ListEmptyComponent={
           loading ? <View style={styles.pad}><LoadingList /></View>
             : error ? <ErrorState onRetry={reload} />
-              : <EmptyState icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
+              : <EmptyState art="niles" icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
         }
         ListFooterComponent={<View style={styles.pad}><Footer /></View>}
         renderItem={({ item }) => <ResourceCard item={item} saved={favorites.includes(item.id)} onShared={setNotice} />}

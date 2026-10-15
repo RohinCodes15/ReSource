@@ -1,23 +1,39 @@
 /** Shared building blocks used by every screen, so text, cards, buttons and fields look and behave the same. */
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ComponentProps, PropsWithChildren, ReactNode, useEffect, useId, useState } from 'react';
+import { PropsWithChildren, ReactNode, useEffect, useId, useState } from 'react';
 import {
   AccessibilityInfo, ActivityIndicator, Animated, Platform, Pressable, StyleProp, StyleSheet, Text, TextInput, TextStyle, View, ViewStyle,
 } from 'react-native';
+import Svg, { Circle, Ellipse, Line, Path, Polygon, Polyline, Rect } from 'react-native-svg';
 import { formatDate, useTranslation } from '../lib/i18n';
 import { openUrl } from '../lib/platform';
 import { textScaleStore } from '../state/stores';
 import { cardSurface, colors, fonts, MIN_TOUCH, radius, spacing, statusTone, type, type TextVariant } from '../theme';
+import { ICONS, type IconName, type IconNode } from './icons';
+import { Illustration, type SceneName } from './illustrations';
 
-export type IconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
+export type { IconName };
+
+const ICON_PARTS: Record<IconNode[0], React.ComponentType<object>> = {
+  path: Path, circle: Circle, rect: Rect, line: Line, polyline: Polyline, polygon: Polygon, ellipse: Ellipse,
+} as never;
 
 /**
- * An icon from the bundled Material Design Icons font. Icons here are always decorative: the
- * label or text beside them carries the meaning, so the glyph is hidden from screen readers
- * (otherwise they would read out a private-use character).
+ * An icon from the app's one line set (Lucide, see icons.ts), drawn as SVG. Icons are always
+ * decorative here: the label or text beside them carries the meaning, so they are hidden from
+ * screen readers.
  */
-export function Icon(props: ComponentProps<typeof MaterialCommunityIcons>) {
-  return <MaterialCommunityIcons aria-hidden accessibilityElementsHidden importantForAccessibility="no" {...props} />;
+export function Icon({ name, size = 24, color = colors.text, style }: { name: IconName; size?: number; color?: string; style?: StyleProp<ViewStyle> }) {
+  const icon = ICONS[name] as { n: IconNode[]; b?: 1; f?: 1 };
+  return (
+    <View aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[{ width: size, height: size }, style]}>
+      <Svg width={size} height={size} viewBox="0 0 24 24" fill={icon.f ? color : 'none'} stroke={color} strokeWidth={icon.b ? 2.4 : 1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        {icon.n.map(([tag, attrs], i) => {
+          const Part = ICON_PARTS[tag];
+          return <Part key={i} {...attrs} />;
+        })}
+      </Svg>
+    </View>
+  );
 }
 
 /** Animations run on the native thread on phones; the web has no native driver. */
@@ -434,14 +450,14 @@ export function Banner({ tone = 'info', title, body, children, live, icon, testI
   );
 }
 
-/** Message for an empty list, with an optional action. */
-export function EmptyState({ icon, title, body, action }: { icon: IconName; title: string; body?: string; action?: ReactNode }) {
+/** Message for an empty list, with an optional action. `art` shows a drawing of a Fremont place instead of the icon. */
+export function EmptyState({ icon, art, title, body, action }: { icon: IconName; art?: SceneName; title: string; body?: string; action?: ReactNode }) {
   return (
     <View style={styles.empty} testID="empty-state">
-      <View style={styles.emptyIcon}><Icon name={icon} size={32} color={colors.navy} /></View>
-      <AppText variant="h4" center>{title}</AppText>
+      {art ? <Illustration name={art} width={216} height={126} /> : <View style={styles.emptyIcon}><Icon name={icon} size={32} color={colors.navy} /></View>}
+      <AppText variant="h2" center>{title}</AppText>
       {!!body && <AppText variant="bodySmall" center style={styles.emptyBody}>{body}</AppText>}
-      {action}
+      {!!action && <View style={styles.emptyAction}>{action}</View>}
     </View>
   );
 }
@@ -554,6 +570,7 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', paddingVertical: spacing.xxxl, paddingHorizontal: spacing.xl, gap: spacing.sm },
   emptyIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.sm },
   emptyBody: { maxWidth: 320, marginBottom: spacing.sm },
+  emptyAction: { alignSelf: 'center' },
   section: { gap: spacing.xs },
   source: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: 2 },
   segmented: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, padding: 3, alignSelf: 'flex-start' },
