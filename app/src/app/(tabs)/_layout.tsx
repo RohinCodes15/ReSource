@@ -49,7 +49,7 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerTitleAlign: 'left',
-        headerTitleStyle: { fontFamily: fonts.bold, fontSize: 18, color: colors.text },
+        headerTitleStyle: { fontFamily: fonts.display, fontWeight: '600', fontSize: 20, color: colors.text },
         // A long title shortens with "…" on a narrow phone and never runs under the language button.
         // The header reserves 52px for the right side, and the language button is wider than that.
         headerTitleContainerStyle: { flexShrink: 1, maxWidth: '100%' },
@@ -92,7 +92,7 @@ export default function TabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  tabBar: { backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border },
+  tabBar: { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, elevation: 0, shadowOpacity: 0 },
   headerButton: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', marginStart: 6, marginEnd: 2 },
   // The language button ends on the same line as the screen content below it.
   headerRight: { marginStart: spacing.sm, marginEnd: SCREEN_PADDING },

@@ -80,6 +80,8 @@ export function AppText({ variant = 'body', color, heading, center, style, live,
       style={[
         base,
         { fontSize: base.fontSize * scale, lineHeight: base.lineHeight * scale, writingDirection: isRTL ? 'rtl' : 'ltr' },
+        // Tracking pulls Persian letters apart and breaks their joins, so right-to-left text has none.
+        isRTL ? styles.noTracking : null,
         color ? { color } : null,
         center ? styles.center : null,
         style,
@@ -90,9 +92,20 @@ export function AppText({ variant = 'body', color, heading, center, style, live,
   );
 }
 
-/** White rounded card with the standard shadow. */
+/** A quiet panel a shade lighter than the page, with a hairline edge and no shadow. Use it for
+ *  things a person fills in or that must read as one unit; elsewhere prefer whitespace and <Rule>. */
 export function Card({ children, style, testID }: PropsWithChildren<{ style?: StyleProp<ViewStyle>; testID?: string }>) {
   return <View testID={testID} style={[styles.card, style]}>{children}</View>;
+}
+
+/** A thin horizontal line between sections, in place of a box around each one. */
+export function Rule({ strong, style }: { strong?: boolean; style?: StyleProp<ViewStyle> }) {
+  return <View aria-hidden style={[styles.rule, strong && styles.ruleStrong, style]} />;
+}
+
+/** The small spaced label above a section, like the head of a ledger column. */
+export function Eyebrow({ children, color, testID }: PropsWithChildren<{ color?: string; testID?: string }>) {
+  return <AppText variant="eyebrow" color={color} testID={testID}>{children}</AppText>;
 }
 
 /** Fades and slides its children in when the screen first shows (skipped with reduced motion). */
@@ -498,6 +511,9 @@ export function Segmented<T extends string>({ options, value, onChange, label }:
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
+  noTracking: { letterSpacing: 0 },
+  rule: { height: StyleSheet.hairlineWidth * 2, backgroundColor: colors.border },
+  ruleStrong: { height: 2, backgroundColor: colors.text },
   stack: { gap: spacing.md },
   stackSmall: { gap: spacing.sm },
   card: { ...cardSurface, padding: spacing.lg },
@@ -515,7 +531,7 @@ const styles = StyleSheet.create({
   iconAction: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
   iconActionGold: { backgroundColor: colors.goldLight },
   link: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', minHeight: 24, maxWidth: '100%' },
-  linkText: { textDecorationLine: 'underline', fontFamily: fonts.medium, flexShrink: 1 },
+  linkText: { textDecorationLine: 'underline', flexShrink: 1 },
   chip: { minHeight: MIN_TOUCH, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong, flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipOn: { backgroundColor: colors.navy, borderColor: colors.navy },
   field: { gap: 6 },

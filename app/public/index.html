@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>%WEB_TITLE%</title>
+    <!--
+      The app's three font files, served from public/fonts. Declared here rather than loaded from
+      JavaScript so the page can paint text straight away in a fallback font and swap when they
+      arrive (font-display: swap). The two used above the fold on Home are preloaded.
+      Licenses: docs/LICENSES.md.
+    -->
+    <link rel="preload" href="/fonts/Inter_400Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/Fraunces_600SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <style id="resource-fonts">
+      @font-face { font-family: 'Inter_400Regular'; src: url('/fonts/Inter_400Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'Inter_600SemiBold'; src: url('/fonts/Inter_600SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+      @font-face { font-family: 'Fraunces_600SemiBold'; src: url('/fonts/Fraunces_600SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+    </style>
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+        background: #F6F2E9;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Use static rendering with Expo Router to support running without JavaScript. -->
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <!-- The root element for your Expo app. -->
+    <div id="root"></div>
+  </body>
+</html>

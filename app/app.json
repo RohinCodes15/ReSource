@@ -26,7 +26,7 @@
       "output": "single",
       "favicon": "./assets/favicon.png",
       "themeColor": "#1B3A6B",
-      "backgroundColor": "#F8F9FC"
+      "backgroundColor": "#F6F2E9"
     },
     "plugins": [
       [
