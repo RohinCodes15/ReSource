@@ -9,7 +9,8 @@
     "resources": "منابع",
     "alerts": "هشدارها",
     "chat": "بپرسید",
-    "more": "بیشتر"
+    "more": "بیشتر",
+    "moreHint": "صفحه‌ها و تنظیمات"
   },
   "titles": {
     "home": "ReSource",

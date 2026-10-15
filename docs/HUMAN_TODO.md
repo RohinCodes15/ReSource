@@ -10,7 +10,7 @@ Things only the project's creator can do. They are in the order to do them. Noth
    - the sentence about an unsubscribe link in alert emails, which describes a feature that is switched off.
 2. **Bump the policy version.** The policy text changed on October 13, 2026. Set `POLICY_VERSION` and `POLICY_EFFECTIVE_DATE` to the review date in `shared/constants.ts` and `POLICY_VERSION` in `backend/settings.py`, together.
 3. **Confirm the license.** `LICENSE` is MIT in your name because the Credits screen says so. Change both if you want a different license.
-4. **Read the Inter font license** in `app/node_modules/@expo-google-fonts/inter/` and confirm a modified copy may keep the name "Inter". The web build uses cut-down copies in `app/assets/fonts/`.
+4. **Font licenses: checked, nothing to do unless you want to confirm.** On October 14, 2026 the license files of Inter (`LICENSE_FONT` in `@expo-google-fonts/inter`) and Fraunces (`OFL.txt` from Google Fonts) were read: neither declares a Reserved Font Name, so the cut-down copies in `app/public/fonts/` and `app/assets/fonts/` may keep their names. The license texts sit beside the files.
 5. **Have native speakers review the Dari, Chinese and Vietnamese text**, and ideally the Spanish. `docs/I18N_REVIEW.md` says what to read first. Until then the language list in the app tells people the translations are unreviewed.
 6. **Re-check every source.** Open each address in `docs/DATA_SOURCES.md`, confirm the app still matches it, and update the `retrieved` dates.
 
