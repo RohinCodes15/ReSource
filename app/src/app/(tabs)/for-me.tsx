@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import type { Service } from '../../../../shared/types';
 import { LocationChip } from '../../components/LocationChip';
 import { Screen } from '../../components/Page';
-import { AppButton, AppText, Banner, Card, Chip, type IconName, LinkText, LoadingList, Pill, SourceLine, StatusBadge } from '../../components/ui';
+import { AppButton, AppText, Banner, Chip, FadeIn, type IconName, LinkText, LoadingList, Pill, Section, SourceLine, StatusBadge } from '../../components/ui';
 import { bundledResources, bundledServices } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getResources, getServices } from '../../lib/api';
@@ -76,37 +76,35 @@ export default function ForMeScreen() {
 
   return (
     <Screen title={t('titles.forMe')} testID="for-me-screen">
-      <AppText color={colors.text}>{t('forMe.intro')}</AppText>
+      <AppText color={colors.text} style={styles.intro}>{t('forMe.intro')}</AppText>
 
-      <Card style={styles.block}>
-        <AppText variant="h3" heading={2}>{t('forMe.step1')}</AppText>
-        <AppText variant="bodySmall" color={colors.text}>{t('forMe.areaHelp')}</AppText>
+      <Section title={t('forMe.step1')} subtitle={t('forMe.areaHelp')}>
         <LocationChip />
-      </Card>
+      </Section>
 
-      <Card style={styles.block}>
-        <AppText variant="h3" heading={2}>{t('forMe.step2')}</AppText>
+      <Section title={t('forMe.step2')}>
         <View style={styles.chips} role="group" accessibilityLabel={t('forMe.interestsLabel')}>
           {INTERESTS.map((interest) => (
             <Chip key={interest} label={t(`forMe.interest_${interest}`)} icon={ICONS[interest]} selected={picked.includes(interest)} onPress={() => toggle(interest)} testID={`interest-${interest}`} />
           ))}
         </View>
         {touched && picked.length === 0 && <AppText variant="caption" color={colors.dangerDark} live="polite" testID="for-me-error">{t('forMe.pickOne')}</AppText>}
-        <AppButton variant="gold" icon="text-box-search" label={t('forMe.show')} onPress={show} testID="for-me-show" />
-      </Card>
+        <AppButton variant="gold" icon="text-box-search" label={t('forMe.show')} onPress={show} style={styles.primary} testID="for-me-show" />
+      </Section>
 
       {shown && (services.loading || resources.loading) && <LoadingList />}
       {shown && !services.loading && !resources.loading && (
-        <View style={styles.block} testID="for-me-results">
-          <AppText variant="h2" heading={2}>{t('forMe.resultsTitle')}</AppText>
+        <FadeIn style={styles.block} testID="for-me-results">
+          <View style={styles.resultsHead}>
+            <AppText variant="h1" heading={2}>{t('forMe.resultsTitle')}</AppText>
+          </View>
           {/* Announced when the summary appears; a heading cannot also be a live region. */}
           <AppText variant="caption" live="polite">{t('forMe.cardArea', { area: tx('area', area ?? 'citywide') })}</AppText>
           {(services.bundled || resources.bundled) && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
           <Banner tone="info" icon="translate" body={t('forMe.englishNote')} />
 
           {sections.map((section) => (
-            <Card key={section.key} style={styles.block} testID={`for-me-section-${section.key}`}>
-              <AppText variant="h3" heading={3}>{sectionTitle(section.key)}</AppText>
+            <Section key={section.key} title={sectionTitle(section.key)} level={3} testID={`for-me-section-${section.key}`}>
               {section.key === 'transit' && <AppText variant="bodySmall" color={colors.text}>{t('forMe.transitNote')}</AppText>}
               {section.noData && <AppText variant="bodySmall" color={colors.text} testID={`for-me-nodata-${section.key}`}>{t('forMe.noData')}</AppText>}
               {!section.noData && section.changed.length === 0 && <AppText variant="bodySmall" color={colors.text} testID={`for-me-nochange-${section.key}`}>{t('forMe.noChange')}</AppText>}
@@ -142,20 +140,23 @@ export default function ForMeScreen() {
                   />
                 </View>
               )}
-            </Card>
+            </Section>
           ))}
 
           <AppText variant="caption">{t('forMe.cardPrivacy')}</AppText>
           <AppButton variant="navy" icon={Platform.OS === 'web' ? 'printer' : 'share-variant'} label={t(Platform.OS === 'web' ? 'forMe.print' : 'forMe.share')} onPress={makeCard} testID="for-me-card" />
           {notice && <Banner tone="info" body={notice} live />}
-        </View>
+        </FadeIn>
       )}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  block: { gap: spacing.md },
+  intro: { maxWidth: 600 },
+  block: { gap: spacing.xl },
+  primary: { alignSelf: 'flex-start', paddingHorizontal: spacing.xxl },
+  resultsHead: { paddingTop: spacing.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   item: { gap: spacing.xs, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },

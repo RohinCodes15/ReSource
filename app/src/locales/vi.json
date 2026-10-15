@@ -258,14 +258,16 @@
     "count": "Đang hiển thị {{count}} dịch vụ",
     "none": "Không có dịch vụ nào khớp với các bộ lọc này.",
     "noneBody": "Hãy thử từ khóa khác hoặc chọn Tất cả.",
-    "pinsNote": "Vị trí các ghim là gần đúng. Nhiều dịch vụ cùng ở Tòa thị chính, nên các ghim được trải ra xung quanh.",
+    "pinsNote": "Vị trí ghim chỉ là gần đúng. Các ghim ở gần nhau được gộp thành nhóm; chọn một nhóm để xem từng ghim.",
     "osmCredit": "Dữ liệu bản đồ © những người đóng góp cho OpenStreetMap.",
     "details": "Chi tiết",
     "reduction": "Cắt giảm ngân sách: {{amount}}",
     "effective": "Có hiệu lực từ {{date}}",
     "approximate": "Vị trí trên bản đồ là gần đúng. Chỉ đường dùng địa chỉ đường phố.",
     "findAlternative": "Tìm nơi thay thế",
-    "reportImpact": "Báo cáo tác động"
+    "reportImpact": "Báo cáo tác động",
+    "cluster": "{{count}} dịch vụ ở gần nhau: {{names}}. Chọn để xem từng dịch vụ.",
+    "tilesFailed": "Không tải được hình ảnh bản đồ. Các ghim vẫn cho thấy vị trí của từng dịch vụ."
   },
   "resources": {
     "searchPlaceholder": "Tìm thực phẩm, phòng khám, nhà ở",

@@ -101,6 +101,10 @@ export default function MapScreen() {
 
   const pins = useMemo(() => spread(visible, (s) => `${s.name}, ${t(`status.${statusTone(s.status).key}`)}`), [visible, t]);
   const selected = (data ?? []).find((s) => s.id === selectedId) ?? null;
+  const mapLabels = useMemo(() => ({
+    map: t('map.mapLabel'), you: t('map.you'), zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), tilesFailed: t('map.tilesFailed'),
+    cluster: (count: number, names: string) => t('map.cluster', { count, names }),
+  }), [t]);
 
   const controls = (
     <View style={styles.controls}>
@@ -154,7 +158,7 @@ export default function MapScreen() {
               center={origin}
               you={location ? origin : null}
               recenterKey={recenterKey}
-              labels={{ map: t('map.mapLabel'), you: t('map.you'), zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut') }}
+              labels={mapLabels}
             />
             {!visible.length && <View style={styles.mapEmpty}><Banner tone="info" body={t('map.none')} live /></View>}
           </View>

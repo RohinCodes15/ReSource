@@ -9,11 +9,11 @@
  *   - Every bar carries its exact value as text, in normal text colors, never the bar color.
  *   - Every chart has a "Show as table" switch and a one-sentence text summary.
  */
-import { PropsWithChildren, ReactNode, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from '../lib/i18n';
-import { colors, fonts, radius, spacing } from '../theme';
-import { Icon, AppText, Card, type IconName, LinkText } from './ui';
+import { colors, fonts, MIN_TOUCH, radius, spacing } from '../theme';
+import { Icon, AppText, type IconName, LinkText, NATIVE_DRIVER, Rule, useReducedMotion } from './ui';
 
 /** Low, medium, high impact: one hue, light to dark. */
 export const IMPACT_RAMP = { low: '#7391C4', medium: '#375A9B', high: '#12284B' } as const;
@@ -46,18 +46,19 @@ export function DataTable({ caption, columns, rows }: TableData & { caption: str
   );
 }
 
-/** Card around a chart: title, text summary, the chart or its table, and the source underneath. */
+/** A chart with its title, text summary, the chart or its table, and the source underneath, set off by a rule. */
 export function ChartCard({ title, summary, table, footer, children, testID }: PropsWithChildren<{ title: string; summary: string; table: TableData; footer?: ReactNode; testID?: string }>) {
   const { t } = useTranslation();
   const [asTable, setAsTable] = useState(false);
   return (
-    <Card style={styles.chartCard} testID={testID}>
-      <AppText variant="h4" heading={3}>{title}</AppText>
+    <View style={styles.chartCard} testID={testID}>
+      <Rule strong />
+      <AppText variant="h3" heading={3}>{title}</AppText>
       <AppText variant="bodySmall" color={colors.text}>{summary}</AppText>
       {asTable ? <DataTable caption={title} {...table} /> : children}
       <LinkText icon={asTable ? 'chart-bar' : 'table'} label={t(asTable ? 'charts.showChart' : 'charts.showTable')} onPress={() => setAsTable(!asTable)} testID="toggle-table" />
       {footer}
-    </Card>
+    </View>
   );
 }
 
@@ -137,13 +138,26 @@ export const SHARE_RAMP = ['#12284B', '#375A9B', '#6A86B8', '#8F8470'] as const;
 
 export function ShareBar({ items, label, testID }: { items: { label: string; percent: number }[]; label: string; testID?: string }) {
   const color = (i: number) => (i === items.length - 1 && items.length > 1 ? SHARE_RAMP[SHARE_RAMP.length - 1] : SHARE_RAMP[Math.min(i, SHARE_RAMP.length - 2)]);
+  const { isRTL } = useTranslation();
+  // The bar draws itself once from the start edge, unless the person asked for less motion.
+  const reduced = useReducedMotion();
+  const [grow] = useState(() => new Animated.Value(0));
+  useEffect(() => {
+    if (reduced) { grow.setValue(1); return; }
+    Animated.timing(grow, { toValue: 1, duration: 700, delay: 150, useNativeDriver: NATIVE_DRIVER }).start();
+  }, [grow, reduced]);
   return (
     <View style={styles.shares} testID={testID}>
-      <View style={styles.shareBar} aria-hidden accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Animated.View
+        style={[styles.shareBar, { transformOrigin: isRTL ? 'right' : 'left', transform: [{ scaleX: grow }] }]}
+        aria-hidden
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
         {items.map((item, i) => (
           <View key={item.label} style={[styles.shareSegment, { flexGrow: item.percent, backgroundColor: color(i) }, i === 0 && styles.shareStart, i === items.length - 1 && styles.shareEnd]} />
         ))}
-      </View>
+      </Animated.View>
       <View role="list" aria-label={label} accessibilityLabel={label}>
         {items.map((item, i) => (
           <View key={item.label} role="listitem" style={[styles.shareRow, i > 0 && styles.shareRowRule]} accessible accessibilityLabel={`${item.label}: ${item.percent}%`}>
@@ -154,6 +168,27 @@ export function ShareBar({ items, label, testID }: { items: { label: string; per
         ))}
       </View>
     </View>
+  );
+}
+
+/** One line of a ledger: a large figure, what it counts, and where it came from. */
+export function LedgerRow({ value, label, onPress, source, testID }: { value: string; label: string; onPress?: () => void; source?: ReactNode; testID: string }) {
+  const { dirIcon } = useTranslation();
+  const body = (
+    <>
+      <AppText variant="h1" color={colors.navy} style={styles.ledgerValue} testID={`${testID}-value`}>{value}</AppText>
+      <View style={styles.ledgerText}>
+        <AppText color={colors.text}>{label}</AppText>
+        {source}
+      </View>
+      {onPress && <Icon name={dirIcon('chevron-right')} size={20} color={colors.navy} />}
+    </>
+  );
+  if (!onPress) return <View style={styles.ledgerRow} testID={testID}>{body}</View>;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${value} ${label}`} testID={testID} style={({ pressed }) => [styles.ledgerRow, pressed && styles.pressed]}>
+      {body}
+    </Pressable>
   );
 }
 
@@ -198,6 +233,9 @@ const styles = StyleSheet.create({
   tableHead: { backgroundColor: colors.navyLight, borderTopWidth: 0 },
   cell: { flex: 1, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm, justifyContent: 'center' },
   cellFirst: { flex: 1.6 },
+  ledgerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.md, minHeight: MIN_TOUCH },
+  ledgerValue: { minWidth: 112, flexShrink: 0, fontVariant: ['tabular-nums'] },
+  ledgerText: { flex: 1, gap: spacing.xs },
   shares: { gap: spacing.md },
   shareBar: { flexDirection: 'row', height: 28, gap: 2 },
   shareSegment: { height: 28, minWidth: 6 },
