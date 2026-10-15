@@ -202,7 +202,8 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
   {
     group: 'Fonts and icons',
     items: [
-      { name: 'Inter', use: 'The app typeface, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
+      { name: 'Fraunces', use: 'Headlines and large figures. One weight, cut down to Latin and Vietnamese letters and bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/undercasetype/Fraunces' },
+      { name: 'Inter', use: 'Body text, labels and buttons, in two weights, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
       { name: 'Material Design Icons', use: 'All icons, through @expo/vector-icons.', license: 'Apache License 2.0', url: 'https://pictogrammers.com/library/mdi/' },
     ],
   },

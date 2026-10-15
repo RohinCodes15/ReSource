@@ -1,4 +1,4 @@
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import { Inter_400Regular, Inter_600SemiBold } from '@expo-google-fonts/inter';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,7 +11,7 @@ import { getConfig } from '../lib/api';
 import { applyDocumentLanguage, languageStore, useTranslation } from '../lib/i18n';
 import { watchAuth } from '../lib/supabase';
 import { hydrateStores, offlineStore } from '../state/stores';
-import { colors, spacing } from '../theme';
+import { colors, fonts, spacing } from '../theme';
 
 /**
  * Web-only page styles that React Native styles cannot express:
@@ -30,20 +30,14 @@ input:focus-visible, textarea:focus-visible { outline-offset: 0 !important; }
 `;
 
 /**
- * The four Inter weights. Phones load the full files from the font package. The web build loads
- * WOFF2 copies cut down to Latin and Vietnamese letters (about 22 KB each instead of 160 KB;
- * made with `pyftsubset`, see docs/LICENSES.md), because the page stays blank until they arrive.
+ * Fonts on phones: Inter regular and semibold from the font package, and one cut of Fraunces
+ * (see docs/LICENSES.md). On the web nothing is loaded from here: public/index.html declares the
+ * same three families with font-display: swap, so the page paints at once in a fallback font
+ * instead of staying blank until the files arrive.
  */
-/* eslint-disable @typescript-eslint/no-require-imports */
-const INTER = Platform.OS === 'web'
-  ? {
-      Inter_400Regular: require('../../assets/fonts/Inter_400Regular.woff2'),
-      Inter_500Medium: require('../../assets/fonts/Inter_500Medium.woff2'),
-      Inter_600SemiBold: require('../../assets/fonts/Inter_600SemiBold.woff2'),
-      Inter_700Bold: require('../../assets/fonts/Inter_700Bold.woff2'),
-    }
-  : { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold };
-/* eslint-enable @typescript-eslint/no-require-imports */
+const NATIVE_FONTS = Platform.OS === 'web'
+  ? {}
+  : { Inter_400Regular, Inter_600SemiBold, Fraunces_600SemiBold: require('../../assets/fonts/Fraunces_600SemiBold.ttf') };
 
 const WEB_DESCRIPTION = 'ReSource shows which Fremont, California city services changed with the city budget and where residents can find help. An independent student project, not an official City of Fremont service.';
 
@@ -83,7 +77,7 @@ function SkipLink() {
     'data-testid': 'skip-link',
     style: {
       position: 'absolute', top: focused ? spacing.md : -100, left: spacing.md, zIndex: 3000, backgroundColor: colors.navyDark, color: colors.white,
-      padding: `${spacing.md}px ${spacing.lg}px`, borderRadius: 8, fontFamily: 'Inter_600SemiBold, system-ui, sans-serif', fontSize: 14, textDecoration: 'none',
+      padding: `${spacing.md}px ${spacing.lg}px`, borderRadius: 8, fontFamily: `${fonts.semibold}, system-ui, sans-serif`, fontSize: 14, textDecoration: 'none',
     },
   }, t('common.skipToContent'));
 }
@@ -102,8 +96,8 @@ function OfflineBanner() {
 }
 
 export default function RootLayout() {
-  // Inter ships inside the app bundle (see `fonts` in theme.ts); nothing is fetched from a font service.
-  const [fontsLoaded, fontError] = useFonts(INTER);
+  // The fonts ship with the app (see `fonts` in theme.ts); nothing is fetched from a font service.
+  const [fontsLoaded, fontError] = useFonts(NATIVE_FONTS);
   const [hydrated, setHydrated] = useState(false);
   const { isRTL } = useTranslation();
   useWebPageStyles();
@@ -120,8 +114,8 @@ export default function RootLayout() {
     return () => { active = false; };
   }, []);
 
-  // Hold a plain background until the font and saved settings are ready, so nothing flashes in
-  // the wrong language or typeface. If the font fails to load, carry on with the system font.
+  // Hold a plain background until the saved settings (and, on phones, the fonts) are ready, so
+  // nothing flashes in the wrong language. If a font fails to load, carry on with the system font.
   if ((!fontsLoaded && !fontError) || !hydrated) return <View style={styles.blank} />;
 
   return (
