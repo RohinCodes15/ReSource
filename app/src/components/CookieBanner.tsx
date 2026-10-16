@@ -2,7 +2,8 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useTranslation } from '../lib/i18n';
-import { consentStore, createStore, setStorageConsent } from '../state/stores';
+import { useAccountRequired } from '../lib/supabase';
+import { authEmailStore, consentStore, createStore, setStorageConsent } from '../state/stores';
 import { colors, MAX_CONTENT_WIDTH, radius, shadow, spacing } from '../theme';
 import { Sheet } from './Sheet';
 import { AppButton, AppText, LinkText, Toggle } from './ui';
@@ -35,11 +36,17 @@ export function CookieBanner() {
   const close = () => cookieSettingsStore.set(false);
   // Phones have no cookies and no banner; optional storage stays off until turned on in Settings.
   const showBanner = Platform.OS === 'web' && consent.choice === null && !managing;
+  // The banner usually floats just above the tab bar. On the account-required welcome screen
+  // there is no tab bar and the age question sits low on the page, so the banner takes its own
+  // space at the bottom instead of covering it.
+  const accountRequired = useAccountRequired();
+  const signedIn = authEmailStore.use() !== ''; // read on every render: hooks cannot sit behind &&
+  const inline = accountRequired && !signedIn;
 
   return (
     <>
       {showBanner && (
-        <View style={styles.wrap} pointerEvents="box-none">
+        <View style={inline ? styles.inlineWrap : styles.wrap} pointerEvents="box-none">
           <View style={styles.banner} role="region" aria-label={t('storage.bannerTitle')} testID="cookie-banner">
             <AppText variant="h4" heading={2}>{t('storage.bannerTitle')}</AppText>
             <AppText variant="bodySmall" color={colors.text}>{t('storage.bannerBody')}</AppText>
@@ -71,6 +78,7 @@ export function CookieBanner() {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 72, alignItems: 'center', paddingHorizontal: spacing.md, zIndex: 2000 },
+  inlineWrap: { alignItems: 'center', paddingHorizontal: spacing.md, paddingBottom: spacing.md },
   banner: { ...shadow, shadowOpacity: 0.2, width: '100%', maxWidth: MAX_CONTENT_WIDTH, backgroundColor: colors.surface, borderRadius: radius.lg, borderWidth: 1.5, borderColor: colors.navy, padding: spacing.lg, gap: spacing.sm },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
   action: { flexGrow: 1, flexBasis: 150 },
