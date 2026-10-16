@@ -199,6 +199,103 @@ export const TERMS: LegalSection[] = [
   },
 ];
 
+/**
+ * The account-required build (EXPO_PUBLIC_ACCOUNT_REQUIRED) shows these versions instead. They
+ * differ from the ones above only where requiring an account changes the facts. They describe
+ * the backend once ACCOUNT_REQUIRED is on there too (docs/handoff/CODEX_ACCOUNT_REQUIRED.md):
+ * reports, posts and votes are then stored under the install token, never the account.
+ */
+const ACCOUNT_CHANGES: Record<string, LegalSection> = {
+  'The short version': {
+    heading: 'The short version',
+    body: [[
+      'You need an account to use ReSource. We use your email address to let you in, and nothing else.',
+      'We do not sell your information and we do not share it for advertising. There are no ads, no analytics and no trackers in this app.',
+      'Your location stays on your device, except that a rounded position is sent with a question to the assistant if you have set a location.',
+      'Reports, posts and votes are not linked to your account, and you can delete them at any time.',
+      'If you are under 13, you cannot create an account.',
+    ]],
+  },
+  'What we collect, and why': {
+    heading: 'What we collect, and why',
+    body: [
+      'We collect only what a feature needs to work.',
+      [
+        'Your account: you must sign in to use ReSource. With an email link: your email address. With "Continue with Google": Google tells our sign-in provider (Supabase) your Google account\'s email address, and also your name and profile picture if your Google account shares them. Supabase keeps them with your account, along with when you signed up and last signed in. The app itself shows and uses only the email address.',
+        'Your sign-in session: after you sign in, the app keeps a sign-in session on your device (in your browser\'s local storage, under the name "resource.session") so you stay signed in. It holds a sign-in token and the account details our sign-in provider sends back: your email address, and your name and picture if Google shared them. It stays until you sign out or clear it in Settings. It is listed in the Cookie Policy as essential storage.',
+        'Our server sees the sign-in token with each request, to check that you are signed in and to limit how often one account can send things. It does not store the token, and it does not store which account sent a report, post or vote.',
+        'Like every website, our server sees your IP address while it answers a request. We use a scrambled (hashed) form of it, held in memory for up to a day, only to stop abuse by limiting how often one visitor can send things. We do not write IP addresses to our database.',
+        'An install token: the first time you send something, the app makes a random code and keeps it on your device. Our server stores only a scrambled version of it next to your reports, posts, votes and alert settings. This is what lets you delete your own things. It is not your device ID or your account, and it cannot be turned back into either.',
+        'Impact reports: the service you chose, a general area (a ZIP-code area or "Citywide"), your description, the impact level, an optional photo and the time. Before saving, we automatically remove email addresses, phone numbers and street addresses from the description. Photos are re-saved without their hidden data, such as the GPS position a phone adds. Reports are stored under the install token, not your account: not even the people who run ReSource can tell which account sent a report.',
+        'Community posts: your post text, the area you picked, the time, the number of upvotes and any abuse reports about it. Like reports, they are not linked to your account.',
+        'Alert settings: the topics and areas you follow, and whether you turned on notifications.',
+        'Email alerts, only if this deployment offers them and you sign up: your email address, so we can send the alerts you asked for.',
+        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). These go to our server and then to our AI provider to write an answer. Our server keeps the current conversation in memory for up to ten minutes so the assistant can follow it, and never writes chat messages to its database. Chat history is kept on your own device only if you accept optional storage.',
+        'Feedback: the message you type, with no identifier attached.',
+        'A data deletion request: your email address and what you wrote, so we can find the data and answer you. We delete the email address once the request is finished.',
+        'Consent records: what you agreed to, which version of this policy, and when, next to your scrambled install token.',
+        'Admin tools: they open only for accounts that the people who run ReSource have marked as admins in our sign-in provider, or for someone with the staff passcode. Our server checks this again on every admin request. Admins can read reports, including any photo attached to them, in order to review them. They cannot see which account sent a report.',
+      ],
+    ],
+  },
+  'What we do not collect': {
+    heading: 'What we do not collect',
+    body: [[
+      'Your home address or phone number. Your name only if Google shares it when you continue with Google (see above).',
+      'Your precise location. The place you choose (GPS or ZIP code) is stored only on your device and distances are worked out on your device.',
+      'Advertising IDs, contact lists, or anything about other apps and sites you use.',
+      'Usage analytics or crash reports.',
+    ]],
+  },
+  'How long we keep it': {
+    heading: 'How long we keep it',
+    body: [[
+      'Your account (email address, and name and picture if Google shared them): until it is deleted. Deleting an account is not yet available in the app. Until it is, ask on the Data deletion request page or email {email}; we answer within 30 days. The copies our providers keep for backups are removed on their own schedule.',
+      'Reports, posts, votes and alert settings: until you delete them, a moderator removes them, or the project ends. If the project ends, all resident data will be deleted.',
+      'Deletion from the app ("Delete my data"): right away.',
+      'Deletion requests sent by form or email: answered within 30 days.',
+      'Rate-limit records: held in memory only, for up to 24 hours.',
+      'Things saved on your device, including your sign-in session: until you sign out, clear them in Settings, or remove the app.',
+    ]],
+  },
+  'Your choices and rights': {
+    heading: 'Your choices and rights',
+    body: [
+      'Everyone, wherever they live, can do the following:',
+      [
+        'See it: "Download my data" in Settings gives you a copy of everything tied to your device.',
+        'Delete it: "Delete my data" in Settings erases your reports, posts, votes, alert settings and consent records from our server immediately. Because these are not linked to your account, it reaches only what was sent from the device you are using; delete things sent from another device on that device.',
+        'Delete your account: not yet in the app. Ask on the Data deletion request page or by emailing {email}.',
+        'Sign out: in Settings. This removes the sign-in session from your device.',
+        'Correct it: delete the report or post and send a corrected one, or email us.',
+        'Opt out: turn off alerts or notifications at any time, and use the unsubscribe link in any alert email.',
+        'Change your mind about optional storage at any time from "Storage settings".',
+      ],
+      'If you live in California, the CCPA/CPRA gives you the right to know what personal information is collected, to delete it, to correct it, to limit the use of sensitive personal information, and not to be treated differently for using these rights. We do not sell or share personal information, so there is nothing to opt out of. We do not use sensitive personal information for anything beyond providing the service. You can make a request through Settings, the Data deletion request page, or by emailing {email}. Someone you authorize may make a request for you. We will not ask for more information than we need to find your data.',
+    ],
+  },
+  'Children': {
+    heading: 'Children',
+    body: [
+      'ReSource is not directed to children under 13 and we do not knowingly collect personal information from them. Before you can sign in, the app asks whether you are 13 or older. Someone who says they are under 13 cannot create an account and cannot use the app; they can still read this policy and the terms.',
+      'There are no ads, no behavioral tracking and no profiling for anyone.',
+      'Parents and guardians: if you believe your child created an account or sent us information, use the Data deletion request page or email {email}. Tell us roughly what was sent and when, and we will delete it.',
+    ],
+  },
+};
+
+export const ACCOUNT_PRIVACY: LegalSection[] = PRIVACY.map((section) => ACCOUNT_CHANGES[section.heading] ?? section);
+
+export const ACCOUNT_TERMS: LegalSection[] = TERMS.map((section) => {
+  if (section.heading === 'About these terms') {
+    return { ...section, body: ['ReSource is a free, independent student project by {creator}. By using it you agree to these terms. If you do not agree, please do not use it. You need an account to use ReSource, and you must be 13 or older to create one. Keep your sign-in to yourself; you are responsible for what is sent while you are signed in.'] };
+  }
+  if (section.heading === 'Ending use') {
+    return { ...section, body: ['You can stop using ReSource at any time, sign out in Settings, and delete your data in Settings. Deleting your account is not yet in the app: ask on the Data deletion request page or email {email}. We may suspend or close accounts that break these terms, and we may change or shut down the project at any time.'] };
+  }
+  return section;
+});
+
 export type Credit = { name: string; use: string; license: string; url: string };
 
 export const CREDITS: { group: string; items: Credit[] }[] = [
