@@ -1,8 +1,7 @@
 # Admin screen: Google sign-in for admins, report status filter, confirmations
 
-> **Base branch:** this branch is cut from `fix-round`, so it is opened against `fix-round`.
-> After PR #3 (`fix-round` → `main`) merges, retarget this PR to `main`. The diff will then show
-> only the admin commits.
+> **Base branch:** `main`. PR #3 (`fix-round` → `main`) has merged and this branch was rebased
+> onto `main`, so the diff shows only the admin commits.
 
 ## What changes
 
