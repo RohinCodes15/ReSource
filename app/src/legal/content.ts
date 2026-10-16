@@ -284,7 +284,12 @@ const ACCOUNT_CHANGES: Record<string, LegalSection> = {
   },
 };
 
-export const ACCOUNT_PRIVACY: LegalSection[] = PRIVACY.map((section) => ACCOUNT_CHANGES[section.heading] ?? section);
+export const ACCOUNT_PRIVACY: LegalSection[] = PRIVACY.map((section) => {
+  if (section.heading !== 'Changes to this policy') return ACCOUNT_CHANGES[section.heading] ?? section;
+  const [intro, log] = section.body as [string, string[]];
+  // The date is the launch date, set with POLICY_VERSION when the account build ships.
+  return { ...section, body: [intro, [...log, 'Effective date above: an account is now required (what sign-in collects, where the session is kept, that reports, posts and votes are not linked to the account, and how to ask for account deletion).']] };
+});
 
 export const ACCOUNT_TERMS: LegalSection[] = TERMS.map((section) => {
   if (section.heading === 'About these terms') {
