@@ -27,7 +27,25 @@ responses. Nothing in the backend was changed.
 | 6 | Settings → Account | **Pass (simulated)** | "Signed in as simulated@example.com", Sign out button, account-deletion note. |
 | 7 | Sign-out returns to the gate | **Pass (simulated)** | Sign out in Settings → `/sign-in`; `resource.session` removed. |
 | 8 | Admin access still needs the admin role | **Pass (simulated, app side)** | Signed in without the role: `/admin` says "this account is not an admin" and offers only the passcode; no Admin tab. Backend role check: `CODEX_ADMIN_ROLE_TEST.md`. |
-| 9 | Flag OFF behaves as before | **Pass** | On 8081: no gate on `/` or `/report`; Settings shows the old Account card ("optional"/"not turned on") and not the new one; Privacy says "No account is needed"; `/sign-in` is the old screen without the age gate; nothing stored under `resource.session`. |
+| 9 | Flag OFF behaves as before | **Pass (rerun, see note)** | Fresh dev server on 8083 with the flag unset, current code: no gate on `/` or `/report`; storage banner floats as before; Settings shows the old Account card and not the new one; Privacy says "No account is needed" and Terms has no account line; `/sign-in` is the old screen without the age gate; nothing stored under `resource.session`. Same result when the API says `account_required: true`. |
+
+**Note on row 9.** The first run of row 9 used the dev server on 8081, which had been running since
+09:40 and was still serving code from before the account work (its file watcher had not picked
+up the changes). It showed the old app, not the new code with the flag off. Rerun 2026-10-16 on a
+fresh server as above.
+
+## `account_required` from `/config` (added 2026-10-16)
+
+The API response was edited in the test browser to simulate Codex's field.
+
+| Build flag | API says | Result |
+|---|---|---|
+| on | nothing (older API) | Gate, welcome screen (build flag stands) |
+| on | `true` | Gate, welcome screen |
+| on | `false` | No gate, `/report` opens, Privacy says "No account is needed", old Settings card |
+| on | unreachable | Gate in its "offline" state (build flag stands) |
+| off | nothing | Today's app |
+| off | `true` | Today's app (the API cannot turn the gate on in a build without the flag) |
 
 ## Problems found
 
@@ -37,10 +55,10 @@ responses. Nothing in the backend was changed.
    summary all say reports, posts and votes are *not* linked. That is only true after Codex
    ships item 2 of `CODEX_ACCOUNT_REQUIRED.md` (install hash when `ACCOUNT_REQUIRED` is on).
    **Do not turn the app flag on before the backend flag.**
-2. **The storage banner covers the age buttons** on first launch (1200×628): the "No, I am under
-   13" button could not be clicked until the banner was answered. Minor, but it is the first
-   thing a new person sees. Fix: leave room under the welcome card for the banner, or show the
-   banner after the age answer.
+2. **Fixed: the storage banner covered the age buttons** on first launch (1200×628). On the
+   welcome screen of the account build, the banner now takes its own space at the bottom
+   instead of floating over the page. Rechecked: no overlap, and "No, I am under 13" can be
+   clicked with the banner open. With the flag off the banner floats as before.
 3. **Offline wins over signed-out.** A signed-out person who is offline sees "You are offline"
    rather than the welcome screen. This is acceptable (sign-in needs a connection anyway), but
    the legal links are not on that screen; the footer still has them.
