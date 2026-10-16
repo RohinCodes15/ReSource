@@ -658,7 +658,9 @@
     "signedInAs": "Signed in as {{email}}",
     "signOut": "Sign out",
     "signedOut": "You are signed out.",
-    "webOnly": "Signing in by email link works in the web version of ReSource only. You do not need an account: everything in this app works without one."
+    "webOnly": "Signing in by email link works in the web version of ReSource only. You do not need an account: everything in this app works without one.",
+    "google": "Continue with Google",
+    "googleFailed": "Google sign-in could not start. Please try again."
   },
   "storage": {
     "bannerTitle": "Storage on your device",

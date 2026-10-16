@@ -33,6 +33,13 @@ export default function SignInScreen() {
     setSending(false);
   }
 
+  /** Leaves for Google and comes back to /sign-in, where detectSessionInUrl reads the session. */
+  async function signInWithGoogle() {
+    if (!supabase || !consent.check()) return;
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/sign-in` } });
+    if (error) setNotice({ tone: 'warning', text: t('signIn.googleFailed') });
+  }
+
   async function signOut() {
     await supabase?.auth.signOut();
     setNotice({ tone: 'success', text: t('signIn.signedOut') });
@@ -55,6 +62,7 @@ export default function SignInScreen() {
           <Field label={t('alerts.emailLabel')} value={email} onChangeText={setEmail} keyboardType="email-address" autoComplete="email" required error={emailError} testID="sign-in-email" />
           <ConsentFields purpose={t('signIn.consent')} consent={consent} />
           <AppButton variant="gold" icon="email-fast" label={t('signIn.send')} loading={sending} onPress={sendLink} testID="sign-in-send" />
+          <AppButton variant="outline" icon="login" label={t('signIn.google')} onPress={signInWithGoogle} testID="sign-in-google" />
           <AppText variant="caption">{t('signIn.transactional')}</AppText>
         </Card>
       )}
