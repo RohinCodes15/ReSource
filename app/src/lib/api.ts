@@ -5,7 +5,7 @@
  */
 import { Platform } from 'react-native';
 import type { Alert, AlertCategory, AreaCode, Budget, ChatTurn, Council, ImpactLevel, LanguageCode, Post, Resource, Service, ServiceStatus } from '../../../shared/types';
-import { adminTokenStore, authTokenStore, getInstallToken, offlineStore } from '../state/stores';
+import { adminTokenStore, authTokenStore, getInstallToken, offlineStore, serverAccountRequiredStore } from '../state/stores';
 
 const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 const configured = process.env.EXPO_PUBLIC_API_URL;
@@ -64,10 +64,21 @@ async function request<T>(path: string, options: Options = {}): Promise<T> {
 
 // ---- Public data ---------------------------------------------------------------------------
 
-export type AppConfig = { mode: 'local' | 'supabase'; ai_enabled: boolean; email_enabled: boolean; auth_enabled: boolean; admin_enabled?: boolean; policy_version: string; data_retrieved: string };
+export type AppConfig = { mode: 'local' | 'supabase'; ai_enabled: boolean; email_enabled: boolean; auth_enabled: boolean; admin_enabled?: boolean; account_required?: boolean; policy_version: string; data_retrieved: string };
 export type Stats = { reports_total: number; reports_verified: number; posts: number; services_tracked: number; services_reduced: number; services_closed: number; resources: number };
 
-export const getConfig = () => request<AppConfig>('/config', { timeoutMs: 5000 });
+/** Also records the API's `account_required` answer (see useAccountRequired in lib/supabase). */
+export async function getConfig(): Promise<AppConfig> {
+  try {
+    const config = await request<AppConfig>('/config', { timeoutMs: 5000 });
+    serverAccountRequiredStore.set(typeof config.account_required === 'boolean' ? config.account_required : null);
+    return config;
+  } catch (reason) {
+    // Keep an answer we already have; a failed first ask means "fall back to the build flag".
+    if (serverAccountRequiredStore.get() === undefined) serverAccountRequiredStore.set(null);
+    throw reason;
+  }
+}
 export const getStats = () => request<Stats>('/stats');
 export const getServices = () => request<Service[]>('/services');
 export const getResources = () => request<Resource[]>('/resources');

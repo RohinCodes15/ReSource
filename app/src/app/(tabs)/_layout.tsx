@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { Icon, type IconName } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
-import { accountRequired } from '../../lib/supabase';
+import { useAccountRequired } from '../../lib/supabase';
 import { authEmailStore } from '../../state/stores';
 import { colors, fonts, MIN_TOUCH, SCREEN_PADDING, spacing } from '../../theme';
 
@@ -45,6 +45,7 @@ export default function TabsLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const signedIn = authEmailStore.use() !== '';
+  const accountRequired = useAccountRequired();
   return (
     <Tabs
       // Back returns to the screen you came from (More, Home...), not always to the first tab.

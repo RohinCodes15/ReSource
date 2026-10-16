@@ -11,7 +11,7 @@ import { AppButton, AppText, Banner, Card, Chip, Field, LinkText, Segmented } fr
 import { ApiError, deleteMyData, exportMyData, sendFeedback } from '../../lib/api';
 import { applyDocumentLanguage, formatDate, languageStore, useTranslation } from '../../lib/i18n';
 import { saveTextFile } from '../../lib/platform';
-import { accountRequired, authEnabled, signInAvailable, signOut } from '../../lib/supabase';
+import { useAccountRequired, authEnabled, signInAvailable, signOut } from '../../lib/supabase';
 import { ageStore, authEmailStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
@@ -26,6 +26,7 @@ export default function SettingsScreen() {
   const consent = consentStore.use();
   const age = ageStore.use();
   const email = authEmailStore.use();
+  const accountRequired = useAccountRequired();
   const [notice, setNotice] = useState<Notice | null>(null);
   const [confirm, setConfirm] = useState<'server' | 'device' | null>(null);
   const [busy, setBusy] = useState(false);

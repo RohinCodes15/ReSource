@@ -106,6 +106,8 @@ export default function RootLayout() {
   const { isRTL } = useTranslation();
   useWebPageStyles();
   useEffect(watchAuth, []);
+  // Tells the app whether the API requires accounts; a failure is handled by the offline banner.
+  useEffect(() => { void getConfig().catch(() => undefined); }, []);
 
   useEffect(() => {
     let active = true;

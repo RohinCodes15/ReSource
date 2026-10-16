@@ -3,8 +3,8 @@ import { useEffect, type PropsWithChildren } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { getConfig } from '../lib/api';
 import { useTranslation } from '../lib/i18n';
-import { accountRequired, supabase } from '../lib/supabase';
-import { authEmailStore, authReadyStore, offlineStore } from '../state/stores';
+import { accountRequiredBuild, supabase, useAccountRequired } from '../lib/supabase';
+import { authEmailStore, authReadyStore, offlineStore, serverAccountRequiredStore } from '../state/stores';
 import { colors, spacing } from '../theme';
 import { AppButton, AppText, Banner } from './ui';
 
@@ -22,18 +22,19 @@ export function isOpenPath(pathname: string): boolean {
 export type GateState = 'notConfigured' | 'loading' | 'offline' | 'redirect' | null;
 
 /** What the gate shows in place of a screen, or null when the screen may be shown. */
-export function gateState(input: { required: boolean; configured: boolean; ready: boolean; signedIn: boolean; offline: boolean; open: boolean }): GateState {
+export function gateState(input: { required: boolean; configured: boolean; ready: boolean; signedIn: boolean; offline: boolean; open: boolean; checking?: boolean }): GateState {
   if (!input.required || input.open) return null;
   if (!input.configured) return 'notConfigured';
-  if (!input.ready) return 'loading';
+  if (!input.ready || input.checking) return 'loading'; // checking: the API has not said yet whether accounts are required
   if (input.offline) return 'offline'; // no cached browsing in the account-required build
   if (!input.signedIn) return 'redirect';
   return null;
 }
 
 /**
- * The account-required build's front door (EXPO_PUBLIC_ACCOUNT_REQUIRED). With the flag off it
- * renders its children and nothing else. It only decides what to draw: the API refuses requests
+ * The account-required build's front door (EXPO_PUBLIC_ACCOUNT_REQUIRED, unless the API's
+ * /config says accounts are off: see useAccountRequired). With the flag off it renders its children
+ * and nothing else. It only decides what to draw: the API refuses requests
  * without a sign-in on its own.
  */
 export function AccountGate({ children }: PropsWithChildren) {
@@ -43,7 +44,10 @@ export function AccountGate({ children }: PropsWithChildren) {
   const ready = authReadyStore.use();
   const signedIn = authEmailStore.use() !== '';
   const offline = offlineStore.use();
-  const state = gateState({ required: accountRequired, configured: supabase !== null, ready, signedIn, offline, open: isOpenPath(pathname) });
+  const required = useAccountRequired();
+  const serverAnswer = serverAccountRequiredStore.use();
+  const checking = accountRequiredBuild && serverAnswer === undefined;
+  const state = gateState({ required, configured: supabase !== null, ready, signedIn, offline, open: isOpenPath(pathname), checking });
 
   useEffect(() => {
     if (state === 'redirect') router.replace('/sign-in' as never);

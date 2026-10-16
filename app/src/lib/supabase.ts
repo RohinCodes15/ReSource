@@ -11,18 +11,35 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { sessionStorageAdapter, STORAGE_KEYS } from './storage';
-import { adminTokenStore, authEmailStore, authReadyStore, authRoleStore, authTokenStore } from '../state/stores';
+import { adminTokenStore, authEmailStore, authReadyStore, authRoleStore, authTokenStore, serverAccountRequiredStore } from '../state/stores';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-/** The account-required build. Off unless the build sets EXPO_PUBLIC_ACCOUNT_REQUIRED to 1 or true. */
-export const accountRequired = ['1', 'true'].includes((process.env.EXPO_PUBLIC_ACCOUNT_REQUIRED ?? '').toLowerCase());
+/**
+ * The account-required build. Off unless the build sets EXPO_PUBLIC_ACCOUNT_REQUIRED to 1 or true.
+ * It decides where the session is kept, which cannot change after start-up. Screens ask
+ * useAccountRequired() instead, which also listens to the API.
+ */
+export const accountRequiredBuild = ['1', 'true'].includes((process.env.EXPO_PUBLIC_ACCOUNT_REQUIRED ?? '').toLowerCase());
+
+/**
+ * Whether accounts are required right now. The API's `account_required` (GET /config) wins when
+ * it gives one; otherwise (an older API, offline, not asked yet) the build flag stands. The API
+ * can turn a required-account build off, but cannot turn it on in a build without the flag: that
+ * build keeps the session in memory only and carries the no-account policy text.
+ */
+export function effectiveAccountRequired(build: boolean, server: boolean | null | undefined): boolean {
+  return build && server !== false;
+}
+
+export const isAccountRequired = () => effectiveAccountRequired(accountRequiredBuild, serverAccountRequiredStore.get());
+export const useAccountRequired = () => effectiveAccountRequired(accountRequiredBuild, serverAccountRequiredStore.use());
 
 export const supabase: SupabaseClient | null =
   url && anonKey
     ? createClient(url, anonKey, {
-      auth: accountRequired
+      auth: accountRequiredBuild
         ? { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true, storage: sessionStorageAdapter, storageKey: STORAGE_KEYS.session.key }
         : { autoRefreshToken: true, persistSession: false, detectSessionInUrl: true },
     })
@@ -61,5 +78,5 @@ export function watchAuth(): () => void {
  */
 export async function signOut(): Promise<void> {
   await supabase?.auth.signOut().catch(() => undefined);
-  if (accountRequired) adminTokenStore.set('');
+  if (isAccountRequired()) adminTokenStore.set('');
 }

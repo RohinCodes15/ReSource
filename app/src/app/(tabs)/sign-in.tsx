@@ -5,7 +5,7 @@ import { BrowseOnly, ConsentFields, useConsent } from '../../components/ConsentF
 import { Screen } from '../../components/Page';
 import { AppButton, AppText, Banner, Card, Field, LinkText } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
-import { accountRequired, signInAvailable, signOut, supabase } from '../../lib/supabase';
+import { useAccountRequired, signInAvailable, signOut, supabase } from '../../lib/supabase';
 import { ageStore, authEmailStore, authRoleStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
@@ -22,6 +22,7 @@ export default function SignInScreen() {
   const consent = useConsent();
   const [email, setEmail] = useState('');
   const signedInAs = authEmailStore.use(); // kept current by watchAuth in the root layout
+  const accountRequired = useAccountRequired();
   const isAdmin = authRoleStore.use() === 'admin';
   const router = useRouter();
   const [notice, setNotice] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
@@ -32,7 +33,7 @@ export default function SignInScreen() {
   // Account-required build: once signed in, the welcome screen has done its job.
   useEffect(() => {
     if (accountRequired && signedInAs) router.replace('/' as never);
-  }, [signedInAs, router]);
+  }, [accountRequired, signedInAs, router]);
 
   async function sendLink() {
     const valid = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim());

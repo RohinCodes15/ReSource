@@ -130,6 +130,11 @@ export const authEmailStore = createStore<string>('');
 export const authRoleStore = createStore<string>('');
 /** True once Supabase has said whether a saved session exists, so the account gate can decide. */
 export const authReadyStore = createStore<boolean>(false);
+/**
+ * `account_required` from GET /config: undefined until the first answer, null when the API did
+ * not say (an older API, or it could not be reached), otherwise what the API said.
+ */
+export const serverAccountRequiredStore = createStore<boolean | null | undefined>(undefined);
 
 // ---- Install token -------------------------------------------------------------------------
 
