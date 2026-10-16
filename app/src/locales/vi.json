@@ -744,6 +744,7 @@
     "offlineBody": "ReSource cần kết nối internet để kiểm tra đăng nhập của bạn. Hãy kết nối rồi thử lại.",
     "notConfigured": "Máy chủ này chưa thiết lập đăng nhập, nên ReSource không thể mở. Nếu bạn vận hành ReSource, hãy đặt cấu hình Supabase cho bản web.",
     "webOnly": "Hiện tại, đăng nhập chỉ hoạt động trên bản web của ReSource. Hãy mở ReSource trong trình duyệt.",
+    "deleteNote": "Xóa tài khoản sẽ gỡ bỏ thông tin đăng nhập và địa chỉ email của quý vị. Tính năng này chưa có trong ứng dụng. Trong lúc chờ, hãy yêu cầu trên trang Yêu cầu xóa dữ liệu. Báo cáo, bài đăng và lượt bình chọn không gắn với tài khoản của quý vị, vì vậy hãy dùng \"Xóa dữ liệu của tôi\" ở trên để xóa chúng.",
     "consent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi để tôi có thể đăng nhập. Nếu tôi tiếp tục với Google, Google cũng chia sẻ tên và ảnh hồ sơ của tôi; nhà cung cấp đăng nhập của ReSource lưu chúng, và ReSource không hiển thị hay sử dụng chúng.",
     "useOtherEmail": "Dùng email khác",
     "signedInBody": "Đã đăng nhập bằng {{email}}. Đăng xuất sẽ xóa đăng nhập khỏi thiết bị này.",

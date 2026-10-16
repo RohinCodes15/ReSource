@@ -744,6 +744,7 @@
     "offlineBody": "ReSource necesita conexión a internet para comprobar tu inicio de sesión. Conéctate e inténtalo de nuevo.",
     "notConfigured": "El inicio de sesión no está configurado en este servidor, así que ReSource no puede abrirse. Si administras ReSource, configura Supabase para la versión web.",
     "webOnly": "Por ahora, el inicio de sesión solo funciona en la versión web de ReSource. Abre ReSource en tu navegador.",
+    "deleteNote": "Eliminar tu cuenta quitará tu inicio de sesión y tu correo electrónico. Todavía no está disponible en la aplicación. Mientras tanto, solicítalo en la página de Solicitud de eliminación de datos. Los informes, publicaciones y votos no están vinculados a tu cuenta, así que usa \"Eliminar mis datos\" arriba para borrarlos.",
     "consent": "Acepto que ReSource guarde mi correo electrónico para poder iniciar sesión. Si continúo con Google, Google también comparte mi nombre y foto de perfil; el proveedor de inicio de sesión de ReSource los guarda, y ReSource no los muestra ni los usa.",
     "useOtherEmail": "Usar otro correo",
     "signedInBody": "Sesión iniciada como {{email}}. Al cerrar sesión se quita el inicio de sesión de este dispositivo.",

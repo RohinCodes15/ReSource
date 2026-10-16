@@ -744,6 +744,7 @@
     "offlineBody": "ReSource 需要联网来检查您的登录状态。请连接网络后重试。",
     "notConfigured": "此服务器未设置登录，因此 ReSource 无法打开。如果您负责运营 ReSource，请为网页版设置 Supabase。",
     "webOnly": "目前只有 ReSource 网页版可以登录。请在浏览器中打开 ReSource。",
+    "deleteNote": "删除账户将移除您的登录信息和电子邮件地址。应用内暂时还不能删除。在此之前，请在“数据删除请求”页面提出申请。报告、帖子和投票与您的账户没有关联，如需删除，请使用上方的“删除我的数据”。",
     "consent": "我同意 ReSource 保存我的电子邮件地址以便登录。如果我使用 Google 继续，Google 还会共享我的姓名和头像；ReSource 的登录服务提供商会保存它们，ReSource 不会显示或使用它们。",
     "useOtherEmail": "使用其他电子邮件",
     "signedInBody": "已用 {{email}} 登录。退出登录会从此设备上移除登录信息。",

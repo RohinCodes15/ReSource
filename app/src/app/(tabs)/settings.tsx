@@ -11,8 +11,8 @@ import { AppButton, AppText, Banner, Card, Chip, Field, LinkText, Segmented } fr
 import { ApiError, deleteMyData, exportMyData, sendFeedback } from '../../lib/api';
 import { applyDocumentLanguage, formatDate, languageStore, useTranslation } from '../../lib/i18n';
 import { saveTextFile } from '../../lib/platform';
-import { authEnabled, signInAvailable } from '../../lib/supabase';
-import { ageStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
+import { accountRequired, authEnabled, signInAvailable, signOut } from '../../lib/supabase';
+import { ageStore, authEmailStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 type Notice = { tone: 'success' | 'warning' | 'info'; text: string };
@@ -25,6 +25,7 @@ export default function SettingsScreen() {
   const location = locationStore.use();
   const consent = consentStore.use();
   const age = ageStore.use();
+  const email = authEmailStore.use();
   const [notice, setNotice] = useState<Notice | null>(null);
   const [confirm, setConfirm] = useState<'server' | 'device' | null>(null);
   const [busy, setBusy] = useState(false);
@@ -115,11 +116,20 @@ export default function SettingsScreen() {
         <LinkText label={t('titles.dataRequest')} onPress={() => router.push('/data-request' as never)} />
       </Card>
 
-      <Card style={styles.block}>
-        <AppText variant="h3" heading={2}>{t('settings.account')}</AppText>
-        <AppText variant="bodySmall" color={colors.text}>{t(signInAvailable ? 'settings.accountOptional' : authEnabled ? 'signIn.webOnly' : 'settings.accountOff')}</AppText>
-        {signInAvailable && <AppButton variant="outline" icon="login" label={t('titles.signIn')} onPress={() => router.push('/sign-in' as never)} testID="go-sign-in" />}
-      </Card>
+      {accountRequired ? (
+        <Card style={styles.block} testID="settings-account">
+          <AppText variant="h3" heading={2}>{t('settings.account')}</AppText>
+          {email !== '' && <AppText color={colors.text} testID="settings-account-email">{t('signIn.signedInAs', { email })}</AppText>}
+          <AppButton variant="outline" icon="logout" label={t('signIn.signOut')} onPress={() => { void signOut(); }} testID="settings-sign-out" />
+          <AppText variant="caption">{t('account.deleteNote')}</AppText>
+        </Card>
+      ) : (
+        <Card style={styles.block}>
+          <AppText variant="h3" heading={2}>{t('settings.account')}</AppText>
+          <AppText variant="bodySmall" color={colors.text}>{t(signInAvailable ? 'settings.accountOptional' : authEnabled ? 'signIn.webOnly' : 'settings.accountOff')}</AppText>
+          {signInAvailable && <AppButton variant="outline" icon="login" label={t('titles.signIn')} onPress={() => router.push('/sign-in' as never)} testID="go-sign-in" />}
+        </Card>
+      )}
 
       <Card style={styles.block} testID="feedback-form">
         <AppText variant="h3" heading={2}>{t('settings.feedbackTitle')}</AppText>

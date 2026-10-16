@@ -744,6 +744,7 @@
     "offlineBody": "ReSource needs an internet connection to check your sign-in. Connect and try again.",
     "notConfigured": "Sign-in is not set up on this server, so ReSource cannot open. If you run ReSource, set the Supabase settings for the web build.",
     "webOnly": "For now, signing in works only in the web version of ReSource. Open ReSource in your browser.",
+    "deleteNote": "Deleting your account will remove your sign-in and email address. It is not available in the app yet. Until it is, ask for it on the Data Deletion Request page. Reports, posts and votes are not linked to your account, so use \"Delete my data\" above to remove those.",
     "consent": "I agree that ReSource may store my email address so I can sign in. If I continue with Google, Google also shares my name and profile picture; ReSource's sign-in provider stores them, and ReSource does not show or use them.",
     "useOtherEmail": "Use a different email",
     "signedInBody": "Signed in as {{email}}. Signing out removes the sign-in from this device.",
