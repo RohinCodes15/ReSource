@@ -663,7 +663,7 @@
   "signIn": {
     "intro": "Signing in is optional. It lets your reports and posts follow you to another device.",
     "offTitle": "Sign-in is turned off",
-    "consent": "I agree that ReSource may store my email address so I can sign in.",
+    "consent": "I agree that ReSource may store my email address so I can sign in, and, if I continue with Google, the name and profile picture Google shares.",
     "send": "Email me a sign-in link",
     "sent": "Check your email for a sign-in link. Open it on this device: you will be signed in in the tab it opens.",
     "failed": "The sign-in email could not be sent. Please try again.",
@@ -674,7 +674,8 @@
     "webOnly": "Signing in by email link works in the web version of ReSource only. You do not need an account: everything in this app works without one.",
     "google": "Continue with Google",
     "googleFailed": "Google sign-in could not start. Please try again.",
-    "openAdmin": "Open admin tools"
+    "openAdmin": "Open admin tools",
+    "googleNote": "With Google, Google shares your account's email address, name and profile picture with our sign-in provider. Admin tools open only for accounts the people who run ReSource have made admins."
   },
   "storage": {
     "bannerTitle": "Storage on your device",
@@ -719,7 +720,7 @@
   "legal": {
     "effective": "Effective {{date}}",
     "summaryTitle": "In short",
-    "privacySummary": "No account is needed. We do not sell or share your information for advertising, and there are no ads or trackers. Your location stays on your device. Reports and posts are stored without your name, and you can delete them at any time in Settings. Under 13: you can read everything, but the app collects nothing from you.",
+    "privacySummary": "No account is needed. We do not sell or share your information for advertising, and there are no ads or trackers. Your location stays on your device. Reports and posts are stored without your name, and you can delete them at any time in Settings. Under 13: you can read everything, but the app collects nothing from you. Signing in is optional, and residents never need to. If you continue with Google, Google shares your account's email address, name and profile picture with our sign-in provider.",
     "termsSummary": "ReSource is a free student project, not an official City of Fremont service. Information can be out of date, so confirm with the organization. It is not for emergencies (call 911) and does not give legal, medical or financial advice. The assistant can be wrong. Be respectful and do not post personal information.",
     "englishOnly": "The full text below is in English. The summary above is provided in your language.",
     "draftNote": "This document is a good-faith draft for a student project and is not legal advice."

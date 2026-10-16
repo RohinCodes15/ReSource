@@ -663,7 +663,7 @@
   "signIn": {
     "intro": "Đăng nhập là tùy chọn. Nó giúp báo cáo và bài đăng đi theo quý vị sang thiết bị khác.",
     "offTitle": "Chức năng đăng nhập đang tắt",
-    "consent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi để tôi có thể đăng nhập.",
+    "consent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi để tôi có thể đăng nhập, và nếu tôi tiếp tục với Google, cả tên và ảnh hồ sơ mà Google chia sẻ.",
     "send": "Gửi liên kết đăng nhập qua email cho tôi",
     "sent": "Hãy kiểm tra email để lấy liên kết đăng nhập. Mở liên kết trên thiết bị này: quý vị sẽ được đăng nhập trong thẻ vừa mở.",
     "failed": "Không gửi được email đăng nhập. Vui lòng thử lại.",
@@ -674,7 +674,8 @@
     "webOnly": "Đăng nhập bằng liên kết qua email chỉ hoạt động trên bản web của ReSource. Quý vị không cần tài khoản: mọi thứ trong ứng dụng này đều hoạt động mà không cần tài khoản.",
     "google": "Tiếp tục với Google",
     "googleFailed": "Không thể bắt đầu đăng nhập bằng Google. Vui lòng thử lại.",
-    "openAdmin": "Mở công cụ quản trị"
+    "openAdmin": "Mở công cụ quản trị",
+    "googleNote": "Với Google, Google chia sẻ email, tên và ảnh hồ sơ của tài khoản bạn với nhà cung cấp đăng nhập của chúng tôi. Công cụ quản trị chỉ mở cho những tài khoản được những người điều hành ReSource cấp quyền quản trị."
   },
   "storage": {
     "bannerTitle": "Lưu trữ trên thiết bị của quý vị",
@@ -719,7 +720,7 @@
   "legal": {
     "effective": "Có hiệu lực từ {{date}}",
     "summaryTitle": "Tóm tắt",
-    "privacySummary": "Không cần tài khoản. Chúng tôi không bán hay chia sẻ thông tin của quý vị cho quảng cáo, và không có quảng cáo hay trình theo dõi. Vị trí của quý vị nằm lại trên thiết bị. Báo cáo và bài đăng được lưu không kèm tên, và quý vị có thể xóa bất cứ lúc nào trong Cài đặt. Dưới 13 tuổi: quý vị có thể đọc mọi thứ, nhưng ứng dụng không thu thập gì từ quý vị.",
+    "privacySummary": "Không cần tài khoản. Chúng tôi không bán hay chia sẻ thông tin của quý vị cho quảng cáo, và không có quảng cáo hay trình theo dõi. Vị trí của quý vị nằm lại trên thiết bị. Báo cáo và bài đăng được lưu không kèm tên, và quý vị có thể xóa bất cứ lúc nào trong Cài đặt. Dưới 13 tuổi: quý vị có thể đọc mọi thứ, nhưng ứng dụng không thu thập gì từ quý vị. Đăng nhập là không bắt buộc, và cư dân không bao giờ cần đăng nhập. Nếu bạn tiếp tục với Google, Google sẽ chia sẻ email, tên và ảnh hồ sơ của tài khoản bạn với nhà cung cấp đăng nhập của chúng tôi.",
     "termsSummary": "ReSource là một dự án miễn phí của học sinh, không phải dịch vụ chính thức của Thành phố Fremont. Thông tin có thể đã cũ, vì vậy hãy xác nhận với tổ chức. Ứng dụng không dành cho trường hợp khẩn cấp (hãy gọi 911) và không đưa ra lời khuyên pháp lý, y tế hay tài chính. Trợ lý có thể sai. Hãy tôn trọng người khác và đừng đăng thông tin cá nhân.",
     "englishOnly": "Toàn văn bên dưới bằng tiếng Anh. Phần tóm tắt ở trên được cung cấp bằng ngôn ngữ của quý vị.",
     "draftNote": "Tài liệu này là bản nháp soạn với thiện chí cho một dự án của học sinh và không phải là tư vấn pháp lý."

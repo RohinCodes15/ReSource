@@ -40,14 +40,15 @@ export const PRIVACY: LegalSection[] = [
         'Feedback: the message you type, with no identifier attached.',
         'A data deletion request: your email address and what you wrote, so we can find the data and answer you. We delete the email address once the request is finished.',
         'Consent records: what you agreed to, which version of this policy, and when, next to your scrambled install token.',
-        'Sign-in, only if accounts are turned on and you choose to use one: your email address, handled by our sign-in provider.',
+        'Sign-in, only if accounts are turned on and you choose to use one. Residents never need to sign in: every feature works without an account. With an email link: your email address, handled by our sign-in provider. With "Continue with Google": Google tells our sign-in provider your Google account\'s email address, name and profile picture, and the provider keeps them with your account. The app itself uses only the email address.',
+        'Admin tools: they open only for accounts that the people who run ReSource have marked as admins in our sign-in provider, or for someone with the staff passcode. Our server checks this again on every admin request. Admins can read reports, including any photo attached to them, in order to review them.',
       ],
     ],
   },
   {
     heading: 'What we do not collect',
     body: [[
-      'Your name, home address or phone number.',
+      'Your name, unless you choose to sign in with Google (see above), your home address or your phone number.',
       'Your precise location. The place you choose (GPS or ZIP code) is stored only on your device and distances are worked out on your device.',
       'Advertising IDs, contact lists, or anything about other apps and sites you use.',
       'Usage analytics or crash reports.',
@@ -59,6 +60,7 @@ export const PRIVACY: LegalSection[] = [
       'We use a small number of service providers to run the app. They act on our instructions and are not allowed to use your information for their own advertising.',
       [
         'Supabase: stores the database, report photos and, if used, sign-in.',
+        'Google: only if you choose "Continue with Google". Google confirms who you are and shares your account\'s email address, name and profile picture with Supabase.',
         'Our hosting providers: deliver the website and run the server, and keep standard short-term server logs.',
         'Anthropic: receives the text of your chat messages to generate the assistant\'s answer.',
         'OpenStreetMap (web) or your phone\'s map provider, Apple or Google (phones): when you open the map, your device asks them for map images, so they see your IP address and the area you are viewing.',
@@ -113,6 +115,7 @@ export const PRIVACY: LegalSection[] = [
       [
         '2026-10-12: first version.',
         '2026-10-13: clarified that the server holds a conversation in memory for up to ten minutes, and that the rounded position sent with a chat message is the one exception to location staying on your device.',
+        '2026-10-16: added Google sign-in (what Google shares, and that residents never need to sign in), how admin access is controlled, and that admins can see report photos.',
       ],
     ],
   },

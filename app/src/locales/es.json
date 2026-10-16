@@ -663,7 +663,7 @@
   "signIn": {
     "intro": "Iniciar sesión es opcional. Permite que sus reportes y publicaciones lo acompañen a otro dispositivo.",
     "offTitle": "El inicio de sesión está desactivado",
-    "consent": "Acepto que ReSource guarde mi correo electrónico para poder iniciar sesión.",
+    "consent": "Acepto que ReSource guarde mi correo electrónico para poder iniciar sesión y, si continúo con Google, el nombre y la foto de perfil que comparte Google.",
     "send": "Enviarme un enlace para iniciar sesión",
     "sent": "Revise su correo: le enviamos un enlace para iniciar sesión. Ábralo en este dispositivo: la sesión se iniciará en la pestaña que se abra.",
     "failed": "No se pudo enviar el correo de inicio de sesión. Inténtelo de nuevo.",
@@ -674,7 +674,8 @@
     "webOnly": "Iniciar sesión con un enlace por correo solo funciona en la versión web de ReSource. No necesita una cuenta: todo en esta aplicación funciona sin ella.",
     "google": "Continuar con Google",
     "googleFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
-    "openAdmin": "Abrir herramientas de administración"
+    "openAdmin": "Abrir herramientas de administración",
+    "googleNote": "Con Google, Google comparte el correo electrónico, el nombre y la foto de perfil de tu cuenta con nuestro proveedor de inicio de sesión. Las herramientas de administración solo se abren para las cuentas que las personas que gestionan ReSource han hecho administradoras."
   },
   "storage": {
     "bannerTitle": "Almacenamiento en su dispositivo",
@@ -719,7 +720,7 @@
   "legal": {
     "effective": "Vigente desde el {{date}}",
     "summaryTitle": "En resumen",
-    "privacySummary": "No se necesita una cuenta. No vendemos ni compartimos su información para publicidad, y no hay anuncios ni rastreadores. Su ubicación se queda en su dispositivo. Los reportes y las publicaciones se guardan sin su nombre y puede eliminarlos cuando quiera en Configuración. Menores de 13 años: pueden leer todo, pero la aplicación no recopila nada de ellos.",
+    "privacySummary": "No se necesita una cuenta. No vendemos ni compartimos su información para publicidad, y no hay anuncios ni rastreadores. Su ubicación se queda en su dispositivo. Los reportes y las publicaciones se guardan sin su nombre y puede eliminarlos cuando quiera en Configuración. Menores de 13 años: pueden leer todo, pero la aplicación no recopila nada de ellos. Iniciar sesión es opcional y los residentes nunca lo necesitan. Si continúas con Google, Google comparte el correo electrónico, el nombre y la foto de perfil de tu cuenta con nuestro proveedor de inicio de sesión.",
     "termsSummary": "ReSource es un proyecto estudiantil gratuito, no un servicio oficial de la Ciudad de Fremont. La información puede estar desactualizada: confírmela con la organización. No es para emergencias (llame al 911) y no da consejos legales, médicos ni financieros. El asistente puede equivocarse. Sea respetuoso y no publique información personal.",
     "englishOnly": "El texto completo de abajo está en inglés. El resumen de arriba está en su idioma.",
     "draftNote": "Este documento es un borrador de buena fe para un proyecto estudiantil y no es asesoría legal."
