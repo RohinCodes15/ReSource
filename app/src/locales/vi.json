@@ -729,5 +729,24 @@
   "credits": {
     "intro": "ReSource chỉ dùng phông chữ, biểu tượng, bản đồ và dữ liệu có giấy phép mở hoặc tự làm. Cảm ơn những người đã tạo ra chúng.",
     "projectLicense": "Mã nguồn của ReSource được phát hành theo Giấy phép MIT."
+  },
+  "account": {
+    "loading": "Đang kiểm tra đăng nhập của bạn…",
+    "welcomeTitle": "Chào mừng đến với ReSource",
+    "welcomeBody": "ReSource cho biết dịch vụ nào của thành phố Fremont đã thay đổi theo ngân sách và nơi tìm trợ giúp. Để sử dụng, hãy đăng nhập bằng Google hoặc bằng đường liên kết chúng tôi gửi qua email.",
+    "why": "Tài khoản của bạn chỉ dùng để vào ứng dụng. Báo cáo, bài đăng và lượt bình chọn không gắn với tài khoản: ngay cả người điều hành ReSource cũng không biết tài khoản nào đã gửi chúng.",
+    "ageQuestion": "Bạn từ 13 tuổi trở lên phải không?",
+    "ageYes": "Đúng, tôi từ 13 tuổi trở lên",
+    "ageNo": "Không, tôi dưới 13 tuổi",
+    "under13Title": "ReSource dành cho người từ 13 tuổi trở lên",
+    "under13Body": "Bạn không thể tạo tài khoản, và chúng tôi chưa thu thập gì từ bạn. Bạn vẫn có thể đọc Chính sách quyền riêng tư và Điều khoản của chúng tôi.",
+    "offlineTitle": "Bạn đang ngoại tuyến",
+    "offlineBody": "ReSource cần kết nối internet để kiểm tra đăng nhập của bạn. Hãy kết nối rồi thử lại.",
+    "notConfigured": "Máy chủ này chưa thiết lập đăng nhập, nên ReSource không thể mở. Nếu bạn vận hành ReSource, hãy đặt cấu hình Supabase cho bản web.",
+    "webOnly": "Hiện tại, đăng nhập chỉ hoạt động trên bản web của ReSource. Hãy mở ReSource trong trình duyệt.",
+    "consent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi để tôi có thể đăng nhập. Nếu tôi tiếp tục với Google, Google cũng chia sẻ tên và ảnh hồ sơ của tôi; nhà cung cấp đăng nhập của ReSource lưu chúng, và ReSource không hiển thị hay sử dụng chúng.",
+    "useOtherEmail": "Dùng email khác",
+    "signedInBody": "Đã đăng nhập bằng {{email}}. Đăng xuất sẽ xóa đăng nhập khỏi thiết bị này.",
+    "signedOutBody": "Bạn chưa đăng nhập."
   }
 }

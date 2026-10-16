@@ -729,5 +729,24 @@
   "credits": {
     "intro": "ReSource usa solo tipografías, iconos, mapas y datos con licencia abierta o hechos por el propio proyecto. Gracias a quienes los crearon.",
     "projectLicense": "El código propio de ReSource se publica bajo la Licencia MIT."
+  },
+  "account": {
+    "loading": "Comprobando tu inicio de sesión…",
+    "welcomeTitle": "Bienvenido a ReSource",
+    "welcomeBody": "ReSource muestra qué servicios de la ciudad de Fremont cambiaron con el presupuesto y dónde encontrar ayuda. Para usarlo, inicia sesión con Google o con un enlace que te enviamos por correo.",
+    "why": "Tu cuenta solo sirve para entrar. Los reportes, publicaciones y votos no están vinculados a ella: ni siquiera quienes administran ReSource pueden saber qué cuenta los envió.",
+    "ageQuestion": "¿Tienes 13 años o más?",
+    "ageYes": "Sí, tengo 13 años o más",
+    "ageNo": "No, tengo menos de 13 años",
+    "under13Title": "ReSource es para personas de 13 años o más",
+    "under13Body": "No puedes crear una cuenta y no hemos recopilado nada de ti. Aún puedes leer nuestra Política de privacidad y los Términos.",
+    "offlineTitle": "No tienes conexión",
+    "offlineBody": "ReSource necesita conexión a internet para comprobar tu inicio de sesión. Conéctate e inténtalo de nuevo.",
+    "notConfigured": "El inicio de sesión no está configurado en este servidor, así que ReSource no puede abrirse. Si administras ReSource, configura Supabase para la versión web.",
+    "webOnly": "Por ahora, el inicio de sesión solo funciona en la versión web de ReSource. Abre ReSource en tu navegador.",
+    "consent": "Acepto que ReSource guarde mi correo electrónico para poder iniciar sesión. Si continúo con Google, Google también comparte mi nombre y foto de perfil; el proveedor de inicio de sesión de ReSource los guarda, y ReSource no los muestra ni los usa.",
+    "useOtherEmail": "Usar otro correo",
+    "signedInBody": "Sesión iniciada como {{email}}. Al cerrar sesión se quita el inicio de sesión de este dispositivo.",
+    "signedOutBody": "No has iniciado sesión."
   }
 }

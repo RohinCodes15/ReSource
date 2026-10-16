@@ -729,5 +729,24 @@
   "credits": {
     "intro": "ReSource uses only openly licensed or self-made fonts, icons, maps and data. Thank you to the people who made them.",
     "projectLicense": "ReSource's own code is released under the MIT License."
+  },
+  "account": {
+    "loading": "Checking your sign-in…",
+    "welcomeTitle": "Welcome to ReSource",
+    "welcomeBody": "ReSource shows which Fremont city services changed with the budget and where to find help. To use it, sign in with Google or with a link we email you.",
+    "why": "Your account only lets you in. Reports, posts and votes are not linked to it: even the people who run ReSource cannot tell which account sent them.",
+    "ageQuestion": "Are you 13 or older?",
+    "ageYes": "Yes, I am 13 or older",
+    "ageNo": "No, I am under 13",
+    "under13Title": "ReSource is for people 13 and older",
+    "under13Body": "You cannot create an account, and we have not collected anything from you. You can still read our Privacy Policy and Terms.",
+    "offlineTitle": "You are offline",
+    "offlineBody": "ReSource needs an internet connection to check your sign-in. Connect and try again.",
+    "notConfigured": "Sign-in is not set up on this server, so ReSource cannot open. If you run ReSource, set the Supabase settings for the web build.",
+    "webOnly": "For now, signing in works only in the web version of ReSource. Open ReSource in your browser.",
+    "consent": "I agree that ReSource may store my email address so I can sign in. If I continue with Google, Google also shares my name and profile picture; ReSource's sign-in provider stores them, and ReSource does not show or use them.",
+    "useOtherEmail": "Use a different email",
+    "signedInBody": "Signed in as {{email}}. Signing out removes the sign-in from this device.",
+    "signedOutBody": "You are not signed in."
   }
 }

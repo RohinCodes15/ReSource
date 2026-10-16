@@ -729,5 +729,24 @@
   "credits": {
     "intro": "ReSource 只使用开放许可或自行制作的字体、图标、地图和数据。感谢它们的作者。",
     "projectLicense": "ReSource 自己的代码以 MIT 许可证发布。"
+  },
+  "account": {
+    "loading": "正在检查您的登录状态…",
+    "welcomeTitle": "欢迎使用 ReSource",
+    "welcomeBody": "ReSource 显示弗里蒙特市哪些服务因预算而变化，以及在哪里可以获得帮助。使用前，请用 Google 或我们通过电子邮件发送的链接登录。",
+    "why": "您的账户只用于登录。报告、帖子和投票不会与账户关联：即使是 ReSource 的运营者也无法知道是哪个账户发送的。",
+    "ageQuestion": "您是否年满 13 岁？",
+    "ageYes": "是，我年满 13 岁",
+    "ageNo": "否，我未满 13 岁",
+    "under13Title": "ReSource 适用于 13 岁及以上的人",
+    "under13Body": "您无法创建账户，我们也没有收集您的任何信息。您仍然可以阅读我们的隐私政策和条款。",
+    "offlineTitle": "您已离线",
+    "offlineBody": "ReSource 需要联网来检查您的登录状态。请连接网络后重试。",
+    "notConfigured": "此服务器未设置登录，因此 ReSource 无法打开。如果您负责运营 ReSource，请为网页版设置 Supabase。",
+    "webOnly": "目前只有 ReSource 网页版可以登录。请在浏览器中打开 ReSource。",
+    "consent": "我同意 ReSource 保存我的电子邮件地址以便登录。如果我使用 Google 继续，Google 还会共享我的姓名和头像；ReSource 的登录服务提供商会保存它们，ReSource 不会显示或使用它们。",
+    "useOtherEmail": "使用其他电子邮件",
+    "signedInBody": "已用 {{email}} 登录。退出登录会从此设备上移除登录信息。",
+    "signedOutBody": "您尚未登录。"
   }
 }

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { createElement, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AccountGate } from '../components/AccountGate';
 import { CookieBanner } from '../components/CookieBanner';
 import { AppText, LinkText } from '../components/ui';
 import { getConfig } from '../lib/api';
@@ -128,7 +129,9 @@ export default function RootLayout() {
         <StatusBar style="dark" />
         <SkipLink />
         <OfflineBanner />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
+        <AccountGate>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }} />
+        </AccountGate>
         <CookieBanner />
       </View>
     </SafeAreaProvider>

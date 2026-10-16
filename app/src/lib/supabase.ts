@@ -11,7 +11,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import { sessionStorageAdapter, STORAGE_KEYS } from './storage';
-import { authEmailStore, authReadyStore, authRoleStore, authTokenStore } from '../state/stores';
+import { adminTokenStore, authEmailStore, authReadyStore, authRoleStore, authTokenStore } from '../state/stores';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -53,4 +53,13 @@ export function watchAuth(): () => void {
     authRoleStore.set(typeof role === 'string' ? role : '');
   });
   return () => data.subscription.unsubscribe();
+}
+
+/**
+ * Signs out of Supabase (which also removes the saved session) and, in the account-required
+ * build, forgets an admin passcode unlock too, so nothing of the session outlives it.
+ */
+export async function signOut(): Promise<void> {
+  await supabase?.auth.signOut().catch(() => undefined);
+  if (accountRequired) adminTokenStore.set('');
 }
