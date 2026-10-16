@@ -23,7 +23,27 @@ export const STORAGE_KEYS = {
   age: { key: 'resource.age', category: 'essential', i18n: 'age' },
   consent: { key: 'resource.storageConsent', category: 'essential', i18n: 'consent' },
   chat: { key: 'resource.chat', category: 'optional', i18n: 'chat' },
+  // Written only in the account-required build (EXPO_PUBLIC_ACCOUNT_REQUIRED), by Supabase Auth.
+  session: { key: 'resource.session', category: 'essential', i18n: 'session' },
 } as const satisfies Record<string, StorageKey>;
+
+/**
+ * Where Supabase Auth keeps the sign-in session in the account-required build. It may only use
+ * the declared `session` key, so the Cookie Policy list stays complete.
+ */
+export const sessionStorageAdapter = {
+  async getItem(key: string): Promise<string | null> {
+    if (key !== STORAGE_KEYS.session.key) return null;
+    try { return await AsyncStorage.getItem(key); } catch { return null; }
+  },
+  async setItem(key: string, value: string): Promise<void> {
+    if (key !== STORAGE_KEYS.session.key) return;
+    try { await AsyncStorage.setItem(key, value); } catch { /* blocked: the session lasts until the app closes */ }
+  },
+  async removeItem(key: string): Promise<void> {
+    try { await AsyncStorage.removeItem(key); } catch { /* nothing more we can do */ }
+  },
+};
 
 export type StorageName = keyof typeof STORAGE_KEYS;
 

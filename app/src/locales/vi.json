@@ -703,7 +703,8 @@
     "alerts": "Chủ đề và khu vực thông báo của quý vị, và những tin quý vị đã đọc.",
     "age": "Ghi nhớ việc quý vị cho biết mình dưới 13 tuổi, để giữ ứng dụng ở chế độ chỉ xem.",
     "consent": "Ghi nhớ lựa chọn của quý vị về lưu trữ tùy chọn.",
-    "chat": "Lịch sử trò chuyện của quý vị với trợ lý."
+    "chat": "Lịch sử trò chuyện của quý vị với trợ lý.",
+    "session": "Giữ bạn đăng nhập trên thiết bị này cho đến khi bạn đăng xuất. Chỉ dùng trong phiên bản ReSource yêu cầu tài khoản."
   },
   "cookiePolicy": {
     "intro": "Trang này liệt kê mọi thứ ReSource lưu trên thiết bị của quý vị. Trên web, ứng dụng dùng bộ nhớ cục bộ của trình duyệt thay vì cookie; trên điện thoại, ứng dụng dùng bộ nhớ riêng của mình.",

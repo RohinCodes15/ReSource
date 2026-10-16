@@ -703,7 +703,8 @@
     "alerts": "Sus temas y zonas de alertas, y qué novedades ya leyó.",
     "age": "Recuerda si nos dijo que tiene menos de 13 años, para mantener la aplicación en modo de solo lectura.",
     "consent": "Recuerda su elección sobre el almacenamiento opcional.",
-    "chat": "Su historial de chat con el asistente."
+    "chat": "Su historial de chat con el asistente.",
+    "session": "Mantiene tu sesión iniciada en este dispositivo hasta que la cierres. Solo se usa en la versión de ReSource que requiere una cuenta."
   },
   "cookiePolicy": {
     "intro": "Esta página enumera todo lo que ReSource guarda en su dispositivo. En la web se usa el almacenamiento local del navegador en lugar de cookies; en el teléfono se usa el almacenamiento propio de la aplicación.",

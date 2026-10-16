@@ -703,7 +703,8 @@
     "alerts": "Your alert topics and areas, and which updates you have read.",
     "age": "Remembers if you told us you are under 13, to keep the app in browse-only mode.",
     "consent": "Remembers your choice about optional storage.",
-    "chat": "Your chat history with the assistant."
+    "chat": "Your chat history with the assistant.",
+    "session": "Keeps you signed in on this device until you sign out. Used only in the version of ReSource that requires an account."
   },
   "cookiePolicy": {
     "intro": "This page lists everything ReSource saves on your device. On the web this uses your browser's local storage rather than cookies; on a phone it uses the app's own storage.",

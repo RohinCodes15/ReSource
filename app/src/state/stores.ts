@@ -128,6 +128,8 @@ export const authEmailStore = createStore<string>('');
  * admin screen draws and nothing more: the API checks the role itself on every admin request.
  */
 export const authRoleStore = createStore<string>('');
+/** True once Supabase has said whether a saved session exists, so the account gate can decide. */
+export const authReadyStore = createStore<boolean>(false);
 
 // ---- Install token -------------------------------------------------------------------------
 
