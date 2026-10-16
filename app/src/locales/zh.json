@@ -658,7 +658,9 @@
     "signedInAs": "已登录：{{email}}",
     "signOut": "退出登录",
     "signedOut": "您已退出登录。",
-    "webOnly": "通过邮件链接登录只适用于 ReSource 的网页版。您不需要账户：本应用的全部功能不登录也能使用。"
+    "webOnly": "通过邮件链接登录只适用于 ReSource 的网页版。您不需要账户：本应用的全部功能不登录也能使用。",
+    "google": "使用 Google 继续",
+    "googleFailed": "无法开始 Google 登录。请重试。"
   },
   "storage": {
     "bannerTitle": "您设备上的存储",
