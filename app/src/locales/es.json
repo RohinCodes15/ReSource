@@ -554,7 +554,6 @@
     "confirmStatusTitle": "¿Cambiar este estado?",
     "confirmStatusBody": "{{name}} se mostrará como {{status}} para todos de inmediato.",
     "confirmStatus": "Cambiar el estado",
-    "noReports": "No hay reportes en espera de revisión.",
     "noPosts": "Aún no hay publicaciones de la comunidad.",
     "noRequests": "No hay solicitudes de eliminación.",
     "hasPhoto": "tiene foto",
@@ -570,7 +569,21 @@
     "setStatus": "Definir el estado de {{name}}",
     "requestStatus_open": "Abierta",
     "requestStatus_completed": "Completada",
-    "markDone": "Marcar como completada"
+    "markDone": "Marcar como completada",
+    "signedInAdmin": "Sesión iniciada como {{email}} con una cuenta de administración.",
+    "notAdmin": "Iniciaste sesión como {{email}}, pero esta cuenta no es de administración. El acceso lo dan las personas que gestionan ReSource.",
+    "reportFilter": "Mostrar reportes",
+    "filter_pending": "En espera",
+    "filter_verified": "Verificados",
+    "filter_rejected": "Rechazados",
+    "noReports_pending": "No hay reportes en espera de revisión.",
+    "noReports_verified": "No hay reportes verificados.",
+    "noReports_rejected": "No hay reportes rechazados.",
+    "reopen": "Volver a en espera",
+    "confirmRejectTitle": "¿Rechazar este reporte?",
+    "confirmRejectBody": "El reporte sobre {{name}} no contará en ningún total público.",
+    "confirmReopenTitle": "¿Volver a poner este reporte en espera?",
+    "confirmReopenBody": "El reporte sobre {{name}} saldrá de los totales públicos hasta que se revise de nuevo."
   },
   "settings": {
     "textSize": "Tamaño del texto",
@@ -660,7 +673,8 @@
     "signedOut": "Cerró la sesión.",
     "webOnly": "Iniciar sesión con un enlace por correo solo funciona en la versión web de ReSource. No necesita una cuenta: todo en esta aplicación funciona sin ella.",
     "google": "Continuar con Google",
-    "googleFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo."
+    "googleFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
+    "openAdmin": "Abrir herramientas de administración"
   },
   "storage": {
     "bannerTitle": "Almacenamiento en su dispositivo",

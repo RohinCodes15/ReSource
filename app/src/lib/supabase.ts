@@ -7,7 +7,7 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
-import { authEmailStore, authTokenStore } from '../state/stores';
+import { authEmailStore, authRoleStore, authTokenStore } from '../state/stores';
 
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -33,6 +33,9 @@ export function watchAuth(): () => void {
   const { data } = supabase.auth.onAuthStateChange((_event, session) => {
     authEmailStore.set(session?.user.email ?? '');
     authTokenStore.set(session?.access_token ?? '');
+    // app_metadata only: a user can edit their own user_metadata, so it must never grant admin.
+    const role = session?.user.app_metadata?.role;
+    authRoleStore.set(typeof role === 'string' ? role : '');
   });
   return () => data.subscription.unsubscribe();
 }

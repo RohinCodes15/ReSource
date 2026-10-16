@@ -3,9 +3,20 @@ import { StyleSheet, View } from 'react-native';
 import { useApi } from '../hooks/useData';
 import { adminCheck, ApiError, getConfig } from '../lib/api';
 import { useTranslation } from '../lib/i18n';
-import { adminTokenStore } from '../state/stores';
+import { adminTokenStore, authEmailStore, authRoleStore } from '../state/stores';
 import { colors, spacing } from '../theme';
 import { AppButton, AppText, Banner, Card, Field } from './ui';
+
+/**
+ * True when the admin tools should be drawn: the passcode was accepted, or the signed-in account
+ * has the admin role in its app_metadata. Display only: the API checks one or the other on every
+ * admin request and answers 403 otherwise.
+ */
+export function useAdminUnlocked(): boolean {
+  const token = adminTokenStore.use();
+  const role = authRoleStore.use();
+  return !!token || role === 'admin';
+}
 
 /**
  * Wraps the staff-only screens. The passcode is checked by the API on every request; this
@@ -14,6 +25,8 @@ import { AppButton, AppText, Banner, Card, Field } from './ui';
 export function AdminGate({ children, body }: PropsWithChildren<{ body?: string }>) {
   const { t } = useTranslation();
   const token = adminTokenStore.use();
+  const signedInAs = authEmailStore.use();
+  const role = authRoleStore.use();
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -36,6 +49,14 @@ export function AdminGate({ children, body }: PropsWithChildren<{ body?: string 
     }
   }
 
+  if (!token && role === 'admin') {
+    return (
+      <View style={styles.block}>
+        <Banner tone="success" icon="shield-account" body={t('admin.signedInAdmin', { email: signedInAs })} testID="admin-signed-in" />
+        {children}
+      </View>
+    );
+  }
   if (!token && config.data?.admin_enabled === false) {
     return (
       <Card style={styles.block} testID="admin-not-set-up">
@@ -48,6 +69,7 @@ export function AdminGate({ children, body }: PropsWithChildren<{ body?: string 
     return (
       <Card style={styles.block} testID="admin-gate">
         <AppText variant="h3" heading={2}>{t('admin.lockedTitle')}</AppText>
+        {!!signedInAs && <Banner tone="info" icon="account-off-outline" body={t('admin.notAdmin', { email: signedInAs })} testID="admin-not-admin" />}
         <AppText variant="bodySmall" color={colors.text}>{body ?? t('admin.lockedBody')}</AppText>
         <Field label={t('admin.passcode')} value={input} onChangeText={setInput} secure error={error} onSubmitEditing={unlock} autoComplete="off" testID="admin-passcode" />
         <AppButton variant="navy" icon="lock-open-variant" label={t('admin.unlock')} loading={checking} onPress={unlock} testID="admin-unlock" />

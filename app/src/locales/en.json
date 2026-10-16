@@ -554,7 +554,6 @@
     "confirmStatusTitle": "Change this status?",
     "confirmStatusBody": "{{name}} will show as {{status}} to everyone straight away.",
     "confirmStatus": "Change the status",
-    "noReports": "No reports are waiting for review.",
     "noPosts": "No community posts yet.",
     "noRequests": "No deletion requests.",
     "hasPhoto": "has a photo",
@@ -570,7 +569,21 @@
     "setStatus": "Set the status of {{name}}",
     "requestStatus_open": "Open",
     "requestStatus_completed": "Completed",
-    "markDone": "Mark as completed"
+    "markDone": "Mark as completed",
+    "signedInAdmin": "Signed in as {{email}} with an admin account.",
+    "notAdmin": "You are signed in as {{email}}, but this account is not an admin. Admin access is given by the people who run ReSource.",
+    "reportFilter": "Show reports",
+    "filter_pending": "Waiting",
+    "filter_verified": "Verified",
+    "filter_rejected": "Rejected",
+    "noReports_pending": "No reports are waiting for review.",
+    "noReports_verified": "No verified reports.",
+    "noReports_rejected": "No rejected reports.",
+    "reopen": "Move back to waiting",
+    "confirmRejectTitle": "Reject this report?",
+    "confirmRejectBody": "The report about {{name}} will not count in any public totals.",
+    "confirmReopenTitle": "Move this report back to waiting?",
+    "confirmReopenBody": "The report about {{name}} will leave the public totals until it is reviewed again."
   },
   "settings": {
     "textSize": "Text size",
@@ -660,7 +673,8 @@
     "signedOut": "You are signed out.",
     "webOnly": "Signing in by email link works in the web version of ReSource only. You do not need an account: everything in this app works without one.",
     "google": "Continue with Google",
-    "googleFailed": "Google sign-in could not start. Please try again."
+    "googleFailed": "Google sign-in could not start. Please try again.",
+    "openAdmin": "Open admin tools"
   },
   "storage": {
     "bannerTitle": "Storage on your device",

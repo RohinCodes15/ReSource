@@ -554,7 +554,6 @@
     "confirmStatusTitle": "این وضعیت تغییر کند؟",
     "confirmStatusBody": "{{name}} فوراً برای همه به شکل «{{status}}» نشان داده می‌شود.",
     "confirmStatus": "تغییر وضعیت",
-    "noReports": "هیچ گزارشی منتظر بررسی نیست.",
     "noPosts": "هنوز نوشته‌ای در تابلوی محله نیست.",
     "noRequests": "درخواست حذفی نیست.",
     "hasPhoto": "عکس دارد",
@@ -570,7 +569,21 @@
     "setStatus": "تعیین وضعیت {{name}}",
     "requestStatus_open": "باز",
     "requestStatus_completed": "تکمیل‌شده",
-    "markDone": "تکمیل‌شده نشانی کن"
+    "markDone": "تکمیل‌شده نشانی کن",
+    "signedInAdmin": "با حساب مدیر به نام {{email}} وارد شده‌اید.",
+    "notAdmin": "شما به نام {{email}} وارد شده‌اید، اما این حساب مدیر نیست. دسترسی مدیر را گردانندگان ReSource می‌دهند.",
+    "reportFilter": "نمایش گزارش‌ها",
+    "filter_pending": "در انتظار",
+    "filter_verified": "تأیید شده",
+    "filter_rejected": "رد شده",
+    "noReports_pending": "هیچ گزارشی در انتظار بررسی نیست.",
+    "noReports_verified": "هیچ گزارش تأیید شده‌ای نیست.",
+    "noReports_rejected": "هیچ گزارش رد شده‌ای نیست.",
+    "reopen": "بازگرداندن به انتظار",
+    "confirmRejectTitle": "این گزارش رد شود؟",
+    "confirmRejectBody": "گزارش دربارهٔ {{name}} در هیچ آمار عمومی شمرده نمی‌شود.",
+    "confirmReopenTitle": "این گزارش به انتظار برگردد؟",
+    "confirmReopenBody": "گزارش دربارهٔ {{name}} تا بررسی دوباره از آمار عمومی خارج می‌شود."
   },
   "settings": {
     "textSize": "اندازهٔ متن",
@@ -660,7 +673,8 @@
     "signedOut": "شما خارج شدید.",
     "webOnly": "ورود با پیوند ایمیلی فقط در نسخهٔ وب ReSource کار می‌کند. به حساب نیاز ندارید: همه چیز در این برنامه بدون آن کار می‌کند.",
     "google": "ادامه با Google",
-    "googleFailed": "ورود با Google شروع نشد. لطفاً دوباره تلاش کنید."
+    "googleFailed": "ورود با Google شروع نشد. لطفاً دوباره تلاش کنید.",
+    "openAdmin": "باز کردن ابزارهای مدیر"
   },
   "storage": {
     "bannerTitle": "ذخیره‌سازی در دستگاه شما",

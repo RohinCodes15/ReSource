@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import type { ServiceStatus } from '../../../../shared/types';
-import { AdminGate } from '../../components/AdminGate';
+import { AdminGate, useAdminUnlocked } from '../../components/AdminGate';
 import { Screen } from '../../components/Page';
 import { Sheet } from '../../components/Sheet';
 import { AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, LoadingList, Pill, Segmented, StatusBadge } from '../../components/ui';
 import { useApi } from '../../hooks/useData';
-import { adminDeletionRequests, adminFeedback, adminPosts, adminReportPhoto, adminReports, closeDeletionRequest, getServices, moderatePost, moderateReport, updateServiceStatus } from '../../lib/api';
+import { adminDeletionRequests, adminFeedback, adminPosts, adminReportPhoto, adminReports, type AdminReport, closeDeletionRequest, getServices, moderatePost, moderateReport, updateServiceStatus } from '../../lib/api';
 import { formatDate, useTranslation } from '../../lib/i18n';
-import { adminTokenStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 type Tab = 'reports' | 'posts' | 'services' | 'requests' | 'feedback';
@@ -56,24 +55,41 @@ function useAction(reload: () => void, setNotice: (text: string) => void, done: 
   };
 }
 
+type ReportStatus = AdminReport['status'];
+const REPORT_FILTERS: ReportStatus[] = ['pending', 'verified', 'rejected'];
+
 function Reports({ setNotice }: { setNotice: (text: string) => void }) {
   const { t, tx, locale } = useTranslation();
-  const { data, loading, error, reload } = useApi(() => adminReports('pending'), undefined, [], 0);
+  const [filter, setFilter] = useState<ReportStatus>('pending');
+  const { data, loading, error, reload } = useApi(() => adminReports(filter), undefined, [filter], 0);
   const action = useAction(reload, setNotice, t('admin.saved'), t('errors.generic'));
-  if (loading) return <LoadingList />;
-  if (error) return <ErrorState onRetry={reload} />;
-  if (!data?.length) return <EmptyState icon="clipboard-check-outline" title={t('admin.noReports')} />;
+  // Rejecting or reopening a report is easy to mis-tap, so both are confirmed first.
+  const [confirm, setConfirm] = useState<{ id: string; name: string; status: ReportStatus } | null>(null);
+  const change = (id: string, status: ReportStatus) => action.run(id, () => moderateReport(id, status));
   return (
     <>
-      {data.map((report) => (
+      <Segmented label={t('admin.reportFilter')} value={filter} onChange={setFilter} options={REPORT_FILTERS.map((value) => ({ value, label: t(`admin.filter_${value}`) }))} />
+      <Sheet visible={!!confirm} onClose={() => setConfirm(null)} title={t(confirm?.status === 'rejected' ? 'admin.confirmRejectTitle' : 'admin.confirmReopenTitle')} testID="confirm-report-sheet">
+        {confirm && (
+          <>
+            <AppText color={colors.text}>{t(confirm.status === 'rejected' ? 'admin.confirmRejectBody' : 'admin.confirmReopenBody', { name: confirm.name })}</AppText>
+            <AppButton variant={confirm.status === 'rejected' ? 'danger' : 'navy'} icon={confirm.status === 'rejected' ? 'close' : 'refresh'} label={t(confirm.status === 'rejected' ? 'admin.reject' : 'admin.reopen')} onPress={() => { const next = confirm; setConfirm(null); void change(next.id, next.status); }} testID="confirm-report" />
+            <AppButton variant="outline" label={t('common.cancel')} onPress={() => setConfirm(null)} testID="cancel-report" />
+          </>
+        )}
+      </Sheet>
+      {loading ? <LoadingList /> : error ? <ErrorState onRetry={reload} /> : !data?.length ? (
+        <EmptyState icon="clipboard-check-outline" title={t(`admin.noReports_${filter}`)} />
+      ) : data.map((report) => (
         <Card key={report.id} style={styles.block} testID={`admin-report-${report.id}`}>
           <AppText variant="h4" heading={3}>{report.service_name}</AppText>
           <AppText variant="caption">{formatDate(report.created_at, locale)} · {tx('area', report.area)} · {tx('impact', report.impact_level)}{report.has_photo ? ` · ${t('admin.hasPhoto')}` : ''}</AppText>
           <AppText color={colors.text}>{report.description}</AppText>
           {report.has_photo && <ReportPhoto id={report.id} />}
           <View style={styles.actions}>
-            <AppButton variant="navy" small icon="check" label={t('admin.verify')} loading={action.busy === report.id} onPress={() => action.run(report.id, () => moderateReport(report.id, 'verified'))} style={styles.action} testID={`verify-${report.id}`} />
-            <AppButton variant="danger" small icon="close" label={t('admin.reject')} onPress={() => action.run(report.id, () => moderateReport(report.id, 'rejected'))} style={styles.action} testID={`reject-${report.id}`} />
+            {report.status !== 'verified' && <AppButton variant="navy" small icon="check" label={t('admin.verify')} loading={action.busy === report.id} onPress={() => change(report.id, 'verified')} style={styles.action} testID={`verify-${report.id}`} />}
+            {report.status !== 'rejected' && <AppButton variant="danger" small icon="close" label={t('admin.reject')} onPress={() => setConfirm({ id: report.id, name: report.service_name, status: 'rejected' })} style={styles.action} testID={`reject-${report.id}`} />}
+            {report.status !== 'pending' && <AppButton variant="outline" small icon="refresh" label={t('admin.reopen')} onPress={() => setConfirm({ id: report.id, name: report.service_name, status: 'pending' })} style={styles.action} testID={`reopen-${report.id}`} />}
           </View>
         </Card>
       ))}
@@ -186,13 +202,13 @@ function Feedback() {
 /** Admin tools: review reports and posts, update a service's status, close deletion requests and read feedback. */
 export default function AdminScreen() {
   const { t } = useTranslation();
-  const token = adminTokenStore.use();
+  const unlocked = useAdminUnlocked();
   const [tab, setTab] = useState<Tab>('reports');
   const [notice, setNotice] = useState<string | null>(null);
   return (
     <Screen title={t('titles.admin')} testID="admin-screen">
       <AdminGate>
-        {token ? (
+        {unlocked ? (
           <View style={styles.block}>
             <Segmented label={t('titles.admin')} value={tab} onChange={(next) => { setTab(next); setNotice(null); }} options={(['reports', 'posts', 'services', 'requests', 'feedback'] as const).map((value) => ({ value, label: t(`admin.tab_${value}`) }))} />
             {notice && <Banner tone="info" body={notice} live testID="admin-notice" />}

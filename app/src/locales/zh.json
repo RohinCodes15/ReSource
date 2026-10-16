@@ -554,7 +554,6 @@
     "confirmStatusTitle": "更改这个状态？",
     "confirmStatusBody": "{{name}} 将立即对所有人显示为“{{status}}”。",
     "confirmStatus": "更改状态",
-    "noReports": "没有等待审核的报告。",
     "noPosts": "还没有社区留言。",
     "noRequests": "没有删除请求。",
     "hasPhoto": "附有照片",
@@ -570,7 +569,21 @@
     "setStatus": "设置 {{name}} 的状态",
     "requestStatus_open": "未处理",
     "requestStatus_completed": "已完成",
-    "markDone": "标为已完成"
+    "markDone": "标为已完成",
+    "signedInAdmin": "已用管理员账户 {{email}} 登录。",
+    "notAdmin": "您已以 {{email}} 登录，但此账户不是管理员。管理员权限由 ReSource 的运营人员授予。",
+    "reportFilter": "显示报告",
+    "filter_pending": "待审核",
+    "filter_verified": "已核实",
+    "filter_rejected": "已拒绝",
+    "noReports_pending": "没有待审核的报告。",
+    "noReports_verified": "没有已核实的报告。",
+    "noReports_rejected": "没有已拒绝的报告。",
+    "reopen": "移回待审核",
+    "confirmRejectTitle": "拒绝此报告？",
+    "confirmRejectBody": "关于{{name}}的报告将不计入任何公开统计。",
+    "confirmReopenTitle": "将此报告移回待审核？",
+    "confirmReopenBody": "关于{{name}}的报告在重新审核前将不计入公开统计。"
   },
   "settings": {
     "textSize": "文字大小",
@@ -660,7 +673,8 @@
     "signedOut": "您已退出登录。",
     "webOnly": "通过邮件链接登录只适用于 ReSource 的网页版。您不需要账户：本应用的全部功能不登录也能使用。",
     "google": "使用 Google 继续",
-    "googleFailed": "无法开始 Google 登录。请重试。"
+    "googleFailed": "无法开始 Google 登录。请重试。",
+    "openAdmin": "打开管理工具"
   },
   "storage": {
     "bannerTitle": "您设备上的存储",

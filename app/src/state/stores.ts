@@ -123,6 +123,11 @@ export const adminTokenStore = createStore<string>('');
 export const authTokenStore = createStore<string>('');
 /** Email address of the signed-in account, or '' when signed out; memory only. */
 export const authEmailStore = createStore<string>('');
+/**
+ * 'admin' when the signed-in account's app_metadata.role says so; memory only. It decides what the
+ * admin screen draws and nothing more: the API checks the role itself on every admin request.
+ */
+export const authRoleStore = createStore<string>('');
 
 // ---- Install token -------------------------------------------------------------------------
 
@@ -160,5 +165,5 @@ export async function resetDeviceData(): Promise<void> {
   await clearAllStored();
   installToken = null;
   setOptionalStorageAllowed(false);
-  [...persisted, chatStore, adminTokenStore, authTokenStore, authEmailStore].forEach((store) => store.reset());
+  [...persisted, chatStore, adminTokenStore, authTokenStore, authEmailStore, authRoleStore].forEach((store) => store.reset());
 }

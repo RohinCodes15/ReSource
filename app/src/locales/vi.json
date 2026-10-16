@@ -554,7 +554,6 @@
     "confirmStatusTitle": "Đổi tình trạng này?",
     "confirmStatusBody": "{{name}} sẽ hiển thị là {{status}} với mọi người ngay lập tức.",
     "confirmStatus": "Đổi tình trạng",
-    "noReports": "Không có báo cáo nào đang chờ xem xét.",
     "noPosts": "Chưa có bài đăng cộng đồng nào.",
     "noRequests": "Không có yêu cầu xóa nào.",
     "hasPhoto": "có ảnh",
@@ -570,7 +569,21 @@
     "setStatus": "Đặt tình trạng của {{name}}",
     "requestStatus_open": "Đang mở",
     "requestStatus_completed": "Đã hoàn tất",
-    "markDone": "Đánh dấu là đã hoàn tất"
+    "markDone": "Đánh dấu là đã hoàn tất",
+    "signedInAdmin": "Đã đăng nhập là {{email}} bằng tài khoản quản trị.",
+    "notAdmin": "Bạn đã đăng nhập là {{email}}, nhưng tài khoản này không phải quản trị. Quyền quản trị do những người điều hành ReSource cấp.",
+    "reportFilter": "Hiển thị báo cáo",
+    "filter_pending": "Đang chờ",
+    "filter_verified": "Đã xác minh",
+    "filter_rejected": "Đã từ chối",
+    "noReports_pending": "Không có báo cáo nào đang chờ xem xét.",
+    "noReports_verified": "Không có báo cáo đã xác minh.",
+    "noReports_rejected": "Không có báo cáo bị từ chối.",
+    "reopen": "Chuyển lại về đang chờ",
+    "confirmRejectTitle": "Từ chối báo cáo này?",
+    "confirmRejectBody": "Báo cáo về {{name}} sẽ không được tính vào bất kỳ tổng số công khai nào.",
+    "confirmReopenTitle": "Chuyển báo cáo này lại về đang chờ?",
+    "confirmReopenBody": "Báo cáo về {{name}} sẽ bị loại khỏi tổng số công khai cho đến khi được xem xét lại."
   },
   "settings": {
     "textSize": "Cỡ chữ",
@@ -660,7 +673,8 @@
     "signedOut": "Quý vị đã đăng xuất.",
     "webOnly": "Đăng nhập bằng liên kết qua email chỉ hoạt động trên bản web của ReSource. Quý vị không cần tài khoản: mọi thứ trong ứng dụng này đều hoạt động mà không cần tài khoản.",
     "google": "Tiếp tục với Google",
-    "googleFailed": "Không thể bắt đầu đăng nhập bằng Google. Vui lòng thử lại."
+    "googleFailed": "Không thể bắt đầu đăng nhập bằng Google. Vui lòng thử lại.",
+    "openAdmin": "Mở công cụ quản trị"
   },
   "storage": {
     "bannerTitle": "Lưu trữ trên thiết bị của quý vị",

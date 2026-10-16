@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { BrowseOnly, ConsentFields, useConsent } from '../../components/ConsentFields';
@@ -5,7 +6,7 @@ import { Screen } from '../../components/Page';
 import { AppButton, AppText, Banner, Card, Field } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
 import { signInAvailable, supabase } from '../../lib/supabase';
-import { ageStore, authEmailStore } from '../../state/stores';
+import { ageStore, authEmailStore, authRoleStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 /**
@@ -19,6 +20,8 @@ export default function SignInScreen() {
   const consent = useConsent();
   const [email, setEmail] = useState('');
   const signedInAs = authEmailStore.use(); // kept current by watchAuth in the root layout
+  const isAdmin = authRoleStore.use() === 'admin';
+  const router = useRouter();
   const [notice, setNotice] = useState<{ tone: 'success' | 'warning'; text: string } | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -55,6 +58,7 @@ export default function SignInScreen() {
       ) : signedInAs ? (
         <Card style={styles.block}>
           <AppText>{t('signIn.signedInAs', { email: signedInAs })}</AppText>
+          {isAdmin && <AppButton variant="navy" icon="shield-account" label={t('signIn.openAdmin')} onPress={() => router.push('/admin' as never)} testID="open-admin" />}
           <AppButton variant="outline" icon="logout" label={t('signIn.signOut')} onPress={signOut} testID="sign-out" />
         </Card>
       ) : age === 'under13' ? <BrowseOnly /> : (
