@@ -20,7 +20,7 @@ load_dotenv(BACKEND_DIR / ".env")
 load_dotenv(BACKEND_DIR.parent / ".env")
 
 # Bumped whenever the Privacy Policy or Terms change; stored with each consent record.
-POLICY_VERSION = "2026-10-12"
+POLICY_VERSION = "2026-10-20"
 DEFAULT_CORS = "http://localhost:8081,http://localhost:19006,http://localhost:3000"
 DEFAULT_MODEL = "claude-haiku-5-5"
 
@@ -44,6 +44,7 @@ class Settings:
     state_dir: Path
     trust_proxy: bool
     rate_limit_enabled: bool
+    account_required: bool
     chat_global_daily_limit: int
     smtp_host: str
     smtp_port: int
@@ -111,6 +112,7 @@ def get_settings() -> Settings:
         state_dir=state_dir,
         trust_proxy=_flag("TRUST_PROXY"),
         rate_limit_enabled=_flag("RATE_LIMIT_ENABLED", True),
+        account_required=_flag("ACCOUNT_REQUIRED", False),
         chat_global_daily_limit=chat_global_daily_limit,
         smtp_host=os.getenv("SMTP_HOST", "").strip(),
         smtp_port=int(os.getenv("SMTP_PORT", "587") or 587),

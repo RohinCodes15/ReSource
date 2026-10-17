@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from starlette.requests import Request
 
-from security import RateLimiter, client_fingerprint, rate_limit
+from security import RateLimiter, client_fingerprint, owner_from, owners_from, rate_limit
 from settings import get_settings
 
 CHAT_BODY = {"messages": [{"role": "user", "content": "free food"}]}
@@ -16,6 +16,33 @@ CHAT_BODY = {"messages": [{"role": "user", "content": "free food"}]}
 def request(ip, token=None):
     headers = [(b"x-client-token", token.encode())] if token else []
     return Request({"type": "http", "headers": headers, "client": (ip, 1234)})
+
+
+def signed_request(account, device=None):
+    req = request("192.0.2.1", device)
+    req.scope["headers"].append((b"authorization", f"Bearer session-{account}".encode()))
+    req.state.resource_user = {"id": account, "role": None}
+    return req
+
+
+def test_same_account_on_two_devices_has_different_owner_hashes(client):
+    first = signed_request("account-1", "install-token-device-one")
+    second = signed_request("account-1", "install-token-device-two")
+    assert owner_from(first) is not None
+    assert owner_from(second) is not None
+    assert owner_from(first) != owner_from(second)
+    assert owners_from(first) == [owner_from(first)]
+    assert owners_from(second) == [owner_from(second)]
+    assert owner_from(signed_request("account-1")) is None
+    assert owners_from(signed_request("account-1")) == []
+
+
+def test_two_accounts_on_one_device_have_same_owner_hash(client):
+    first = signed_request("account-1", "install-token-same-device")
+    second = signed_request("account-2", "install-token-same-device")
+    assert owner_from(first) is not None
+    assert owner_from(first) == owner_from(second)
+    assert owners_from(first) == owners_from(second) == [owner_from(first)]
 
 
 @pytest.mark.parametrize("path", ["/chat", "/chat/stream"])

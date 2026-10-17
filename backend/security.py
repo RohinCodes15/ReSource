@@ -6,6 +6,7 @@ Privacy design:
     to let someone delete their own post, vote once, or erase their data.
   * IP addresses are used only for rate limiting, are hashed before use and are kept in
     memory for the length of the rate-limit window. They are never written to disk.
+    Uvicorn access logs redact the client address; provider/proxy logs are configured separately.
 """
 from __future__ import annotations
 
@@ -51,7 +52,8 @@ def signed_in_user(request: Request) -> dict[str, Any] | None:
             try:
                 found = store.client.auth.get_user(token)
                 if found and found.user:
-                    user = {"id": found.user.id, "role": (found.user.app_metadata or {}).get("role")}
+                    user = {"id": found.user.id, "role": (found.user.app_metadata or {}).get("role"),
+                            "email": getattr(found.user, "email", None)}
             except Exception:
                 logger.info("Rejected an invalid or expired sign-in token")
     request.state.resource_user = user
@@ -59,25 +61,15 @@ def signed_in_user(request: Request) -> dict[str, Any] | None:
 
 
 def owner_from(request: Request) -> str | None:
-    """Stable, non-reversible id for whoever sent the request; None for a fully anonymous one."""
-    user = signed_in_user(request)
-    if user:
-        return _hmac(f"user:{user['id']}")
+    """Install/device identity only; sign-in sessions never determine data ownership."""
     token = request.headers.get("x-client-token", "")
     return _hmac(f"install:{token}") if TOKEN_RE.match(token) else None
 
 
 def owners_from(request: Request) -> list[str]:
-    """Every id this request can prove it owns: the signed-in account and this install. Export and
-    delete use both, so what someone posted before signing in is not left behind."""
-    owners = []
-    user = signed_in_user(request)
-    if user:
-        owners.append(_hmac(f"user:{user['id']}"))
-    token = request.headers.get("x-client-token", "")
-    if TOKEN_RE.match(token):
-        owners.append(_hmac(f"install:{token}"))
-    return owners
+    """Export and delete use the same device identity as reports, posts and votes."""
+    owner = owner_from(request)
+    return [owner] if owner else []
 
 
 def require_owners(request: Request) -> list[str]:

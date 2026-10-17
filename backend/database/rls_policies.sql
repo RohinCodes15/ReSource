@@ -6,6 +6,8 @@
 -- app and must be treated as public, can read the public catalog and approved posts and can do
 -- nothing else. A signed-in admin (app_metadata.role = 'admin', set by hand in the Supabase
 -- dashboard) may additionally moderate and update service status.
+-- Account consent is a separate exception: authenticated users may insert/read only their own
+-- consent rows. They cannot supply the server timestamp or update/delete the audit record.
 --
 -- With RLS enabled and no policy, a table is closed to anon and authenticated. Every "no policy"
 -- below is a deliberate default-deny.
@@ -25,6 +27,7 @@ alter table public.post_flags enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.email_subscriptions enable row level security;
 alter table public.consent_records enable row level security;
+alter table public.account_consents enable row level security;
 alter table public.deletion_requests enable row level security;
 alter table public.feedback enable row level security;
 
@@ -77,6 +80,19 @@ create policy "Admins verify reports" on public.reports for update to authentica
 
 -- ---- post_votes, post_flags, subscriptions, email_subscriptions, consent_records -----------
 -- Keyed by owner_hash, which only the server can compute. No policies: server only.
+
+-- ---- account_consents: account-only consent, never joined to resident contributions --------
+revoke all on public.account_consents from public, anon, authenticated;
+grant select on public.account_consents to authenticated;
+grant insert (user_id, policy_version) on public.account_consents to authenticated;
+
+drop policy if exists "Users read own account consent" on public.account_consents;
+create policy "Users read own account consent" on public.account_consents
+  for select to authenticated using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users accept own account policy" on public.account_consents;
+create policy "Users accept own account policy" on public.account_consents
+  for insert to authenticated with check ((select auth.uid()) = user_id);
 
 -- ---- deletion_requests, feedback ------------------------------------------------------------
 -- Written through the API. Admins may read them to act on them.

@@ -39,6 +39,7 @@ def config() -> dict[str, Any]:
         "ai_enabled": settings.ai_enabled,
         "email_enabled": settings.email_enabled,
         "auth_enabled": settings.use_supabase,
+        "account_required": settings.account_required,
         # False when nobody could ever pass require_admin: no ADMIN_TOKEN and no accounts.
         "admin_enabled": bool(settings.admin_token) or settings.use_supabase,
         "policy_version": POLICY_VERSION,

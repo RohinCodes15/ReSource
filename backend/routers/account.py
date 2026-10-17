@@ -7,13 +7,15 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
+from httpx import RequestError
+from supabase_auth.errors import AuthError
 
 from chat_sessions import sessions
 from moderation import clean_text
 from routers.contribute import reject_bots
 from routers.public import public_row
 from schemas import DeletionRequestIn, EmailSubscribeIn, SubscriptionIn
-from security import rate_limit, require_owner, require_owners, sign, unsign
+from security import rate_limit, require_owner, require_owners, sign, signed_in_user, unsign
 from settings import POLICY_VERSION, get_settings
 from store import Row, get_store, now_iso
 
@@ -103,6 +105,45 @@ def email_unsubscribe_one_click(token: str = Query(max_length=400)) -> dict[str,
 # ---- Access and deletion ----------------------------------------------------------------------
 
 OWNED_TABLES = ("reports", "posts", "post_votes", "post_flags", "subscriptions", "email_subscriptions", "consent_records")
+
+
+@router.delete("/me/account", dependencies=[Depends(rate_limit("delete-account", 3, 3600))])
+def delete_my_account(request: Request) -> dict[str, Any]:
+    """Delete only the verified Auth account/email; install-owned contributions stay intact."""
+    user = signed_in_user(request)
+    if user is None:
+        raise HTTPException(status_code=401, detail="sign_in_required", headers={"WWW-Authenticate": "Bearer"})
+    store = get_store()
+    if store.mode != "supabase":
+        raise HTTPException(status_code=503, detail="account_deletion_unavailable")
+    try:
+        # Hard deletion removes Auth identity/email. Account consent cascades via its FK.
+        # Never call delete_my_data or delete any install-owned rows here.
+        store.client.auth.admin.delete_user(user["id"], should_soft_delete=False)
+    except (AuthError, RequestError) as exc:
+        status = getattr(exc, "status", None)
+        if status == 404:
+            raise HTTPException(status_code=404, detail="account_not_found") from exc
+        if status in (401, 403):
+            raise HTTPException(status_code=503, detail="account_deletion_unavailable") from exc
+        raise HTTPException(status_code=502, detail="account_deletion_failed") from exc
+    return {"account_deleted": True, "reports_deleted": False, "completed_at": now_iso()}
+
+
+@router.get("/me/account/export")
+def export_my_account(request: Request) -> dict[str, Any]:
+    """Account-only export: no install-owned reports or other resident contributions."""
+    user = signed_in_user(request)
+    if user is None:
+        raise HTTPException(status_code=401, detail="sign_in_required", headers={"WWW-Authenticate": "Bearer"})
+    store = get_store()
+    if store.mode != "supabase":
+        raise HTTPException(status_code=503, detail="account_export_unavailable")
+    consents = store.list("account_consents", {"user_id": user["id"]}, order="accepted_at", desc=True)
+    return {"email": user.get("email"), "consents": [
+        {"policy_version": row["policy_version"], "accepted_at": row["accepted_at"]}
+        for row in consents
+    ]}
 
 
 @router.get("/me/export")

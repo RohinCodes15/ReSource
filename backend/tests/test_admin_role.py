@@ -1,7 +1,6 @@
-"""Scratch check (not committed): a signed-in non-admin gets 403 from report moderation and photos."""
+"""Regression: signed-in non-admins cannot moderate reports or view report photos."""
 import pytest
-from tests.conftest import ALICE  # noqa: F401  (fixtures come from -p tests.conftest)
-from tests.test_api import report_body
+from conftest import ALICE, report_body
 
 
 @pytest.mark.parametrize("role, expected_ok", [(None, False), ("user", False), ("admin", True)])
