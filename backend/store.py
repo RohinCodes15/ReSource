@@ -113,6 +113,13 @@ class LocalStore:
     def insert(self, table: str, row: Row) -> Row:
         new_row = {"id": str(uuid.uuid4()), "created_at": now_iso(), **row}
         with self._lock:
+            # Mirror Supabase unique(post_id, owner_hash) while holding the write lock.
+            if table in ("post_votes", "post_flags") and any(
+                existing.get("post_id") == row.get("post_id")
+                and existing.get("owner_hash") == row.get("owner_hash")
+                for existing in self._tables[table]
+            ):
+                raise StoreError("Duplicate community action")
             self._tables[table].append(new_row)
             self._persist()
         return dict(new_row)
@@ -149,6 +156,10 @@ class LocalStore:
         (folder / name).write_bytes(data)
         return f"local:{name}"
 
+    def read_file(self, path: str) -> bytes | None:
+        file = self._state_dir / "uploads" / path.removeprefix("local:")
+        return file.read_bytes() if path.startswith("local:") and file.is_file() else None
+
     def delete_file(self, path: str) -> None:
         if path.startswith("local:"):
             (self._state_dir / "uploads" / path.removeprefix("local:")).unlink(missing_ok=True)
@@ -176,14 +187,22 @@ class SupabaseStore:
             query = query.is_(key, "null") if value is None else query.eq(key, value)
         return query
 
+    PAGE = 1000
+
     def list(self, table: str, filters: Row | None = None, order: str | None = None,
              desc: bool = False, limit: int | None = None) -> list[Row]:
         query = self._filtered(self.client.table(table).select("*"), filters)
         if order:
             query = query.order(order, desc=desc)
         if limit:
-            query = query.limit(limit)
-        return self._run(query).data or []
+            return self._run(query.limit(limit)).data or []
+        # Supabase returns at most PAGE rows per request, so read every page.
+        rows: list[Row] = []
+        while True:
+            page = self._run(query.range(len(rows), len(rows) + self.PAGE - 1)).data or []
+            rows += page
+            if len(page) < self.PAGE:
+                return rows
 
     def get(self, table: str, row_id: str) -> Row | None:
         rows = self._run(self.client.table(table).select("*").eq("id", row_id).limit(1)).data or []
@@ -216,6 +235,13 @@ class SupabaseStore:
             raise StoreError("The photo could not be stored") from exc
         return f"{self.bucket}/{name}"
 
+    def read_file(self, path: str) -> bytes | None:
+        try:
+            return self.client.storage.from_(self.bucket).download(path.split("/", 1)[-1])
+        except Exception:
+            logger.exception("Supabase Storage download failed for %s", path)
+            return None
+
     def delete_file(self, path: str) -> None:
         try:
             self.client.storage.from_(self.bucket).remove([path.split("/", 1)[-1]])
@@ -240,8 +266,11 @@ def get_store() -> LocalStore | SupabaseStore:
                         create_client(settings.supabase_url, settings.supabase_service_role_key),
                         settings.storage_bucket,
                     )
-                except Exception:
-                    logger.exception("Could not start the Supabase client; falling back to local mode")
+                except Exception as exc:
+                    # Never fall back to local files here: reports would be written to a disk
+                    # that the next deploy erases, while the API looked healthy.
+                    logger.exception("Could not start the Supabase client")
+                    raise RuntimeError("SUPABASE_URL is set but the Supabase client could not start") from exc
             if _store is None:
                 _store = LocalStore(settings.data_dir, settings.state_dir)
             logger.info("ReSource store running in %s mode", _store.mode)

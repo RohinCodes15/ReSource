@@ -1,4 +1,4 @@
-"""Admin-only routes: moderation, service status updates and the Community Impact dashboard.
+"""Admin-only routes: moderation, service status updates and the Community Impact CSV export.
 
 Every route here requires `require_admin`: the ADMIN_TOKEN header, or a signed-in Supabase user
 whose app_metadata.role is "admin".
@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import csv
 import io
-from collections import Counter
+import re
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
-from routers.public import public_row
+from community_guard import guard
+from routers.public import public_row, verified_reports
 from schemas import (
     DeletionRequestStatusIn,
     ModeratePostIn,
@@ -41,6 +42,16 @@ def reports(status: str = Query(default="pending", pattern="^(pending|verified|r
     return [_report_view(r) for r in get_store().list("reports", filters, order="created_at", desc=True, limit=200)]
 
 
+@router.get("/admin/reports/{report_id}/photo")
+def report_photo(report_id: str) -> Response:
+    """The photo attached to a report, so a moderator can look at it before verifying."""
+    report = get_store().get("reports", report_id)
+    data = get_store().read_file(report["photo_path"]) if report and report.get("photo_path") else None
+    if data is None:
+        raise HTTPException(status_code=404, detail="photo_not_found")
+    return Response(content=data, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
 @router.post("/admin/reports/{report_id}")
 def moderate_report(report_id: str, body: ModerateReportIn) -> Row:
     row = get_store().update("reports", report_id, {"status": body.status, "reviewed_at": now_iso()})
@@ -65,6 +76,7 @@ def moderate_post(post_id: str, body: ModeratePostIn) -> Row:
         raise HTTPException(status_code=404, detail="post_not_found")
     if body.status == "approved":  # an approved post starts again with a clean record
         store.delete("post_flags", {"post_id": post_id})
+        guard.clear_flags(post_id)
     return public_row(row)
 
 
@@ -101,38 +113,12 @@ def feedback() -> list[Row]:
     return get_store().list("feedback", order="created_at", desc=True, limit=200)
 
 
-# ---- Community Impact dashboard: verified reports only ----------------------------------------
+# ---- Community Impact export (the totals themselves are public: routers/public.py) -----------
 
-IMPACT_LEVELS = ("high", "medium", "low")
-
-
-def _verified() -> list[Row]:
-    return get_store().list("reports", {"status": "verified"}, order="created_at", desc=True)
-
-
-def _breakdown(rows: list[Row], key: str) -> list[dict[str, Any]]:
-    groups: dict[str, Counter] = {}
-    for row in rows:
-        groups.setdefault(row.get(key) or "unknown", Counter())[row["impact_level"]] += 1
-    out = [{"key": name, "total": sum(counts.values()), **{level: counts.get(level, 0) for level in IMPACT_LEVELS}}
-           for name, counts in groups.items()]
-    return sorted(out, key=lambda item: (-item["total"], item["key"]))
-
-
-@router.get("/impact/summary")
-def impact_summary() -> dict[str, Any]:
-    rows = _verified()
-    store = get_store()
-    levels = Counter(row["impact_level"] for row in rows)
-    return {
-        "verified_total": len(rows),
-        "pending_total": store.count("reports", {"status": "pending"}),
-        "rejected_total": store.count("reports", {"status": "rejected"}),
-        "by_impact": [{"key": level, "total": levels.get(level, 0)} for level in IMPACT_LEVELS],
-        "by_service": _breakdown(rows, "service_name"),
-        "by_area": _breakdown(rows, "area"),
-        "generated_at": now_iso(),
-    }
+def safe_csv_cell(value: Any) -> str:
+    text = "" if value is None else str(value)
+    # Protect every column, including legacy rows and whitespace-prefixed spreadsheet formulas.
+    return "'" + text if re.match(r"^\s*[=+@\-\t\r\n]", text) else text
 
 
 @router.get("/impact/export.csv")
@@ -141,12 +127,9 @@ def impact_export() -> Response:
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(["report_id", "created_at", "service", "area", "impact_level", "description"])
-    for row in _verified():
-        description = str(row.get("description") or "")
-        # A leading =, +, - or @ would be run as a formula by spreadsheet software.
-        if description[:1] in ("=", "+", "-", "@"):
-            description = "'" + description
-        writer.writerow([row["id"], row.get("created_at"), row.get("service_name"), row.get("area"), row.get("impact_level"), description])
+    for row in verified_reports():
+        writer.writerow([safe_csv_cell(row.get(key)) for key in
+                         ("id", "created_at", "service_name", "area", "impact_level", "description")])
     return Response(
         content=buffer.getvalue(),
         media_type="text/csv; charset=utf-8",

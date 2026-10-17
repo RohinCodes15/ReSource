@@ -1,21 +1,36 @@
 import { PropsWithChildren, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { adminCheck, ApiError } from '../lib/api';
+import { useApi } from '../hooks/useData';
+import { adminCheck, ApiError, getConfig } from '../lib/api';
 import { useTranslation } from '../lib/i18n';
-import { adminTokenStore } from '../state/stores';
+import { adminTokenStore, authEmailStore, authRoleStore } from '../state/stores';
 import { colors, spacing } from '../theme';
 import { AppButton, AppText, Banner, Card, Field } from './ui';
+
+/**
+ * True when the admin tools should be drawn: the passcode was accepted, or the signed-in account
+ * has the admin role in its app_metadata. Display only: the API checks one or the other on every
+ * admin request and answers 403 otherwise.
+ */
+export function useAdminUnlocked(): boolean {
+  const token = adminTokenStore.use();
+  const role = authRoleStore.use();
+  return !!token || role === 'admin';
+}
 
 /**
  * Wraps the staff-only screens. The passcode is checked by the API on every request; this
  * component only decides what to draw. It is kept in memory, so closing the app locks it again.
  */
-export function AdminGate({ children }: PropsWithChildren) {
+export function AdminGate({ children, body }: PropsWithChildren<{ body?: string }>) {
   const { t } = useTranslation();
   const token = adminTokenStore.use();
+  const signedInAs = authEmailStore.use();
+  const role = authRoleStore.use();
   const [input, setInput] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const config = useApi(getConfig);
 
   async function unlock() {
     if (!input.trim() || checking) return;
@@ -27,17 +42,35 @@ export function AdminGate({ children }: PropsWithChildren) {
       setInput('');
     } catch (reason) {
       adminTokenStore.set('');
-      setError(t(reason instanceof ApiError && reason.isNetwork ? 'admin.offline' : 'admin.wrong'));
+      const status = reason instanceof ApiError ? reason.status : 0;
+      setError(t(status === 0 ? 'admin.offline' : status === 403 ? 'admin.wrong' : status === 429 ? 'errors.rateLimited' : 'errors.generic'));
     } finally {
       setChecking(false);
     }
   }
 
+  if (!token && role === 'admin') {
+    return (
+      <View style={styles.block}>
+        <Banner tone="success" icon="shield-account" body={t('admin.signedInAdmin', { email: signedInAs })} testID="admin-signed-in" />
+        {children}
+      </View>
+    );
+  }
+  if (!token && config.data?.admin_enabled === false) {
+    return (
+      <Card style={styles.block} testID="admin-not-set-up">
+        <AppText variant="h3" heading={2}>{t('admin.lockedTitle')}</AppText>
+        <AppText variant="bodySmall" color={colors.text}>{t('admin.notSetUp')}</AppText>
+      </Card>
+    );
+  }
   if (!token) {
     return (
       <Card style={styles.block} testID="admin-gate">
         <AppText variant="h3" heading={2}>{t('admin.lockedTitle')}</AppText>
-        <AppText variant="bodySmall" color={colors.text}>{t('admin.lockedBody')}</AppText>
+        {!!signedInAs && <Banner tone="info" icon="account-off-outline" body={t('admin.notAdmin', { email: signedInAs })} testID="admin-not-admin" />}
+        <AppText variant="bodySmall" color={colors.text}>{body ?? t('admin.lockedBody')}</AppText>
         <Field label={t('admin.passcode')} value={input} onChangeText={setInput} secure error={error} onSubmitEditing={unlock} autoComplete="off" testID="admin-passcode" />
         <AppButton variant="navy" icon="lock-open-variant" label={t('admin.unlock')} loading={checking} onPress={unlock} testID="admin-unlock" />
       </Card>

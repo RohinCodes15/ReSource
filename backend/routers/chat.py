@@ -13,13 +13,15 @@ from collections.abc import Iterator
 from typing import Any, Literal
 
 import anthropic
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import grounding
+from answer_validation import contacts_are_grounded
+from chat_sessions import sessions
 from schemas import ChatIn
-from security import rate_limit
+from security import chat_global_limit, owner_from, rate_limit
 from settings import get_settings
 
 logger = logging.getLogger("resource.chat")
@@ -30,7 +32,31 @@ EFFORT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claud
 # Models where a request declined by a safety check can be retried server-side on Anthropic's
 # recommended fallback model. Claude Haiku 5.5 has no server-side fallback.
 FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
-MAX_TOKENS = 16000
+# Answers are meant to be short; this also bounds what one question can cost.
+MAX_TOKENS = 1500
+# Includes the latest question. Drop old whole turns instead of rejecting long conversations.
+MAX_HISTORY_CHARS = 8000
+
+
+def bounded_conversation(request: ChatIn) -> list[dict[str, str]]:
+    turns = request.conversation()
+    total = sum(len(turn["content"]) for turn in turns)
+    while total > MAX_HISTORY_CHARS:
+        total -= len(turns.pop(0)["content"])
+    # Anthropic expects a user turn first; never leave an orphan assistant response.
+    while turns and turns[0]["role"] != "user":
+        turns.pop(0)
+    return turns
+
+
+def server_conversation(request: ChatIn, owner: str | None) -> list[dict[str, str]]:
+    # The only client-authored turn we trust is its current question. Older assistant and user
+    # turns come from this process, never from a forged client transcript.
+    if len(request.messages) == 1:
+        sessions.forget(owner, request.language)  # the app started or cleared its conversation
+    turns = [*sessions.history(owner, request.language), request.messages[-1].model_dump()]
+    return bounded_conversation(ChatIn(messages=turns, language=request.language))
+
 
 REFUSAL_TEXT = {
     "en": "I can't help with that. I can answer questions about Fremont city services, budget changes and places to get help.",
@@ -115,24 +141,31 @@ def _log_failure(exc: Exception) -> None:
         logger.exception("Unexpected error while answering a chat message")
 
 
-chat_limits = [Depends(rate_limit("chat", 12, 60)), Depends(rate_limit("chat-day", 150, 86400))]
+chat_limits = [
+    Depends(rate_limit("chat", 12, 60)),
+    Depends(rate_limit("chat-day", 150, 86400)),
+    Depends(chat_global_limit),
+]
 
 
 @router.post("/chat", response_model=ChatOut, dependencies=chat_limits)
-def chat(request: ChatIn) -> ChatOut:
+def chat(request: ChatIn, http_request: Request) -> ChatOut:
+    owner = owner_from(http_request)
+    turns = server_conversation(request, owner)
     llm = get_llm()
     if llm is None:
         return _basic(request)
     system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
     try:
-        reply = llm.complete(system, request.conversation())
+        reply = llm.complete(system, turns)
     except Refused:
         return _refusal(request)
     except Exception as exc:  # the AI service is down or misconfigured: still give a grounded answer
         _log_failure(exc)
         return _basic(request)
-    if not reply:
+    if not reply or not contacts_are_grounded(reply):
         return _basic(request)
+    sessions.save(owner, request.language, turns, reply)
     return ChatOut(reply=reply, sources=grounding.detect_sources(reply, names), mode="ai", language=request.language)
 
 
@@ -141,11 +174,13 @@ def _event(name: str, payload: dict) -> str:
 
 
 @router.post("/chat/stream", dependencies=chat_limits)
-def chat_stream(request: ChatIn) -> StreamingResponse:
+def chat_stream(request: ChatIn, http_request: Request) -> StreamingResponse:
     """Server-sent events: `delta` {text} repeated, then `done` {sources, mode}.
 
     `reset` {text} replaces everything sent so far (used when an answer is withdrawn part-way).
     """
+    owner = owner_from(http_request)
+    turns = server_conversation(request, owner)
     llm = get_llm()
 
     def events() -> Iterator[str]:
@@ -158,14 +193,14 @@ def chat_stream(request: ChatIn) -> StreamingResponse:
             return
         try:
             system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
-            parts: list[str] = []
-            for text in llm.stream(system, request.conversation()):
-                parts.append(text)
-                yield _event("delta", {"text": text})
+            # Buffer contact facts until checked; ungrounded details must not flash on screen.
+            parts = list(llm.stream(system, turns))
             reply = "".join(parts).strip()
-            if not reply:
+            if not reply or not contacts_are_grounded(reply):
                 yield from finish(_basic(request), replace=True)
                 return
+            sessions.save(owner, request.language, turns, reply)
+            yield _event("delta", {"text": reply})
             yield _event("done", {"sources": grounding.detect_sources(reply, names), "mode": "ai"})
         except Refused:
             yield from finish(_refusal(request), replace=True)
@@ -185,4 +220,3 @@ def chat_status() -> dict[str, Any]:
     if not get_settings().ai_enabled:
         return {"mode": "basic"}
     return {"mode": "ai", "model": get_settings().claude_model}
-

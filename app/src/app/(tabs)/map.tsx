@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import type { Service, ServiceStatus } from '../../../../shared/types';
 import { LocationChip } from '../../components/LocationChip';
 import { Footer, Screen } from '../../components/Page';
@@ -12,7 +12,7 @@ import { bundledServices, SERVICE_ICONS } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getServices } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
-import { directionsUrl, telUrl } from '../../lib/platform';
+import { directionsUrl, MAP_AVAILABLE, telUrl } from '../../lib/platform';
 import { useOrigin } from '../../state/stores';
 import { colors, fonts, MIN_TOUCH, radius, spacing, statusTone } from '../../theme';
 
@@ -62,7 +62,7 @@ function ServiceDetail({ service, onClose }: { service: Service; onClose: () => 
         {!!service.hours && <AppText variant="bodySmall" color={colors.text}>{t('common.hours')}: {service.hours}</AppText>}
         {service.coords === 'approximate' && <AppText variant="caption">{t('map.approximate')}</AppText>}
       </View>
-      <AppButton variant="gold" icon="compass" label={t('map.findAlternative')} onPress={() => go('/resources', { categories: categories.join(','), from: service.name })} testID="find-alternative" />
+      <AppButton variant="gold" icon="compass" label={t('map.findAlternative')} onPress={() => go('/resources', { categories: categories.join(','), from: service.name, at: String(Date.now()) })} testID="find-alternative" />
       <View style={styles.actions}>
         {!!service.phone && <AppButton variant="outline" icon="phone" label={t('common.callNumber', { phone: service.phone })} href={telUrl(service.phone)} style={styles.action} testID="detail-call" />}
         <AppButton variant="outline" icon="directions" label={t('common.directions')} href={directionsUrl(service.address)} style={styles.action} testID="detail-directions" />
@@ -79,7 +79,7 @@ export default function MapScreen() {
   const params = useLocalSearchParams<{ service?: string }>();
   const { data, loading, error, reload } = useApi(getServices, () => bundledServices);
   const { origin, location } = useOrigin();
-  const [view, setView] = useState<'map' | 'list'>('map');
+  const [view, setView] = useState<'map' | 'list'>(MAP_AVAILABLE ? 'map' : 'list');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<'all' | ServiceStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -101,6 +101,10 @@ export default function MapScreen() {
 
   const pins = useMemo(() => spread(visible, (s) => `${s.name}, ${t(`status.${statusTone(s.status).key}`)}`), [visible, t]);
   const selected = (data ?? []).find((s) => s.id === selectedId) ?? null;
+  const mapLabels = useMemo(() => ({
+    map: t('map.mapLabel'), you: t('map.you'), zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), tilesFailed: t('map.tilesFailed'),
+    cluster: (count: number, names: string) => t('map.cluster', { count, names }),
+  }), [t]);
 
   const controls = (
     <View style={styles.controls}>
@@ -128,7 +132,9 @@ export default function MapScreen() {
         ))}
       </ScrollView>
       <View style={styles.row}>
-        <Segmented label={t('map.viewLabel')} value={view} onChange={setView} options={[{ value: 'map', label: t('map.viewMap') }, { value: 'list', label: t('map.viewList') }]} />
+        {MAP_AVAILABLE
+          ? <Segmented label={t('map.viewLabel')} value={view} onChange={setView} options={[{ value: 'map', label: t('map.viewMap') }, { value: 'list', label: t('map.viewList') }]} />
+          : <AppText variant="caption" testID="map-list-only">{t('map.listOnly')}</AppText>}
         <View style={styles.flex} />
         {view === 'map' && <IconAction icon="image-filter-center-focus" label={t('map.recenter')} onPress={() => setRecenterKey((key) => key + 1)} testID="map-recenter" />}
       </View>
@@ -140,7 +146,9 @@ export default function MapScreen() {
   return (
     <Screen title={t('titles.map')} scroll={false} testID="map-screen">
       {loading ? <View style={styles.pad}><LoadingList /></View> : error ? <ErrorState onRetry={reload} /> : view === 'map' ? (
-        <View style={styles.fill}>
+        // On a tall screen the map fills what is left; on a short one, or with larger text, the column scrolls
+        // so the map keeps a usable height and the note stays reachable.
+        <ScrollView style={styles.fill} contentContainerStyle={styles.mapColumn} keyboardShouldPersistTaps="handled">
           {controls}
           <View style={styles.mapWrap}>
             <ServiceMap
@@ -150,26 +158,26 @@ export default function MapScreen() {
               center={origin}
               you={location ? origin : null}
               recenterKey={recenterKey}
-              labels={{ map: t('map.mapLabel'), you: t('map.you'), zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut') }}
+              labels={mapLabels}
             />
             {!visible.length && <View style={styles.mapEmpty}><Banner tone="info" body={t('map.none')} live /></View>}
           </View>
-          <AppText variant="caption" style={styles.mapNote}>{t('map.pinsNote')}</AppText>
-        </View>
+          <AppText variant="caption" style={styles.mapNote}>{t('map.pinsNote')}{Platform.OS === 'web' ? ` ${t('map.osmCredit')}` : ''}</AppText>
+        </ScrollView>
       ) : (
         <FlatList
           data={visible}
           keyExtractor={(s) => s.id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={controls}
-          ListEmptyComponent={<EmptyState icon="map-search-outline" title={t('map.none')} body={t('map.noneBody')} />}
+          ListEmptyComponent={<EmptyState art="niles" icon="map-search-outline" title={t('map.none')} body={t('map.noneBody')} />}
           ListFooterComponent={<Footer />}
           renderItem={({ item }) => (
             <Card style={styles.listCard}>
               <View style={styles.listHead}>
                 <View style={styles.listIcon}><Icon name={SERVICE_ICONS[item.category] ?? 'office-building'} size={22} color={colors.navy} /></View>
                 <View style={styles.flex}>
-                  <AppText variant="h4" heading={3}>{item.name}</AppText>
+                  <AppText variant="h4" heading={2}>{item.name}</AppText>
                   <AppText variant="caption">{tx('category', item.category)} · {tx('area', item.area)}</AppText>
                 </View>
               </View>
@@ -190,6 +198,7 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   fill: { flex: 1 },
+  mapColumn: { flexGrow: 1 },
   pad: { padding: spacing.lg },
   controls: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.sm, gap: spacing.sm },
   search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },

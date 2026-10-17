@@ -1,0 +1,13 @@
+# Railway builds the API from the Dockerfile at the repository root.
+# Set the variables listed under "Minimum for a public deployment" in deployment/ENV.md.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5
+# One instance only: rate limits and chat sessions live in memory.
+numReplicas = 1

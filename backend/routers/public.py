@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, Query, Request
 from grounding import with_distance
 from security import owner_from
 from settings import POLICY_VERSION, get_settings
-from store import Row, get_store, reference
+from store import Row, get_store, now_iso, reference
 
 router = APIRouter(tags=["public"])
 # Columns that must never leave the server.
@@ -39,8 +39,47 @@ def config() -> dict[str, Any]:
         "ai_enabled": settings.ai_enabled,
         "email_enabled": settings.email_enabled,
         "auth_enabled": settings.use_supabase,
+        "account_required": settings.account_required,
+        # False when nobody could ever pass require_admin: no ADMIN_TOKEN and no accounts.
+        "admin_enabled": bool(settings.admin_token) or settings.use_supabase,
         "policy_version": POLICY_VERSION,
         "data_retrieved": reference("budget")["retrieved"],
+    }
+
+
+# ---- Community Impact dashboard: totals of verified reports, no report text -------------------
+
+IMPACT_LEVELS = ("high", "medium", "low")
+
+
+def verified_reports() -> list[Row]:
+    return get_store().list("reports", {"status": "verified"}, order="created_at", desc=True)
+
+
+def _breakdown(rows: list[Row], key: str) -> list[dict[str, Any]]:
+    groups: dict[str, Counter] = {}
+    for row in rows:
+        # Free-text names may contain personal details from old versions. Aggregate them as Other.
+        name = "Other" if key == "service_name" and not row.get("service_id") else row.get(key) or "unknown"
+        groups.setdefault(name, Counter())[row["impact_level"]] += 1
+    out = [{"key": name, "total": sum(counts.values()), **{level: counts.get(level, 0) for level in IMPACT_LEVELS}}
+           for name, counts in groups.items()]
+    return sorted(out, key=lambda item: (-item["total"], item["key"]))
+
+
+@router.get("/impact/summary")
+def impact_summary() -> dict[str, Any]:
+    rows = verified_reports()
+    store = get_store()
+    levels = Counter(row["impact_level"] for row in rows)
+    return {
+        "verified_total": len(rows),
+        "pending_total": store.count("reports", {"status": "pending"}),
+        "rejected_total": store.count("reports", {"status": "rejected"}),
+        "by_impact": [{"key": level, "total": levels.get(level, 0)} for level in IMPACT_LEVELS],
+        "by_service": _breakdown(rows, "service_name"),
+        "by_area": _breakdown(rows, "area"),
+        "generated_at": now_iso(),
     }
 
 
@@ -106,7 +145,7 @@ def stats() -> dict[str, int]:
     store = get_store()
     services = store.list("services")
     return {
-        "reports_total": store.count("reports"),
+        "reports_total": store.count("reports", {"status": "verified"}),
         "reports_verified": store.count("reports", {"status": "verified"}),
         "posts": store.count("posts", {"status": "approved", "is_sample": False}),
         "services_tracked": len(services),
@@ -171,7 +210,7 @@ def list_posts(request: Request, sort: str = Query(default="top", pattern="^(top
     voted = {vote["post_id"] for vote in store.list("post_votes", {"owner_hash": owner})} if owner else set()
     posts = []
     for post in store.list("posts", {"status": "approved"}):
-        posts.append({**public_row(post), "mine": bool(owner) and post.get("owner_hash") == owner, "voted": post["id"] in voted})
+        posts.append({**public_row(post), "upvotes_approximate": True, "mine": bool(owner) and post.get("owner_hash") == owner, "voted": post["id"] in voted})
     if sort == "top":
         posts.sort(key=lambda p: (p.get("upvotes") or 0, p.get("created_at") or ""), reverse=True)
     else:

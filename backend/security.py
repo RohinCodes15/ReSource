@@ -6,6 +6,7 @@ Privacy design:
     to let someone delete their own post, vote once, or erase their data.
   * IP addresses are used only for rate limiting, are hashed before use and are kept in
     memory for the length of the rate-limit window. They are never written to disk.
+    Uvicorn access logs redact the client address; provider/proxy logs are configured separately.
 """
 from __future__ import annotations
 
@@ -51,7 +52,8 @@ def signed_in_user(request: Request) -> dict[str, Any] | None:
             try:
                 found = store.client.auth.get_user(token)
                 if found and found.user:
-                    user = {"id": found.user.id, "role": (found.user.app_metadata or {}).get("role")}
+                    user = {"id": found.user.id, "role": (found.user.app_metadata or {}).get("role"),
+                            "email": getattr(found.user, "email", None)}
             except Exception:
                 logger.info("Rejected an invalid or expired sign-in token")
     request.state.resource_user = user
@@ -59,12 +61,22 @@ def signed_in_user(request: Request) -> dict[str, Any] | None:
 
 
 def owner_from(request: Request) -> str | None:
-    """Stable, non-reversible id for whoever sent the request; None for a fully anonymous one."""
-    user = signed_in_user(request)
-    if user:
-        return _hmac(f"user:{user['id']}")
+    """Install/device identity only; sign-in sessions never determine data ownership."""
     token = request.headers.get("x-client-token", "")
     return _hmac(f"install:{token}") if TOKEN_RE.match(token) else None
+
+
+def owners_from(request: Request) -> list[str]:
+    """Export and delete use the same device identity as reports, posts and votes."""
+    owner = owner_from(request)
+    return [owner] if owner else []
+
+
+def require_owners(request: Request) -> list[str]:
+    owners = owners_from(request)
+    if not owners:
+        raise HTTPException(status_code=400, detail="missing_client_token")
+    return owners
 
 
 def require_owner(request: Request) -> str:
@@ -87,10 +99,7 @@ def require_admin(request: Request) -> str:
 
 
 def client_fingerprint(request: Request) -> str:
-    """Short hash that tells callers apart for rate limiting without keeping their IP."""
-    owner = owner_from(request)
-    if owner:
-        return owner[:24]
+    """IP bucket identity, independent of caller-selected tokens; never retain the raw IP."""
     ip = request.client.host if request.client else "unknown"
     if get_settings().trust_proxy:
         ip = request.headers.get("x-forwarded-for", ip).split(",")[0].strip() or ip
@@ -102,38 +111,63 @@ class RateLimiter:
 
     def __init__(self) -> None:
         self._hits: dict[str, deque[float]] = {}
+        self._windows: dict[str, int] = {}
         self._lock = threading.Lock()
 
     def check(self, key: str, limit: int, window_seconds: int) -> None:
+        self.check_many([(key, limit, window_seconds)])
+
+    def check_many(self, buckets: list[tuple[str, int, int]]) -> None:
+        """Check and debit all buckets atomically; a rejected call consumes none of them."""
         now = time.monotonic()
         with self._lock:
-            hits = self._hits.setdefault(key, deque())
-            while hits and now - hits[0] > window_seconds:
-                hits.popleft()
-            if len(hits) >= limit:
-                retry_after = max(1, int(window_seconds - (now - hits[0])) + 1)
+            retry_after = 0
+            for key, limit, window_seconds in buckets:
+                hits = self._hits.setdefault(key, deque())
+                self._windows[key] = window_seconds
+                while hits and now - hits[0] >= window_seconds:
+                    hits.popleft()
+                if len(hits) >= limit:
+                    retry_after = max(retry_after, int(window_seconds - (now - hits[0])) + 1)
+            if retry_after:
                 raise HTTPException(status_code=429, detail="rate_limited", headers={"Retry-After": str(retry_after)})
-            hits.append(now)
+            for key, _, _ in buckets:
+                self._hits[key].append(now)
             if len(self._hits) > 20000:  # keep memory bounded: forget callers with no recent hits
-                for stale in [k for k, v in self._hits.items() if not v or now - v[-1] > 3600]:
+                for stale in [k for k, v in self._hits.items() if not v or now - v[-1] >= self._windows[k]]:
                     del self._hits[stale]
+                    del self._windows[stale]
 
     def reset(self) -> None:
         with self._lock:
             self._hits.clear()
+            self._windows.clear()
 
 
 limiter = RateLimiter()
 
 
 def rate_limit(bucket: str, limit: int, window_seconds: int) -> Callable[[Request], None]:
-    """FastAPI dependency: at most `limit` calls per `window_seconds` for each caller."""
+    """Always charge an IP bucket, plus an owner/token bucket when one is present."""
 
     def dependency(request: Request) -> None:
         if get_settings().rate_limit_enabled:
-            limiter.check(f"{bucket}:{client_fingerprint(request)}", limit, window_seconds)
+            limiter.check(f"{bucket}:ip:{client_fingerprint(request)}", limit, window_seconds)
+            owner = owner_from(request)
+            if owner:
+                limiter.check(f"{bucket}:owner:{owner}", limit, window_seconds)
 
     return dependency
+
+
+def chat_global_limit(request: Request) -> None:
+    """One rolling 24-hour ceiling shared by JSON and streaming chat in this process.
+
+    Run one API worker; multiple workers require a shared counter store such as Redis.
+    """
+    settings = get_settings()
+    if settings.rate_limit_enabled:
+        limiter.check("chat:global:day", settings.chat_global_daily_limit, 86400)
 
 
 def sign(value: str) -> str:

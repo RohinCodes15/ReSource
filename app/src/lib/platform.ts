@@ -1,6 +1,14 @@
 /** Small wrappers for things that differ between the web and phones: links, calls, sharing, files. */
 import * as Clipboard from 'expo-clipboard';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Linking, Platform, Share } from 'react-native';
+
+/**
+ * False only on an Android build made without a Google Maps key (app.config.js): creating the
+ * map view there fails or draws a grey box, so the map screen shows its list instead.
+ */
+export const MAP_AVAILABLE =
+  Platform.OS !== 'android' || Constants.executionEnvironment === ExecutionEnvironment.StoreClient || Constants.expoConfig?.extra?.androidMapsKey === true;
 
 /** Opens a link in a new tab on the web (without giving the new page access to this one). */
 export async function openUrl(url: string): Promise<boolean> {
@@ -92,5 +100,34 @@ export async function saveTextFile(filename: string, text: string, mime: string)
     return 'shared';
   } catch {
     return 'failed';
+  }
+}
+
+/**
+ * Prints a self-contained HTML page from a hidden frame, so the print-out is exactly that page
+ * and not the app around it. Web only; returns false where there is no browser print dialog.
+ */
+export function printHtml(html: string, marker: string): boolean {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return false;
+  try {
+    document.querySelectorAll(`iframe[data-print="${marker}"]`).forEach((old) => old.remove());
+    const frame = document.createElement('iframe');
+    frame.setAttribute('data-print', marker);
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('tabindex', '-1');
+    frame.style.cssText = 'position:fixed;width:0;height:0;border:0;visibility:hidden';
+    frame.onload = () => {
+      try {
+        frame.contentWindow?.focus();
+        frame.contentWindow?.print();
+      } catch {
+        // The browser refused to print: the card stays on screen for the person to read.
+      }
+    };
+    frame.srcdoc = html;
+    document.body.appendChild(frame);
+    return true;
+  } catch {
+    return false;
   }
 }

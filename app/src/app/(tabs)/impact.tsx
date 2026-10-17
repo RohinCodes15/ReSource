@@ -13,9 +13,8 @@ import { colors, spacing } from '../../theme';
 
 const LEVELS = ['high', 'medium', 'low'] as const;
 
-function Dashboard() {
-  const { t, tx, locale } = useTranslation();
-  const { data, loading, error, reload } = useApi(getImpactSummary, undefined, [], 0); // always current when the screen is opened
+function ExportCsv() {
+  const { t } = useTranslation();
   const [exported, setExported] = useState<string | null>(null);
 
   async function exportCsv() {
@@ -27,7 +26,27 @@ function Dashboard() {
     }
   }
 
+  return (
+    <>
+      <AppButton variant="gold" icon="download" label={t('impact.export')} onPress={exportCsv} testID="impact-export" />
+      {exported && <Banner tone="info" body={exported} live />}
+    </>
+  );
+}
+
+function Dashboard() {
+  const { t, tx, locale } = useTranslation();
+  const { data, loading, error, reload } = useApi(getImpactSummary, undefined, [], 0); // always current when the screen is opened
+
   if (loading) return <LoadingList />;
+  // There is no bundled copy of these totals: showing saved numbers would misstate them.
+  if (error?.isNetwork) {
+    return (
+      <Banner tone="warning" icon="cloud-off-outline" body={t('impact.offline')} testID="impact-offline">
+        <AppButton variant="outline" small icon="refresh" label={t('common.retry')} onPress={reload} />
+      </Banner>
+    );
+  }
   if (error || !data) return <ErrorState onRetry={reload} />;
 
   const series = LEVELS.map((level) => ({ key: level, label: tx('impact', level), color: IMPACT_RAMP[level] }));
@@ -47,11 +66,9 @@ function Dashboard() {
         <StatTile value={String(data.rejected_total)} label={t('impact.rejected')} icon="close-circle-outline" basis={96} />
       </View>
       <AppText variant="caption">{t('impact.generated', { date: formatDate(data.generated_at, locale) })}</AppText>
-      <AppButton variant="gold" icon="download" label={t('impact.export')} onPress={exportCsv} testID="impact-export" />
-      {exported && <Banner tone="info" body={exported} live />}
 
       {data.verified_total === 0 ? (
-        <EmptyState icon="chart-box-outline" title={t('impact.emptyTitle')} body={t('impact.emptyBody')} />
+        <EmptyState art="lake" icon="chart-box-outline" title={t('impact.emptyTitle')} body={t('impact.emptyBody')} />
       ) : (
         <>
           <ChartCard
@@ -84,14 +101,15 @@ function Dashboard() {
   );
 }
 
-/** Community Impact dashboard: verified reports by service, area and impact level, with CSV export. */
+/** Community Impact dashboard: public totals of verified reports by service, area and impact level. The CSV export is staff-only. */
 export default function ImpactScreen() {
   const { t } = useTranslation();
   const token = adminTokenStore.use();
   return (
     <Screen title={t('titles.impact')} testID="impact-screen">
       <AppText variant="bodySmall" color={colors.text}>{t('impact.intro')}</AppText>
-      <AdminGate>{token ? <Dashboard /> : null}</AdminGate>
+      <Dashboard />
+      <AdminGate body={t('impact.exportLocked')}>{token ? <ExportCsv /> : null}</AdminGate>
     </Screen>
   );
 }

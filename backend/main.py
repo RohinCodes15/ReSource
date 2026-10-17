@@ -6,6 +6,9 @@ Run it with no configuration at all:
 
 That starts "local" mode (bundled data, writes kept in backend/.local_state). Set SUPABASE_URL
 and SUPABASE_SERVICE_ROLE_KEY for live mode. See deployment/ENV.md for every variable.
+
+Uvicorn access logs replace visitor IP addresses and ports with [redacted]. Hosting-provider
+and reverse-proxy logs are independent and must be configured separately.
 """
 from __future__ import annotations
 
@@ -17,11 +20,14 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from access_logging import configure_access_logging
 from routers import account, admin, chat, contribute, public
 from settings import get_settings
 from store import StoreError, get_store
+from upload_limits import PhotoBodyLimit
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+configure_access_logging()
 logger = logging.getLogger("resource.api")
 
 settings = get_settings()
@@ -40,6 +46,8 @@ app = FastAPI(
                 "An independent student project, not a City of Fremont service.",
     version="1.0.0",
 )
+
+app.add_middleware(PhotoBodyLimit)
 
 if "*" in settings.cors_origins:
     logger.warning("CORS_ORIGINS contains '*'; set it to the web app's exact origin before going live")

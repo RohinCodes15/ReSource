@@ -17,7 +17,7 @@ export const PRIVACY: LegalSection[] = [
     body: [[
       'You can use ReSource without an account and without giving your name.',
       'We do not sell your information and we do not share it for advertising. There are no ads, no analytics and no trackers in this app.',
-      'Your location stays on your device. Reports and posts are stored without your name, and you can delete them at any time.',
+      'Your location stays on your device, except that a rounded position is sent with a question to the assistant if you have set a location. Reports and posts are stored without your name, and you can delete them at any time.',
       'If you are under 13, you can read everything but you cannot send us anything.',
     ]],
   },
@@ -36,18 +36,19 @@ export const PRIVACY: LegalSection[] = [
         'Community posts: your post text, the area you picked, the time, the number of upvotes and any abuse reports about it.',
         'Alert settings: the topics and areas you follow, and whether you turned on notifications.',
         'Email alerts, only if this deployment offers them and you sign up: your email address, so we can send the alerts you asked for.',
-        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). These go to our server and then to our AI provider to write an answer. Our server does not save your chat messages. Chat history is kept on your own device only if you accept optional storage.',
+        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). These go to our server and then to our AI provider to write an answer. Our server keeps the current conversation in memory for up to ten minutes so the assistant can follow it, and never writes chat messages to its database. Chat history is kept on your own device only if you accept optional storage.',
         'Feedback: the message you type, with no identifier attached.',
         'A data deletion request: your email address and what you wrote, so we can find the data and answer you. We delete the email address once the request is finished.',
         'Consent records: what you agreed to, which version of this policy, and when, next to your scrambled install token.',
-        'Sign-in, only if accounts are turned on and you choose to use one: your email address, handled by our sign-in provider.',
+        'Sign-in, only if accounts are turned on and you choose to use one. Residents never need to sign in: every feature works without an account. With an email link: your email address, handled by our sign-in provider. With "Continue with Google": Google tells our sign-in provider your Google account\'s email address, name and profile picture, and the provider keeps them with your account. The app itself uses only the email address.',
+        'Admin tools: they open only for accounts that the people who run ReSource have marked as admins in our sign-in provider, or for someone with the staff passcode. Our server checks this again on every admin request. Admins can read reports, including any photo attached to them, in order to review them.',
       ],
     ],
   },
   {
     heading: 'What we do not collect',
     body: [[
-      'Your name, home address or phone number.',
+      'Your name, unless you choose to sign in with Google (see above), your home address or your phone number.',
       'Your precise location. The place you choose (GPS or ZIP code) is stored only on your device and distances are worked out on your device.',
       'Advertising IDs, contact lists, or anything about other apps and sites you use.',
       'Usage analytics or crash reports.',
@@ -59,6 +60,7 @@ export const PRIVACY: LegalSection[] = [
       'We use a small number of service providers to run the app. They act on our instructions and are not allowed to use your information for their own advertising.',
       [
         'Supabase: stores the database, report photos and, if used, sign-in.',
+        'Google: only if you choose "Continue with Google". Google confirms who you are and shares your account\'s email address, name and profile picture with Supabase.',
         'Our hosting providers: deliver the website and run the server, and keep standard short-term server logs.',
         'Anthropic: receives the text of your chat messages to generate the assistant\'s answer.',
         'OpenStreetMap (web) or your phone\'s map provider, Apple or Google (phones): when you open the map, your device asks them for map images, so they see your IP address and the area you are viewing.',
@@ -110,7 +112,11 @@ export const PRIVACY: LegalSection[] = [
     heading: 'Changes to this policy',
     body: [
       'If we change what we collect or how we use it, we will update this page, change the effective date, and add a line to the change log below.',
-      ['2026-10-12: first version.'],
+      [
+        '2026-10-12: first version.',
+        '2026-10-13: clarified that the server holds a conversation in memory for up to ten minutes, and that the rounded position sent with a chat message is the one exception to location staying on your device.',
+        '2026-10-16: added Google sign-in (what Google shares, and that residents never need to sign in), how admin access is controlled, and that admins can see report photos.',
+      ],
     ],
   },
   {
@@ -185,7 +191,7 @@ export const TERMS: LegalSection[] = [
   },
   {
     heading: 'Governing law',
-    body: ['[Placeholder: these terms are intended to be governed by the laws of the State of California. Confirm this section with a parent, teacher or attorney before public launch.]'],
+    body: ['These terms are governed by the laws of the State of California, USA.'],
   },
   {
     heading: 'Changes and contact',
@@ -199,8 +205,10 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
   {
     group: 'Fonts and icons',
     items: [
-      { name: 'Inter', use: 'The app typeface, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
-      { name: 'Material Design Icons', use: 'All icons, through @expo/vector-icons.', license: 'Apache License 2.0', url: 'https://pictogrammers.com/library/mdi/' },
+      { name: 'Fraunces', use: 'Headlines and large figures. One weight, cut down to Latin and Vietnamese letters and bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/undercasetype/Fraunces' },
+      { name: 'Inter', use: 'Body text, labels and buttons, in two weights, bundled with the app (not loaded from a font service).', license: 'SIL Open Font License 1.1', url: 'https://github.com/rsms/inter' },
+      { name: 'Lucide icons', use: 'Every icon in the app, drawn from Lucide 1.57.0 (some derived from Feather). Copied into the app as drawing data, so no icon font is downloaded.', license: 'ISC License (Feather parts: MIT License)', url: 'https://lucide.dev/license' },
+      { name: 'Drawings of Fremont places', use: 'Mission Peak, the NILES sign above Niles, and Lake Elizabeth in Central Park, in headers and empty lists. Drawn for this project.', license: 'Part of ReSource, MIT License', url: 'https://github.com/RohinCodes15/ReSource' },
     ],
   },
   {
@@ -223,6 +231,7 @@ export const CREDITS: { group: string; items: Credit[] }[] = [
     group: 'Software',
     items: [
       { name: 'Expo and React Native', use: 'The app framework.', license: 'MIT', url: 'https://expo.dev/' },
+      { name: 'react-native-svg', use: 'Draws the icons and illustrations on phones and the web.', license: 'MIT', url: 'https://github.com/software-mansion/react-native-svg' },
       { name: 'FastAPI', use: 'The server framework.', license: 'MIT', url: 'https://fastapi.tiangolo.com/' },
       { name: 'Supabase client libraries', use: 'Database, storage and optional sign-in.', license: 'MIT', url: 'https://supabase.com/' },
       { name: 'Anthropic SDK and Claude', use: 'The assistant\'s AI model, used under Anthropic\'s terms.', license: 'MIT (SDK)', url: 'https://www.anthropic.com/' },

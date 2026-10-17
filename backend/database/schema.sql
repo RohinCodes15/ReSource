@@ -147,6 +147,16 @@ create table if not exists public.consent_records (
   created_at timestamptz not null default now()
 );
 
+-- Account consent is separate from install-owned reports, posts, votes and consent_records.
+create table if not exists public.account_consents (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  policy_version text not null check (btrim(policy_version) <> ''),
+  accepted_at timestamptz not null default now(),
+  primary key (user_id, policy_version)
+);
+alter table public.account_consents enable row level security;
+revoke all on public.account_consents from public, anon, authenticated;
+
 create table if not exists public.deletion_requests (
   id uuid primary key default gen_random_uuid(),
   contact_email text,           -- cleared when the request is completed
