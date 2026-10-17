@@ -19,11 +19,9 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from starlette.concurrency import run_in_threadpool
 
 from access_logging import configure_access_logging
 from routers import account, admin, chat, contribute, public
-from security import signed_in_user
 from settings import get_settings
 from store import StoreError, get_store
 from upload_limits import PhotoBodyLimit
@@ -50,22 +48,6 @@ app = FastAPI(
 )
 
 app.add_middleware(PhotoBodyLimit)
-
-ACCOUNT_EXEMPT_PATHS = frozenset({"/health", "/config", "/privacy", "/terms", "/cookies"})
-
-
-@app.middleware("http")
-async def account_gate(request: Request, call_next):
-    if (
-        get_settings().account_required
-        and request.method != "OPTIONS"  # CORS preflight carries no sign-in token.
-        and request.url.path.rstrip("/") not in ACCOUNT_EXEMPT_PATHS
-        and not await run_in_threadpool(signed_in_user, request)
-    ):
-        return JSONResponse(status_code=401, content={"detail": "sign_in_required"},
-                            headers={"WWW-Authenticate": "Bearer"})
-    return await call_next(request)
-
 
 if "*" in settings.cors_origins:
     logger.warning("CORS_ORIGINS contains '*'; set it to the web app's exact origin before going live")

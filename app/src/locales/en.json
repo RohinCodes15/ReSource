@@ -703,8 +703,7 @@
     "alerts": "Your alert topics and areas, and which updates you have read.",
     "age": "Remembers if you told us you are under 13, to keep the app in browse-only mode.",
     "consent": "Remembers your choice about optional storage.",
-    "chat": "Your chat history with the assistant.",
-    "session": "Keeps you signed in on this device until you sign out. Used only in the version of ReSource that requires an account."
+    "chat": "Your chat history with the assistant."
   },
   "cookiePolicy": {
     "intro": "This page lists everything ReSource saves on your device. On the web this uses your browser's local storage rather than cookies; on a phone it uses the app's own storage.",
@@ -722,7 +721,6 @@
     "effective": "Effective {{date}}",
     "summaryTitle": "In short",
     "privacySummary": "No account is needed. We do not sell or share your information for advertising, and there are no ads or trackers. Your location stays on your device. Reports and posts are stored without your name, and you can delete them at any time in Settings. Under 13: you can read everything, but the app collects nothing from you. Signing in is optional, and residents never need to. If you continue with Google, Google shares your account's email address, name and profile picture with our sign-in provider.",
-    "privacySummaryAccount": "You need an account to use ReSource, and you must be 13 or older to create one. We receive your email address; if you continue with Google, Google may also share your name and profile picture with our sign-in provider, and the app does not show or use them. Your sign-in is kept on this device until you sign out. Reports, posts and votes are not linked to your account. We do not sell or share your information for advertising, and there are no ads or trackers. Your location stays on your device. Deleting your account is not in the app yet: ask on the Data Deletion Request page.",
     "termsSummary": "ReSource is a free student project, not an official City of Fremont service. Information can be out of date, so confirm with the organization. It is not for emergencies (call 911) and does not give legal, medical or financial advice. The assistant can be wrong. Be respectful and do not post personal information.",
     "englishOnly": "The full text below is in English. The summary above is provided in your language.",
     "draftNote": "This document is a good-faith draft for a student project and is not legal advice."
@@ -730,25 +728,5 @@
   "credits": {
     "intro": "ReSource uses only openly licensed or self-made fonts, icons, maps and data. Thank you to the people who made them.",
     "projectLicense": "ReSource's own code is released under the MIT License."
-  },
-  "account": {
-    "loading": "Checking your sign-in…",
-    "welcomeTitle": "Welcome to ReSource",
-    "welcomeBody": "ReSource shows which Fremont city services changed with the budget and where to find help. To use it, sign in with Google or with a link we email you.",
-    "why": "Your account only lets you in. Reports, posts and votes are not linked to it: even the people who run ReSource cannot tell which account sent them.",
-    "ageQuestion": "Are you 13 or older?",
-    "ageYes": "Yes, I am 13 or older",
-    "ageNo": "No, I am under 13",
-    "under13Title": "ReSource is for people 13 and older",
-    "under13Body": "You cannot create an account, and we have not collected anything from you. You can still read our Privacy Policy and Terms.",
-    "offlineTitle": "You are offline",
-    "offlineBody": "ReSource needs an internet connection to check your sign-in. Connect and try again.",
-    "notConfigured": "Sign-in is not set up on this server, so ReSource cannot open. If you run ReSource, set the Supabase settings for the web build.",
-    "webOnly": "For now, signing in works only in the web version of ReSource. Open ReSource in your browser.",
-    "deleteNote": "Deleting your account will remove your sign-in and email address. It is not available in the app yet. Until it is, ask for it on the Data Deletion Request page. Reports, posts and votes are not linked to your account, so use \"Delete my data\" above to remove those.",
-    "consent": "I agree that ReSource may store my email address so I can sign in. If I continue with Google, Google also shares my name and profile picture; ReSource's sign-in provider stores them, and ReSource does not show or use them.",
-    "useOtherEmail": "Use a different email",
-    "signedInBody": "Signed in as {{email}}. Signing out removes the sign-in from this device.",
-    "signedOutBody": "You are not signed in."
   }
 }

@@ -1,8 +1,6 @@
 import { LegalDocument } from '../../components/Legal';
-import { ACCOUNT_PRIVACY, PRIVACY } from '../../legal/content';
-import { useAccountRequired } from '../../lib/supabase';
+import { PRIVACY } from '../../legal/content';
 
 export default function PrivacyScreen() {
-  const accountRequired = useAccountRequired();
-  return <LegalDocument titleKey="titles.privacy" summaryKey={accountRequired ? 'legal.privacySummaryAccount' : 'legal.privacySummary'} sections={accountRequired ? ACCOUNT_PRIVACY : PRIVACY} testID="privacy-screen" />;
+  return <LegalDocument titleKey="titles.privacy" summaryKey="legal.privacySummary" sections={PRIVACY} testID="privacy-screen" />;
 }

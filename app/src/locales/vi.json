@@ -703,8 +703,7 @@
     "alerts": "Chủ đề và khu vực thông báo của quý vị, và những tin quý vị đã đọc.",
     "age": "Ghi nhớ việc quý vị cho biết mình dưới 13 tuổi, để giữ ứng dụng ở chế độ chỉ xem.",
     "consent": "Ghi nhớ lựa chọn của quý vị về lưu trữ tùy chọn.",
-    "chat": "Lịch sử trò chuyện của quý vị với trợ lý.",
-    "session": "Giữ bạn đăng nhập trên thiết bị này cho đến khi bạn đăng xuất. Chỉ dùng trong phiên bản ReSource yêu cầu tài khoản."
+    "chat": "Lịch sử trò chuyện của quý vị với trợ lý."
   },
   "cookiePolicy": {
     "intro": "Trang này liệt kê mọi thứ ReSource lưu trên thiết bị của quý vị. Trên web, ứng dụng dùng bộ nhớ cục bộ của trình duyệt thay vì cookie; trên điện thoại, ứng dụng dùng bộ nhớ riêng của mình.",
@@ -722,7 +721,6 @@
     "effective": "Có hiệu lực từ {{date}}",
     "summaryTitle": "Tóm tắt",
     "privacySummary": "Không cần tài khoản. Chúng tôi không bán hay chia sẻ thông tin của quý vị cho quảng cáo, và không có quảng cáo hay trình theo dõi. Vị trí của quý vị nằm lại trên thiết bị. Báo cáo và bài đăng được lưu không kèm tên, và quý vị có thể xóa bất cứ lúc nào trong Cài đặt. Dưới 13 tuổi: quý vị có thể đọc mọi thứ, nhưng ứng dụng không thu thập gì từ quý vị. Đăng nhập là không bắt buộc, và cư dân không bao giờ cần đăng nhập. Nếu bạn tiếp tục với Google, Google sẽ chia sẻ email, tên và ảnh hồ sơ của tài khoản bạn với nhà cung cấp đăng nhập của chúng tôi.",
-    "privacySummaryAccount": "Quý vị cần có tài khoản để dùng ReSource, và phải từ 13 tuổi trở lên mới được tạo tài khoản. Chúng tôi nhận địa chỉ email của quý vị; nếu quý vị tiếp tục với Google, Google cũng có thể chia sẻ tên và ảnh hồ sơ với nhà cung cấp đăng nhập của chúng tôi, và ứng dụng không hiển thị hay sử dụng chúng. Thông tin đăng nhập được lưu trên thiết bị này cho đến khi quý vị đăng xuất. Báo cáo, bài đăng và lượt bình chọn không gắn với tài khoản của quý vị. Chúng tôi không bán hay chia sẻ thông tin của quý vị cho quảng cáo, và không có quảng cáo hay trình theo dõi. Vị trí của quý vị nằm lại trên thiết bị. Hiện chưa thể xóa tài khoản trong ứng dụng: hãy yêu cầu trên trang Yêu cầu xóa dữ liệu.",
     "termsSummary": "ReSource là một dự án miễn phí của học sinh, không phải dịch vụ chính thức của Thành phố Fremont. Thông tin có thể đã cũ, vì vậy hãy xác nhận với tổ chức. Ứng dụng không dành cho trường hợp khẩn cấp (hãy gọi 911) và không đưa ra lời khuyên pháp lý, y tế hay tài chính. Trợ lý có thể sai. Hãy tôn trọng người khác và đừng đăng thông tin cá nhân.",
     "englishOnly": "Toàn văn bên dưới bằng tiếng Anh. Phần tóm tắt ở trên được cung cấp bằng ngôn ngữ của quý vị.",
     "draftNote": "Tài liệu này là bản nháp soạn với thiện chí cho một dự án của học sinh và không phải là tư vấn pháp lý."
@@ -730,25 +728,5 @@
   "credits": {
     "intro": "ReSource chỉ dùng phông chữ, biểu tượng, bản đồ và dữ liệu có giấy phép mở hoặc tự làm. Cảm ơn những người đã tạo ra chúng.",
     "projectLicense": "Mã nguồn của ReSource được phát hành theo Giấy phép MIT."
-  },
-  "account": {
-    "loading": "Đang kiểm tra đăng nhập của bạn…",
-    "welcomeTitle": "Chào mừng đến với ReSource",
-    "welcomeBody": "ReSource cho biết dịch vụ nào của thành phố Fremont đã thay đổi theo ngân sách và nơi tìm trợ giúp. Để sử dụng, hãy đăng nhập bằng Google hoặc bằng đường liên kết chúng tôi gửi qua email.",
-    "why": "Tài khoản của bạn chỉ dùng để vào ứng dụng. Báo cáo, bài đăng và lượt bình chọn không gắn với tài khoản: ngay cả người điều hành ReSource cũng không biết tài khoản nào đã gửi chúng.",
-    "ageQuestion": "Bạn từ 13 tuổi trở lên phải không?",
-    "ageYes": "Đúng, tôi từ 13 tuổi trở lên",
-    "ageNo": "Không, tôi dưới 13 tuổi",
-    "under13Title": "ReSource dành cho người từ 13 tuổi trở lên",
-    "under13Body": "Bạn không thể tạo tài khoản, và chúng tôi chưa thu thập gì từ bạn. Bạn vẫn có thể đọc Chính sách quyền riêng tư và Điều khoản của chúng tôi.",
-    "offlineTitle": "Bạn đang ngoại tuyến",
-    "offlineBody": "ReSource cần kết nối internet để kiểm tra đăng nhập của bạn. Hãy kết nối rồi thử lại.",
-    "notConfigured": "Máy chủ này chưa thiết lập đăng nhập, nên ReSource không thể mở. Nếu bạn vận hành ReSource, hãy đặt cấu hình Supabase cho bản web.",
-    "webOnly": "Hiện tại, đăng nhập chỉ hoạt động trên bản web của ReSource. Hãy mở ReSource trong trình duyệt.",
-    "deleteNote": "Xóa tài khoản sẽ gỡ bỏ thông tin đăng nhập và địa chỉ email của quý vị. Tính năng này chưa có trong ứng dụng. Trong lúc chờ, hãy yêu cầu trên trang Yêu cầu xóa dữ liệu. Báo cáo, bài đăng và lượt bình chọn không gắn với tài khoản của quý vị, vì vậy hãy dùng \"Xóa dữ liệu của tôi\" ở trên để xóa chúng.",
-    "consent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi để tôi có thể đăng nhập. Nếu tôi tiếp tục với Google, Google cũng chia sẻ tên và ảnh hồ sơ của tôi; nhà cung cấp đăng nhập của ReSource lưu chúng, và ReSource không hiển thị hay sử dụng chúng.",
-    "useOtherEmail": "Dùng email khác",
-    "signedInBody": "Đã đăng nhập bằng {{email}}. Đăng xuất sẽ xóa đăng nhập khỏi thiết bị này.",
-    "signedOutBody": "Bạn chưa đăng nhập."
   }
 }

@@ -703,8 +703,7 @@
     "alerts": "Sus temas y zonas de alertas, y qué novedades ya leyó.",
     "age": "Recuerda si nos dijo que tiene menos de 13 años, para mantener la aplicación en modo de solo lectura.",
     "consent": "Recuerda su elección sobre el almacenamiento opcional.",
-    "chat": "Su historial de chat con el asistente.",
-    "session": "Mantiene tu sesión iniciada en este dispositivo hasta que la cierres. Solo se usa en la versión de ReSource que requiere una cuenta."
+    "chat": "Su historial de chat con el asistente."
   },
   "cookiePolicy": {
     "intro": "Esta página enumera todo lo que ReSource guarda en su dispositivo. En la web se usa el almacenamiento local del navegador en lugar de cookies; en el teléfono se usa el almacenamiento propio de la aplicación.",
@@ -722,7 +721,6 @@
     "effective": "Vigente desde el {{date}}",
     "summaryTitle": "En resumen",
     "privacySummary": "No se necesita una cuenta. No vendemos ni compartimos su información para publicidad, y no hay anuncios ni rastreadores. Su ubicación se queda en su dispositivo. Los reportes y las publicaciones se guardan sin su nombre y puede eliminarlos cuando quiera en Configuración. Menores de 13 años: pueden leer todo, pero la aplicación no recopila nada de ellos. Iniciar sesión es opcional y los residentes nunca lo necesitan. Si continúas con Google, Google comparte el correo electrónico, el nombre y la foto de perfil de tu cuenta con nuestro proveedor de inicio de sesión.",
-    "privacySummaryAccount": "Necesitas una cuenta para usar ReSource, y debes tener 13 años o más para crearla. Recibimos tu correo electrónico; si continúas con Google, Google también puede compartir tu nombre y foto de perfil con nuestro proveedor de inicio de sesión, y la aplicación no los muestra ni los usa. Tu inicio de sesión se guarda en este dispositivo hasta que cierres sesión. Los informes, publicaciones y votos no están vinculados a tu cuenta. No vendemos ni compartimos tu información para publicidad, y no hay anuncios ni rastreadores. Tu ubicación se queda en tu dispositivo. Eliminar tu cuenta todavía no es posible en la aplicación: solicítalo en la página de Solicitud de eliminación de datos.",
     "termsSummary": "ReSource es un proyecto estudiantil gratuito, no un servicio oficial de la Ciudad de Fremont. La información puede estar desactualizada: confírmela con la organización. No es para emergencias (llame al 911) y no da consejos legales, médicos ni financieros. El asistente puede equivocarse. Sea respetuoso y no publique información personal.",
     "englishOnly": "El texto completo de abajo está en inglés. El resumen de arriba está en su idioma.",
     "draftNote": "Este documento es un borrador de buena fe para un proyecto estudiantil y no es asesoría legal."
@@ -730,25 +728,5 @@
   "credits": {
     "intro": "ReSource usa solo tipografías, iconos, mapas y datos con licencia abierta o hechos por el propio proyecto. Gracias a quienes los crearon.",
     "projectLicense": "El código propio de ReSource se publica bajo la Licencia MIT."
-  },
-  "account": {
-    "loading": "Comprobando tu inicio de sesión…",
-    "welcomeTitle": "Bienvenido a ReSource",
-    "welcomeBody": "ReSource muestra qué servicios de la ciudad de Fremont cambiaron con el presupuesto y dónde encontrar ayuda. Para usarlo, inicia sesión con Google o con un enlace que te enviamos por correo.",
-    "why": "Tu cuenta solo sirve para entrar. Los reportes, publicaciones y votos no están vinculados a ella: ni siquiera quienes administran ReSource pueden saber qué cuenta los envió.",
-    "ageQuestion": "¿Tienes 13 años o más?",
-    "ageYes": "Sí, tengo 13 años o más",
-    "ageNo": "No, tengo menos de 13 años",
-    "under13Title": "ReSource es para personas de 13 años o más",
-    "under13Body": "No puedes crear una cuenta y no hemos recopilado nada de ti. Aún puedes leer nuestra Política de privacidad y los Términos.",
-    "offlineTitle": "No tienes conexión",
-    "offlineBody": "ReSource necesita conexión a internet para comprobar tu inicio de sesión. Conéctate e inténtalo de nuevo.",
-    "notConfigured": "El inicio de sesión no está configurado en este servidor, así que ReSource no puede abrirse. Si administras ReSource, configura Supabase para la versión web.",
-    "webOnly": "Por ahora, el inicio de sesión solo funciona en la versión web de ReSource. Abre ReSource en tu navegador.",
-    "deleteNote": "Eliminar tu cuenta quitará tu inicio de sesión y tu correo electrónico. Todavía no está disponible en la aplicación. Mientras tanto, solicítalo en la página de Solicitud de eliminación de datos. Los informes, publicaciones y votos no están vinculados a tu cuenta, así que usa \"Eliminar mis datos\" arriba para borrarlos.",
-    "consent": "Acepto que ReSource guarde mi correo electrónico para poder iniciar sesión. Si continúo con Google, Google también comparte mi nombre y foto de perfil; el proveedor de inicio de sesión de ReSource los guarda, y ReSource no los muestra ni los usa.",
-    "useOtherEmail": "Usar otro correo",
-    "signedInBody": "Sesión iniciada como {{email}}. Al cerrar sesión se quita el inicio de sesión de este dispositivo.",
-    "signedOutBody": "No has iniciado sesión."
   }
 }

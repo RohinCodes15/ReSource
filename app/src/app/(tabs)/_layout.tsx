@@ -4,8 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { Icon, type IconName } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
-import { useAccountRequired } from '../../lib/supabase';
-import { authEmailStore } from '../../state/stores';
 import { colors, fonts, MIN_TOUCH, SCREEN_PADDING, spacing } from '../../theme';
 
 // The six destinations in the tab bar. `key` picks the translated title (titles.<key>) and label (tabs.<key>).
@@ -44,8 +42,6 @@ function BackButton() {
 export default function TabsLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const signedIn = authEmailStore.use() !== '';
-  const accountRequired = useAccountRequired();
   return (
     <Tabs
       // Back returns to the screen you came from (More, Home...), not always to the first tab.
@@ -64,10 +60,7 @@ export default function TabsLayout() {
         headerRight: () => <View style={styles.headerRight}><LanguageSelector /></View>,
         tabBarActiveTintColor: colors.navy,
         tabBarInactiveTintColor: colors.muted,
-        // Account-required build: no tab bar until signed in, since every tab would send you back here.
-        tabBarStyle: accountRequired && !signedIn
-          ? { display: 'none' }
-          : [styles.tabBar, { height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 4 }],
+        tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 4 }],
         // 10px with tight tracking: each tab has 50px for its label on a 360px phone, and "Resources" must fit.
         tabBarLabelStyle: TAB_LABEL,
         // The bar has a fixed height; the label stays one size so six tabs always fit.
