@@ -92,4 +92,3 @@ async def validation_error(_: Request, exc: RequestValidationError) -> JSONRespo
 
 for module in (public, contribute, account, admin, chat):
     app.include_router(module.router)
-
