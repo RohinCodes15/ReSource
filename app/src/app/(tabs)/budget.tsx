@@ -57,7 +57,14 @@ export default function BudgetScreen() {
         footer={<View style={styles.sources}>{budget.reductions.map((r) => source(r.source, r.page, r.id))}</View>}
         testID="chart-reductions"
       >
-        <BarList items={budget.reductions.map((r) => ({ label: r.label, value: r.amount, display: formatMoney(r.amount), note: r.detail }))} />
+        <BarList items={budget.reductions.map((r) => ({
+          label: r.label,
+          value: r.amount,
+          display: formatMoney(r.amount),
+          note: r.lastUpdated
+            ? `${r.detail}\nUpdated ${formatDate(r.lastUpdated, locale)}${r.changeNote ? `\n${r.changeNote}` : ''}`
+            : r.detail,
+        }))} />
       </ChartCard>
 
       <ChartCard

@@ -4,7 +4,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import type { Service } from '../../../../shared/types';
 import { LocationChip } from '../../components/LocationChip';
 import { Screen } from '../../components/Page';
-import { AppButton, AppText, Banner, Chip, FadeIn, type IconName, LinkText, LoadingList, Pill, Section, SourceLine, StatusBadge } from '../../components/ui';
+import { AppButton, AppText, Banner, Card, Chip, FadeIn, type IconName, LinkText, LoadingList, Pill, Section, SourceLine, StatusBadge } from '../../components/ui';
 import { bundledResources, bundledServices } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getResources, getServices } from '../../lib/api';
@@ -117,6 +117,18 @@ export default function ForMeScreen() {
                   </View>
                   <AppText variant="h4" heading={4}>{service.name}</AppText>
                   <AppText color={colors.text}>{service.summary}</AppText>
+                  {service.before && service.after && (
+                    <Card style={styles.comparison}>
+                      <View style={styles.comparisonPart}>
+                        <AppText variant="caption">{t('forMe.before')}</AppText>
+                        <AppText variant="bodySmall" color={colors.text}>{service.before}</AppText>
+                      </View>
+                      <View style={styles.comparisonPart}>
+                        <AppText variant="caption">{t('forMe.after')}</AppText>
+                        <AppText variant="bodySmall" color={colors.text}>{service.after}</AppText>
+                      </View>
+                    </Card>
+                  )}
                   {service.status !== 'open' && <AppText variant="bodySmall" color={colors.text}>{amountText(service)} {sinceText(service)}</AppText>}
                   <SourceLine title={service.source_title} url={service.source_url} retrieved={service.retrieved} />
                 </View>
@@ -159,6 +171,8 @@ const styles = StyleSheet.create({
   resultsHead: { paddingTop: spacing.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  comparison: { gap: spacing.sm },
+  comparisonPart: { gap: spacing.xs },
   item: { gap: spacing.xs, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   resource: { gap: 2 },
 });

@@ -53,6 +53,18 @@ function ServiceDetail({ service, onClose }: { service: Service; onClose: () => 
       <AppText variant="caption" color={colors.text}>{tx('category', service.category)} · {tx('area', service.area)}</AppText>
       <AppText>{service.summary}</AppText>
       {!!service.detail && <AppText variant="bodySmall">{service.detail}</AppText>}
+      {service.before && service.after && (
+        <Card style={styles.comparison}>
+          <View style={styles.comparisonPart}>
+            <AppText variant="caption">Before</AppText>
+            <AppText variant="bodySmall" color={colors.text}>{service.before}</AppText>
+          </View>
+          <View style={styles.comparisonPart}>
+            <AppText variant="caption">After</AppText>
+            <AppText variant="bodySmall" color={colors.text}>{service.after}</AppText>
+          </View>
+        </Card>
+      )}
       {service.cut_amount != null && (
         <Banner tone="warning" icon="cash-minus" title={t('map.reduction', { amount: formatMoney(service.cut_amount) })} body={service.cut_amount_note ?? undefined} />
       )}
@@ -214,6 +226,8 @@ const styles = StyleSheet.create({
   listHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   listIcon: { width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
   detail: { gap: spacing.md },
+  comparison: { gap: spacing.sm },
+  comparisonPart: { gap: spacing.xs },
   facts: { gap: spacing.xs },
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   action: { flexGrow: 1, flexBasis: 200 },

@@ -25,6 +25,8 @@ export type Service = {
   hours: string | null;
   summary: string;
   detail: string | null;
+  before?: string;
+  after?: string;
   cut_amount: number | null;
   cut_amount_note: string | null;
   effective_date: string | null;
@@ -131,7 +133,7 @@ export type Budget = {
   retrieved: string;
   sources: Record<string, BudgetSource>;
   headline: { id: string; label: string; amount: number; source: string; page: number | null }[];
-  reductions: { id: string; label: string; detail: string; amount: number; fiscal_year: string; source: string; page: number | null }[];
+  reductions: { id: string; label: string; detail: string; amount: number; fiscal_year: string; source: string; page: number | null; lastUpdated?: string; changeNote?: string }[];
   positions: { id: string; label: string; count: number; source: string }[];
   general_fund_shares: { caption: string; note: string; source: string; page: number; items: { label: string; percent: number }[] };
   revenue: BudgetTable;

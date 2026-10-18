@@ -51,7 +51,8 @@
       "amount": 3800000,
       "fiscal_year": "FY 2025/26",
       "source": "rebalance",
-      "page": null
+      "page": null,
+      "lastUpdated": "2026-10-12"
     },
     {
       "id": "red-maint",
@@ -60,7 +61,8 @@
       "amount": 3000000,
       "fiscal_year": "FY 2025/26",
       "source": "cmletter",
-      "page": 1
+      "page": 1,
+      "lastUpdated": "2026-10-12"
     }
   ],
   "positions": [
