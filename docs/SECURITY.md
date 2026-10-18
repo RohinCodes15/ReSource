@@ -1,6 +1,6 @@
 # Security
 
-A summary of the security review in `review/SECURITY.md` (15 findings, S1 to S15) and what has been done about each, taken from the git history up to October 13, 2026. The backend fixes were made by a second coding agent (Codex) working in `backend/`; this page summarizes its commits and does not re-verify them beyond running the test suite (138 backend tests pass).
+A summary of the security review in `review/SECURITY.md` (15 findings, S1 to S15) and what has been done about each, taken from the git history up to October 18, 2026. The earlier backend fixes were made by a second coding agent (Codex) working in `backend/`, and this page summarizes those commits without re-verifying them beyond the test suite. The six fixes made on October 18 (S4, S9, S11, S12, S14, S15) were checked against their diffs and the current code. 222 backend tests pass.
 
 Report a vulnerability by email to rohincodes15@gmail.com. Please do not open a public issue for one.
 
@@ -47,8 +47,8 @@ The API connects to Supabase with the service-role key, which bypasses row-level
 
 - **One API process.** Rate limits, vote and flag network buckets, and chat history live in memory. Running several workers splits them. Use one worker, or move them to a shared store first.
 - **Local mode is for development.** It keeps data, including deletion-request emails, in a plain JSON file under `backend/.local_state/`.
-- **Set `OWNER_HASH_SALT`.** Without it the salt is derived from another secret, and rotating that secret would cut every resident off from their own data.
-- **Set `TRUST_PROXY=1` only behind a proxy you control**, and read S4 first.
+- **Set `OWNER_HASH_SALT`.** Supabase mode in production refuses to start without it. The salt is no longer derived from another secret. Local and development mode generate a random salt in `backend/.local_state/salt` instead. Every resident's owner hash depends on this value, so changing it on a live deployment cuts every resident off from their own reports, posts, export and deletion. Set it once and never change it casually. A deployment that ran before this change without the variable used a salt derived from the service-role key; set `OWNER_HASH_SALT` to that same derived value (the SHA-256 hex digest of `resource-owner-salt:` followed by the key) to keep existing data reachable.
+- **Set `TRUST_PROXY=1` only behind a proxy you control.** The API trusts the last `X-Forwarded-For` entry, which is correct behind exactly one proxy, such as Railway's (S4). Behind more than one proxy, rate limits would see the inner proxy's address instead of the visitor's.
 - **Use a long random `ADMIN_TOKEN`** (32 characters or more) and share it with as few people as possible. There is no per-person admin login unless Supabase accounts are used.
 
 ## Not verified
