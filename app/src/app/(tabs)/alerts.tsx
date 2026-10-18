@@ -1,3 +1,4 @@
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { ALERT_CATEGORIES, AREA_CODES } from '../../../../shared/constants';
@@ -16,6 +17,13 @@ const SEVERITY = {
   critical: { color: colors.dangerDark, bg: colors.dangerLight, icon: 'alert-octagon' },
   warning: { color: colors.warningDark, bg: colors.warningLight, icon: 'alert' },
   info: { color: colors.navy, bg: colors.navyLight, icon: 'information' },
+} as const;
+
+/** Messages for people arriving from the confirm and unsubscribe links in our emails. */
+const EMAIL_LANDING = {
+  confirmed: ['success', 'alerts.emailConfirmed'],
+  unsubscribed: ['info', 'alerts.emailUnsubscribed'],
+  expired: ['warning', 'alerts.emailLinkExpired'],
 } as const;
 
 /** An alert is "for me" when it matches the chosen topics and areas. Nothing chosen means everything. */
@@ -72,6 +80,12 @@ export default function AlertsScreen() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const emailConsent = useConsent();
+  const [emailSending, setEmailSending] = useState(false);
+  // Links in our emails come back here as /alerts?email=confirmed | unsubscribed | expired.
+  const { email: emailLanding } = useLocalSearchParams<{ email?: string }>();
+  const landing = EMAIL_LANDING[emailLanding as keyof typeof EMAIL_LANDING];
+  // Anything the person does on this screen replaces the landing message.
+  const shownNotice = notice ?? (landing ? { tone: landing[0], text: t(landing[1]) } : null);
 
   const alerts = useMemo(() => data ?? [], [data]);
   const shown = view === 'all' ? alerts : alerts.filter((alert) => matches(alert, prefs));
@@ -123,15 +137,18 @@ export default function AlertsScreen() {
   async function subscribeEmail() {
     const valid = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email.trim());
     setEmailError(valid ? null : t('alerts.emailInvalid'));
-    if (!emailConsent.check() || !valid) return;
+    if (!emailConsent.check() || !valid || emailSending) return;
+    setEmailSending(true);
     try {
-      await emailSubscribe({ email: email.trim(), categories: draft.categories, areas: draft.areas, ...emailConsent.flags() });
+      const result = await emailSubscribe({ email: email.trim(), categories: draft.categories, areas: draft.areas, ...emailConsent.flags() });
       setEmail('');
       emailConsent.reset();
-      setNotice({ tone: 'success', text: t('alerts.emailSaved') });
+      // Nothing is sent until the person clicks the link in the confirmation email.
+      setNotice({ tone: 'success', text: t(result.pending_confirmation ? 'alerts.emailCheckInbox' : 'alerts.emailSaved') });
     } catch (reason) {
       setNotice({ tone: 'warning', text: t(reason instanceof ApiError && reason.status === 429 ? 'errors.rateLimited' : 'errors.generic') });
     }
+    setEmailSending(false);
   }
 
   return (
@@ -171,15 +188,19 @@ export default function AlertsScreen() {
             )}
             {config.data?.email_enabled && (
               <View style={styles.email}>
-                <AppText variant="h4" heading={3}>{t('alerts.emailTitle')}</AppText>
-                <Field label={t('alerts.emailLabel')} value={email} onChangeText={setEmail} error={emailError} keyboardType="email-address" autoComplete="email" testID="email-input" />
+                <View style={styles.emailHead}>
+                  <Icon name="email-fast" size={22} color={colors.navy} />
+                  <AppText variant="h4" heading={3}>{t('alerts.emailTitle')}</AppText>
+                </View>
+                <AppText variant="bodySmall" color={colors.text}>{t('alerts.emailBody')}</AppText>
+                <Field label={t('alerts.emailLabel')} value={email} onChangeText={setEmail} error={emailError} keyboardType="email-address" autoComplete="email" onSubmitEditing={subscribeEmail} testID="email-input" />
                 <ConsentFields purpose={t('alerts.emailConsent')} consent={emailConsent} />
-                <AppButton variant="outline" icon="email-plus" label={t('alerts.emailSubscribe')} onPress={subscribeEmail} testID="email-subscribe" />
+                <AppButton variant="navy" icon="email-plus" label={t('alerts.emailSubscribe')} loading={emailSending} onPress={subscribeEmail} testID="email-subscribe" />
               </View>
             )}
           </>
         )}
-        {notice && <Banner tone={notice.tone} body={notice.text} live testID="alerts-notice" />}
+        {shownNotice && <Banner tone={shownNotice.tone} body={shownNotice.text} live testID="alerts-notice" />}
       </Card>
 
       <Rule strong />
@@ -230,6 +251,7 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   action: { flexGrow: 1, flexBasis: 180 },
   email: { gap: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  emailHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   feedHead: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.sm },
   // Each update is a ruled entry, newest first, like a page of short news items.
   alert: { paddingTop: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },

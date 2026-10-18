@@ -107,7 +107,7 @@ export const sendFeedback = (kind: 'problem' | 'idea' | 'data_error', message: s
 export type Subscription = { subscribed: boolean; categories: AlertCategory[]; areas: AreaCode[]; notifications: boolean };
 export const saveSubscription = (prefs: Omit<Subscription, 'subscribed'>) => request<Subscription>('/subscriptions', { method: 'PUT', body: prefs });
 export const deleteSubscription = () => request<{ subscribed: false }>('/subscriptions', { method: 'DELETE' });
-export const emailSubscribe = (input: ConsentFlags & { email: string; categories: AlertCategory[]; areas: AreaCode[] }) => request<{ subscribed: boolean }>('/email/subscribe', { body: input });
+export const emailSubscribe = (input: ConsentFlags & { email: string; categories: AlertCategory[]; areas: AreaCode[] }) => request<{ subscribed: boolean; pending_confirmation?: boolean }>('/email/subscribe', { body: input });
 
 export type DeletionReceipt = { receipt_id: string; completed_at: string; deleted: Record<string, number> };
 export const exportMyData = () => request<Record<string, unknown>>('/me/export');
