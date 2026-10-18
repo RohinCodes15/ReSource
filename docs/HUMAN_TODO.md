@@ -49,7 +49,7 @@ Things only the project's creator can do. They are in the order to do them. Noth
 ## E. Optional, later
 
 22. **Android map:** create a Google Maps SDK for Android key restricted to the package `org.resource.fremont`, set it as `GOOGLE_MAPS_ANDROID_KEY` in EAS, and open the Map tab on a real device. Without the key an Android build shows the service list instead of the map.
-23. **Sign-in:** needs a Supabase project and has never been run end to end. It is off until `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set.
+23. **Sign-in:** needs a Supabase project and has never been run end to end. It is off until `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` are set. The backend also needs `SUPABASE_JWT_SECRET` (and `SUPABASE_JWT_ALGORITHM` if the project uses an asymmetric signing key; the default is `HS256`) to verify sessions locally; without it every sign-in is rejected (see step 9).
 24. **Screen-reader pass:** go through the app once with VoiceOver or TalkBack (`docs/ACCESSIBILITY.md` lists what the automated checks cannot tell).
 25. **Open security items** (details in `docs/SECURITY.md`):
    - S4: behind more than one proxy, the last `X-Forwarded-For` entry is the inner proxy's address, and there is no setting for more hops. No test covers the change.
