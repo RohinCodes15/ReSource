@@ -1,4 +1,4 @@
-"""S6: untrusted history/location must not become instructions or contact facts."""
+"""S6: untrusted history/location must not become instructions; Fremont contact facts are still checked."""
 import pytest
 from conftest import ALICE, BOB
 from test_chat import FakeLLM, sse
@@ -56,6 +56,19 @@ def test_reference_contacts_are_allowed(client):
 
     assert contacts_are_grounded("TCV Food Bank: (510) 793-4583, 37350 Joseph St.")
     assert not contacts_are_grounded("Call 510-555-0199.")
+
+
+def test_contact_check_applies_only_to_fremont_answers(client):
+    from answer_validation import is_fremont_specific, reply_is_acceptable
+
+    assert is_fremont_specific("Where can I get food in Fremont?", "Try a food bank.")
+    assert is_fremont_specific("food?", "TCV Food Bank + Mobile Pantry can help.")
+    assert not is_fremont_specific("How do I bake bread?", "Mix flour, water, salt and yeast.")
+    # A general answer may carry contact details ReSource does not list...
+    assert reply_is_acceptable("Poison control?", "Call Poison Control at (800) 222-1222.")
+    # ...but a Fremont answer may not invent a local phone number or address.
+    assert not reply_is_acceptable("Fremont food bank?", "Call (510) 555-0199.")
+    assert reply_is_acceptable("Fremont food bank?", "TCV Food Bank: (510) 793-4583.")
 
 
 def test_session_expiry_language_and_memory_bounds(monkeypatch):

@@ -13,13 +13,13 @@ from settings import get_settings
 
 
 @pytest.mark.parametrize("configured", [None, "", "  "])
-def test_default_model_is_haiku(client, env, configured):
+def test_default_model_is_sonnet_5(client, env, configured):
     if configured is None:
         env.delenv("CLAUDE_MODEL", raising=False)
     else:
         env.setenv("CLAUDE_MODEL", configured)
     get_settings.cache_clear()
-    assert get_settings().claude_model == "claude-haiku-5-5"
+    assert get_settings().claude_model == "claude-sonnet-5"
 
 
 def test_model_override_is_preserved(client, env):
@@ -32,9 +32,37 @@ def test_output_budget_and_default_model_parameters(client, env):
     env.delenv("CLAUDE_MODEL", raising=False)
     get_settings.cache_clear()
     params = AnthropicLLM("test-key", get_settings().claude_model)._params([], [])
-    assert params["model"] == "claude-haiku-5-5"
+    assert params["model"] == "claude-sonnet-5" and params["output_config"] == {"effort": "low"}
     assert params["max_tokens"] == MAX_TOKENS == 1500
     assert "betas" not in params and "extra_body" not in params
+
+
+def test_daily_token_budget_is_configurable_and_validated(client, env):
+    env.delenv("CHAT_DAILY_TOKEN_BUDGET", raising=False)
+    get_settings.cache_clear()
+    assert get_settings().chat_daily_token_budget == 400_000
+    env.setenv("CHAT_DAILY_TOKEN_BUDGET", "50000")
+    get_settings.cache_clear()
+    assert get_settings().chat_daily_token_budget == 50_000
+    env.setenv("CHAT_DAILY_TOKEN_BUDGET", "0")
+    get_settings.cache_clear()
+    with pytest.raises(ValueError):
+        get_settings()
+    env.delenv("CHAT_DAILY_TOKEN_BUDGET")
+    get_settings.cache_clear()
+
+
+def test_token_budget_window_expires(monkeypatch):
+    from chat_budget import WINDOW_SECONDS, TokenBudget
+
+    clock = [1000.0]
+    monkeypatch.setattr("chat_budget.time.monotonic", lambda: clock[0])
+    tokens = TokenBudget()
+    tokens.charge(300)
+    tokens.charge(0)
+    assert tokens.spent() == 300
+    clock[0] += WINDOW_SECONDS
+    assert tokens.spent() == 0
 
 
 def test_history_boundary_preserves_recent_complete_turns():

@@ -43,6 +43,9 @@ def client(env):
     from chat_sessions import sessions
 
     sessions.reset()
+    from chat_budget import budget
+
+    budget.reset()
     import main
 
     with TestClient(main.app) as test_client:
@@ -63,6 +66,9 @@ def restart():
     from chat_sessions import sessions
 
     sessions.reset()
+    from chat_budget import budget
+
+    budget.reset()
 
 
 def report_body(**overrides):

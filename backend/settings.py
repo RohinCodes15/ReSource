@@ -22,7 +22,11 @@ load_dotenv(BACKEND_DIR.parent / ".env")
 # Bumped whenever the Privacy Policy or Terms change; stored with each consent record.
 POLICY_VERSION = "2026-10-20"
 DEFAULT_CORS = "http://localhost:8081,http://localhost:19006,http://localhost:3000"
-DEFAULT_MODEL = "claude-haiku-5-5"
+# The general-purpose assistant. Override with CLAUDE_MODEL (any current Claude model ID).
+DEFAULT_MODEL = "claude-sonnet-5"
+# Tokens (input + output) the assistant may spend per rolling 24 hours before chat drops to
+# basic search. About 300 typical answers; at Sonnet 5 prices that caps spend near $3 a day.
+DEFAULT_CHAT_DAILY_TOKEN_BUDGET = 400_000
 
 
 def _flag(name: str, default: bool = False) -> bool:
@@ -46,6 +50,7 @@ class Settings:
     rate_limit_enabled: bool
     account_required: bool
     chat_global_daily_limit: int
+    chat_daily_token_budget: int
     smtp_host: str
     smtp_port: int
     smtp_user: str
@@ -96,6 +101,9 @@ def get_settings() -> Settings:
     chat_global_daily_limit = int(os.getenv("CHAT_GLOBAL_DAILY_LIMIT", "2000"))
     if chat_global_daily_limit < 1:
         raise ValueError("CHAT_GLOBAL_DAILY_LIMIT must be a positive integer")
+    chat_daily_token_budget = int(os.getenv("CHAT_DAILY_TOKEN_BUDGET", str(DEFAULT_CHAT_DAILY_TOKEN_BUDGET)))
+    if chat_daily_token_budget < 1:
+        raise ValueError("CHAT_DAILY_TOKEN_BUDGET must be a positive integer")
     state_dir = Path(os.getenv("LOCAL_STATE_DIR", BACKEND_DIR / ".local_state"))
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     origins = tuple(o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", DEFAULT_CORS).split(",") if o.strip())
@@ -114,6 +122,7 @@ def get_settings() -> Settings:
         rate_limit_enabled=_flag("RATE_LIMIT_ENABLED", True),
         account_required=_flag("ACCOUNT_REQUIRED", False),
         chat_global_daily_limit=chat_global_daily_limit,
+        chat_daily_token_budget=chat_daily_token_budget,
         smtp_host=os.getenv("SMTP_HOST", "").strip(),
         smtp_port=int(os.getenv("SMTP_PORT", "587") or 587),
         smtp_user=os.getenv("SMTP_USER", "").strip(),

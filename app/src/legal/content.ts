@@ -36,7 +36,7 @@ export const PRIVACY: LegalSection[] = [
         'Community posts: your post text, the area you picked, the time, the number of upvotes and any abuse reports about it.',
         'Alert settings: the topics and areas you follow, and whether you turned on notifications.',
         'Email alerts, only if this deployment offers them and you sign up: your email address, so we can send the alerts you asked for.',
-        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). These go to our server and then to our AI provider to write an answer. Our server keeps the current conversation in memory for up to ten minutes so the assistant can follow it, and never writes chat messages to its database. Chat history is kept on your own device only if you accept optional storage.',
+        'The assistant: your messages, your chosen language and, if you set a location, a rounded position (to about one kilometer). Your messages and language go to our server and then to our AI provider, Anthropic, to write an answer. The rounded position stays on our server, where the basic search mode uses it to sort nearby places; it is not sent to Anthropic. Our server keeps the current conversation in memory for up to ten minutes so the assistant can follow it, and never writes chat messages to its database. Chat history is kept on your own device only if you accept optional storage.',
         'Feedback: the message you type, with no identifier attached.',
         'A data deletion request: your email address and what you wrote, so we can find the data and answer you. We delete the email address once the request is finished.',
         'Consent records: what you agreed to, which version of this policy, and when, next to your scrambled install token.',
@@ -116,6 +116,7 @@ export const PRIVACY: LegalSection[] = [
         '2026-10-12: first version.',
         '2026-10-13: clarified that the server holds a conversation in memory for up to ten minutes, and that the rounded position sent with a chat message is the one exception to location staying on your device.',
         '2026-10-16: added Google sign-in (what Google shares, and that residents never need to sign in), how admin access is controlled, and that admins can see report photos.',
+        '2026-10-18: the assistant became a general-purpose AI (Claude, from Anthropic). Your rounded position is no longer sent to Anthropic with a chat message.',
       ],
     ],
   },
@@ -143,7 +144,7 @@ export const TERMS: LegalSection[] = [
   },
   {
     heading: 'The assistant',
-    body: ['The assistant uses an AI model that is given our service, resource and budget data. It can still make mistakes or misunderstand a question. Its answers are not official City statements and are not advice. Check anything important with the organization named in the answer. Do not type personal information into the chat.'],
+    body: ['The assistant is Claude, a general-purpose AI model from Anthropic. It answers from its own knowledge, not from our sourced data, so it can be wrong, out of date or misunderstand a question, especially about Fremont budget figures, services, phone numbers and addresses. Check those in the Budget and Resources tabs, which show each source, or with the organization itself. Its answers are not official City statements and are not advice. Do not type personal information into the chat.'],
   },
   {
     heading: 'Acceptable use',

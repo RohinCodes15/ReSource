@@ -1,9 +1,10 @@
 """The ReSource assistant: POST /chat (one JSON reply) and POST /chat/stream (server-sent events).
 
-Each request carries the conversation so far and the resident's language. The system prompt is
-rebuilt from the database on every request (see grounding.py), so the assistant can only state
-what is in the services, resources, budget and council data. With no ANTHROPIC_API_KEY the same
-routes answer in "basic" mode: a direct lookup of that data, clearly labeled.
+Each request carries the resident's question and language. In "ai" mode (shown in the app as
+"Claude AI") a general-purpose Claude model answers from its own knowledge; see grounding.RULES
+for how it handles Fremont-specific facts it cannot source. The same routes answer in "basic"
+mode, a direct keyword lookup of ReSource's data, clearly labeled, whenever Claude is unavailable:
+no ANTHROPIC_API_KEY, a failed API call, or the daily token budget spent (chat_budget.py).
 """
 from __future__ import annotations
 
@@ -18,7 +19,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 import grounding
-from answer_validation import contacts_are_grounded
+from answer_validation import reply_is_acceptable
+from chat_budget import budget
 from chat_sessions import sessions
 from schemas import ChatIn
 from security import chat_global_limit, owner_from, rate_limit
@@ -27,12 +29,15 @@ from settings import get_settings
 logger = logging.getLogger("resource.chat")
 router = APIRouter(tags=["chat"])
 
-# Models that accept the `effort` setting. Short factual answers do not need deep reasoning.
-EFFORT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-haiku-5-5", "claude-fable-5-1")
+# Models that accept the `effort` setting. Chat answers do not need deep reasoning, and low effort
+# keeps each answer cheaper.
+EFFORT_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-sonnet-5", "claude-haiku-5-5", "claude-fable-5-1")
 # Models where a request declined by a safety check can be retried server-side on Anthropic's
-# recommended fallback model. Claude Haiku 5.5 has no server-side fallback.
+# recommended fallback model. Claude Sonnet 5 and Claude Haiku 5.5 have no server-side fallback;
+# a declined answer there gets REFUSAL_TEXT.
 FALLBACK_MODELS = ("claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1")
-# Answers are meant to be short; this also bounds what one question can cost.
+# Answers are meant to be short; this also bounds what one question can cost. The daily total is
+# bounded separately by CHAT_DAILY_TOKEN_BUDGET.
 MAX_TOKENS = 1500
 # Includes the latest question. Drop old whole turns instead of rejecting long conversations.
 MAX_HISTORY_CHARS = 8000
@@ -59,11 +64,11 @@ def server_conversation(request: ChatIn, owner: str | None) -> list[dict[str, st
 
 
 REFUSAL_TEXT = {
-    "en": "I can't help with that. I can answer questions about Fremont city services, budget changes and places to get help.",
-    "es": "No puedo ayudar con eso. Puedo responder preguntas sobre los servicios de la ciudad de Fremont, los cambios del presupuesto y dónde conseguir ayuda.",
-    "fa": "در این مورد کمک کرده نمی‌توانم. می‌توانم به پرسش‌ها دربارهٔ خدمات شهر فریمانت، تغییرات بودجه و جاهای دریافت کمک پاسخ بدهم.",
-    "zh": "这个问题我帮不上忙。我可以回答有关弗里蒙特市政服务、预算变化和求助地点的问题。",
-    "vi": "Tôi không thể giúp việc đó. Tôi có thể trả lời câu hỏi về dịch vụ của thành phố Fremont, thay đổi ngân sách và nơi nhận trợ giúp.",
+    "en": "I can't help with that request. Feel free to ask me something else.",
+    "es": "No puedo ayudar con esa solicitud. Puedes preguntarme otra cosa.",
+    "fa": "در مورد این درخواست کمک کرده نمی‌توانم. می‌توانید چیز دیگری بپرسید.",
+    "zh": "这个请求我无法提供帮助。欢迎问我其他问题。",
+    "vi": "Tôi không thể giúp yêu cầu này. Bạn có thể hỏi tôi điều khác.",
 }
 
 
@@ -84,6 +89,13 @@ class AnthropicLLM:
     def __init__(self, api_key: str, model: str) -> None:
         self.client = anthropic.Anthropic(api_key=api_key, timeout=60.0)
         self.model = model
+        # Tokens billed for the most recent call, read by the router to charge the daily budget.
+        self.last_usage = 0
+
+    @staticmethod
+    def _tokens(usage: Any) -> int:
+        return sum(getattr(usage, field, None) or 0 for field in
+                   ("input_tokens", "output_tokens", "cache_creation_input_tokens", "cache_read_input_tokens"))
 
     def _params(self, system: list[dict], messages: list[dict]) -> dict[str, Any]:
         params: dict[str, Any] = {"model": self.model, "max_tokens": MAX_TOKENS, "system": system, "messages": messages}
@@ -98,6 +110,7 @@ class AnthropicLLM:
         params = self._params(system, messages)
         create = self.client.beta.messages.create if "betas" in params else self.client.messages.create
         response = create(**params)
+        self.last_usage = self._tokens(response.usage)
         # Check the stop reason before reading content: a declined request has no usable answer.
         if response.stop_reason == "refusal":
             raise Refused()
@@ -108,13 +121,25 @@ class AnthropicLLM:
         open_stream = self.client.beta.messages.stream if "betas" in params else self.client.messages.stream
         with open_stream(**params) as stream:
             yield from stream.text_stream
-            if stream.get_final_message().stop_reason == "refusal":
+            final = stream.get_final_message()
+            self.last_usage = self._tokens(final.usage)
+            if final.stop_reason == "refusal":
                 raise Refused()
 
 
 def get_llm() -> AnthropicLLM | None:
+    """The Claude client, or None when chat should use basic search (no key, or budget spent)."""
     settings = get_settings()
-    return AnthropicLLM(settings.anthropic_api_key, settings.claude_model) if settings.ai_enabled else None
+    if not settings.ai_enabled:
+        return None
+    if not budget.available():
+        logger.warning("Daily chat token budget spent; answering in basic search mode")
+        return None
+    return AnthropicLLM(settings.anthropic_api_key, settings.claude_model)
+
+
+def _charge(llm: Any) -> None:
+    budget.charge(getattr(llm, "last_usage", 0))
 
 
 def _basic(request: ChatIn) -> ChatOut:
@@ -155,18 +180,22 @@ def chat(request: ChatIn, http_request: Request) -> ChatOut:
     llm = get_llm()
     if llm is None:
         return _basic(request)
-    system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
+    system = grounding.build_system(request.language)
+    question = request.messages[-1].content
     try:
         reply = llm.complete(system, turns)
     except Refused:
+        _charge(llm)
         return _refusal(request)
-    except Exception as exc:  # the AI service is down or misconfigured: still give a grounded answer
+    except Exception as exc:  # the AI service is down or misconfigured: fall back to basic search
         _log_failure(exc)
         return _basic(request)
-    if not reply or not contacts_are_grounded(reply):
+    _charge(llm)
+    if not reply or not reply_is_acceptable(question, reply):
         return _basic(request)
     sessions.save(owner, request.language, turns, reply)
-    return ChatOut(reply=reply, sources=grounding.detect_sources(reply, names), mode="ai", language=request.language)
+    # No sources: Claude answers from its own knowledge, not from ReSource's sourced data.
+    return ChatOut(reply=reply, sources=[], mode="ai", language=request.language)
 
 
 def _event(name: str, payload: dict) -> str:
@@ -192,17 +221,19 @@ def chat_stream(request: ChatIn, http_request: Request) -> StreamingResponse:
             yield from finish(_basic(request), replace=False)
             return
         try:
-            system, names = grounding.build_system(request.language, request.latitude, request.longitude, request.area_label)
-            # Buffer contact facts until checked; ungrounded details must not flash on screen.
+            system = grounding.build_system(request.language)
+            # Buffer the answer until checked; unlisted Fremont contact details must not flash on screen.
             parts = list(llm.stream(system, turns))
+            _charge(llm)
             reply = "".join(parts).strip()
-            if not reply or not contacts_are_grounded(reply):
+            if not reply or not reply_is_acceptable(request.messages[-1].content, reply):
                 yield from finish(_basic(request), replace=True)
                 return
             sessions.save(owner, request.language, turns, reply)
             yield _event("delta", {"text": reply})
-            yield _event("done", {"sources": grounding.detect_sources(reply, names), "mode": "ai"})
+            yield _event("done", {"sources": [], "mode": "ai"})
         except Refused:
+            _charge(llm)
             yield from finish(_refusal(request), replace=True)
         except Exception as exc:
             _log_failure(exc)
@@ -217,6 +248,6 @@ def chat_stream(request: ChatIn, http_request: Request) -> StreamingResponse:
 
 @router.get("/chat/status")
 def chat_status() -> dict[str, Any]:
-    if not get_settings().ai_enabled:
+    if not get_settings().ai_enabled or not budget.available():
         return {"mode": "basic"}
     return {"mode": "ai", "model": get_settings().claude_model}
