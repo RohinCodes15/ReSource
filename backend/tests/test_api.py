@@ -93,6 +93,7 @@ def test_security_headers_and_cors(client):
     response = client.get("/health", headers={"Origin": "http://localhost:8081"})
     assert response.headers["access-control-allow-origin"] == "http://localhost:8081"
     assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
     assert "access-control-allow-origin" not in client.get("/health", headers={"Origin": "https://evil.example"}).headers
 
 

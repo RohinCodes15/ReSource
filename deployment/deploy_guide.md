@@ -63,7 +63,10 @@ Any host that runs a container works the same way: build the `Dockerfile`, set t
 4. Optional, for sign-in: `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 5. Deploy, then go back to Railway and set `CORS_ORIGINS` to the exact address Vercel gave the site.
 
-The Content-Security-Policy in `vercel.json` allows map images from `tile.openstreetmap.org` only. If you set `EXPO_PUBLIC_MAP_TILE_URL` to another tile provider, add that host to `img-src`.
+`app/vercel.json` limits browser connections to localhost, Supabase, and Railway-generated API
+domains. If `EXPO_PUBLIC_API_URL` uses a custom API domain, add that exact origin to the CSP's
+`connect-src`. If you set `EXPO_PUBLIC_MAP_TILE_URL` to another tile provider, add that host to
+`img-src`.
 
 ## 4. Phone builds: EAS (optional)
 
