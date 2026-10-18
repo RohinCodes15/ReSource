@@ -102,7 +102,7 @@ def client_fingerprint(request: Request) -> str:
     """IP bucket identity, independent of caller-selected tokens; never retain the raw IP."""
     ip = request.client.host if request.client else "unknown"
     if get_settings().trust_proxy:
-        ip = request.headers.get("x-forwarded-for", ip).split(",")[0].strip() or ip
+        ip = request.headers.get("x-forwarded-for", ip).split(",")[-1].strip() or ip
     return _hmac(f"ip:{ip}")[:24]
 
 
