@@ -1,4 +1,5 @@
 """Resident routes remain device-token accessible regardless of ACCOUNT_REQUIRED."""
+import time
 from types import SimpleNamespace
 
 import pytest
@@ -10,16 +11,15 @@ from store import get_store
 
 @pytest.fixture()
 def account_mode(client, env, monkeypatch):
-    def verify(token):
-        if token != "valid-session":
-            raise ValueError("invalid or expired session")
-        return SimpleNamespace(user=SimpleNamespace(id="account-1", app_metadata={}))
+    def reject_remote_verification(token):
+        pytest.fail("signed-in requests must not call Supabase Auth remotely")
 
     store = get_store()
     monkeypatch.setattr(store, "mode", "supabase")
-    monkeypatch.setattr(store, "client", SimpleNamespace(auth=SimpleNamespace(get_user=verify)), raising=False)
+    monkeypatch.setattr(store, "client", SimpleNamespace(auth=SimpleNamespace(get_user=reject_remote_verification)), raising=False)
     env.setenv("SUPABASE_URL", "https://example.supabase.co")
     env.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-key")
+    env.setenv("SUPABASE_JWT_SECRET", "test-supabase-jwt-secret-at-least-32-bytes")
 
     def configure(required):
         env.setenv("ACCOUNT_REQUIRED", "true" if required else "false")
@@ -40,7 +40,15 @@ def test_resident_access_does_not_require_a_session(client, account_mode, requir
 @pytest.mark.parametrize("required", [False, True])
 def test_signed_in_users_can_also_access_resident_routes(client, account_mode, required):
     account_mode(required)
-    headers = {**ALICE, "Authorization": "Bearer valid-session"}
+    import jwt
+
+    token = jwt.encode({
+        "sub": "account-1",
+        "iss": "https://example.supabase.co/auth/v1",
+        "exp": int(time.time()) + 600,
+        "app_metadata": {},
+    }, "test-supabase-jwt-secret-at-least-32-bytes", algorithm="HS256")
+    headers = {**ALICE, "Authorization": f"Bearer {token}"}
     assert client.get("/services", headers=headers).status_code == 200
     assert client.post("/reports", headers=headers, json=report_body()).status_code == 201
 

@@ -21,6 +21,7 @@ from collections import deque
 from collections.abc import Callable
 from typing import Any
 
+import jwt
 from fastapi import HTTPException, Request
 
 from settings import get_settings
@@ -44,18 +45,33 @@ def signed_in_user(request: Request) -> dict[str, Any] | None:
         return request.state.resource_user
     user = None
     token = _bearer(request)
-    if token and get_settings().use_supabase:
-        from store import get_store
-
-        store = get_store()
-        if store.mode == "supabase":
+    settings = get_settings()
+    if token and settings.use_supabase:
+        if not settings.supabase_jwt_secret:
+            logger.error("Cannot verify Supabase sign-in JWT locally: SUPABASE_JWT_SECRET is not configured")
+        else:
             try:
-                found = store.client.auth.get_user(token)
-                if found and found.user:
-                    user = {"id": found.user.id, "role": (found.user.app_metadata or {}).get("role"),
-                            "email": getattr(found.user, "email", None)}
-            except Exception:
-                logger.info("Rejected an invalid or expired sign-in token")
+                claims = jwt.decode(
+                    token,
+                    settings.supabase_jwt_secret.replace("\\n", "\n"),
+                    algorithms=[settings.supabase_jwt_algorithm],
+                    issuer=f"{settings.supabase_url.rstrip('/')}/auth/v1",
+                    options={"verify_aud": False},
+                )
+                user_id = claims.get("sub")
+                if not isinstance(user_id, str) or not user_id:
+                    raise jwt.InvalidTokenError("missing_subject")
+                app_metadata = claims.get("app_metadata")
+                app_metadata = app_metadata if isinstance(app_metadata, dict) else {}
+                user = {
+                    "id": user_id,
+                    "role": app_metadata.get("role") or claims.get("role"),
+                    "email": claims.get("email"),
+                }
+            except jwt.InvalidTokenError as exc:
+                logger.info("Rejected invalid Supabase sign-in JWT (%s): %s", type(exc).__name__, exc)
+            except jwt.PyJWTError as exc:
+                logger.error("Local Supabase JWT verification is unavailable (%s): %s", type(exc).__name__, exc)
     request.state.resource_user = user
     return user
 

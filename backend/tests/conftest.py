@@ -21,7 +21,7 @@ CONSENT = {"consent": True, "age_confirmed": True}
 @pytest.fixture()
 def env(tmp_path, monkeypatch):
     """Clean environment: no Supabase, no AI key, no email, rate limiting off."""
-    for name in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ANTHROPIC_API_KEY", "SMTP_HOST", "EMAIL_FROM", "PUBLIC_API_URL"):
+    for name in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_JWT_SECRET", "SUPABASE_JWT_ALGORITHM", "ANTHROPIC_API_KEY", "SMTP_HOST", "EMAIL_FROM", "PUBLIC_API_URL"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LOCAL_STATE_DIR", str(tmp_path / "state"))
     monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token-for-suite-01")

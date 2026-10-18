@@ -16,12 +16,13 @@ USER_ID = "11111111-1111-4111-8111-111111111111"
 @pytest.fixture()
 def auth_account(client, env, monkeypatch):
     store = get_store()
-    user = SimpleNamespace(id=USER_ID, app_metadata={})
-    verify = Mock(side_effect=lambda token: SimpleNamespace(user=user if token == "valid-session" else None))
+    user = {"id": USER_ID, "app_metadata": {}}
+    verify = Mock(side_effect=lambda request: user if request.headers.get("authorization") == "Bearer valid-session" else None)
     delete = Mock()
     monkeypatch.setattr(store, "mode", "supabase")
     monkeypatch.setattr(store, "client", SimpleNamespace(auth=SimpleNamespace(
-        get_user=verify, admin=SimpleNamespace(delete_user=delete))), raising=False)
+        get_user=Mock(), admin=SimpleNamespace(delete_user=delete))), raising=False)
+    monkeypatch.setattr("routers.account.signed_in_user", verify)
     env.setenv("SUPABASE_URL", "https://example.supabase.co")
     env.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-key")
     env.setenv("ACCOUNT_REQUIRED", "false")
@@ -60,7 +61,8 @@ def test_deletes_only_verified_account_and_preserves_reports(client, env, auth_a
     assert response.json()["reports_deleted"] is False
     assert response.json()["completed_at"]
     delete.assert_called_once_with(USER_ID, should_soft_delete=False)
-    verify.assert_called_once_with("valid-session")
+    verify.assert_called_once()
+    assert verify.call_args.args[0].headers["authorization"] == "Bearer valid-session"
     assert {table: store.list(table) for table in before} == before
     assert store.get("reports", report["id"])
     assert store.get("post_votes", vote["id"])

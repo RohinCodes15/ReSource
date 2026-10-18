@@ -38,6 +38,8 @@ def _flag(name: str, default: bool = False) -> bool:
 class Settings:
     supabase_url: str
     supabase_service_role_key: str
+    supabase_jwt_secret: str
+    supabase_jwt_algorithm: str
     storage_bucket: str
     anthropic_api_key: str
     claude_model: str
@@ -110,9 +112,14 @@ def get_settings() -> Settings:
     admin_token = os.getenv("ADMIN_TOKEN", "").strip()
     if admin_token and len(admin_token) < 24:
         raise ValueError("ADMIN_TOKEN must be at least 24 characters when configured")
+    jwt_algorithm = os.getenv("SUPABASE_JWT_ALGORITHM", "HS256").strip().upper() or "HS256"
+    if jwt_algorithm not in {"HS256", "RS256", "ES256", "ES384", "ES512"}:
+        raise ValueError("SUPABASE_JWT_ALGORITHM must be a supported asymmetric algorithm or HS256")
     return Settings(
         supabase_url=os.getenv("SUPABASE_URL", "").strip(),
         supabase_service_role_key=service_role_key,
+        supabase_jwt_secret=os.getenv("SUPABASE_JWT_SECRET", "").strip(),
+        supabase_jwt_algorithm=jwt_algorithm,
         storage_bucket=os.getenv("SUPABASE_STORAGE_BUCKET", "report-photos").strip(),
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
         claude_model=os.getenv("CLAUDE_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,

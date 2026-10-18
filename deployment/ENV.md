@@ -9,6 +9,8 @@ Every variable the project reads, in one place. All are optional: with none set,
 | `SUPABASE_URL` | empty | Project address. With `SUPABASE_SERVICE_ROLE_KEY`, switches the API from local files to Supabase. If set but unusable, the API refuses to start rather than fall back. | No |
 | `SUPABASE_SERVICE_ROLE_KEY` | empty | Key that can read and write every table. Server only. | **Yes** |
 | `SUPABASE_STORAGE_BUCKET` | `report-photos` | Private bucket for report photos | No |
+| `SUPABASE_JWT_SECRET` | empty | Supabase Auth signing key/JWT secret used to verify bearer tokens locally. Required for signed-in account/admin actions. | **Yes** |
+| `SUPABASE_JWT_ALGORITHM` | `HS256` | Algorithm for the configured Supabase signing key, such as `HS256`, `ES256` or `RS256`. | No |
 | `ANTHROPIC_API_KEY` | empty | Anthropic API key (from console.anthropic.com). Turns on the general-purpose Claude assistant in chat. Without it chat uses basic search, a keyword lookup of the app's data. | **Yes** |
 | `CLAUDE_MODEL` | `claude-sonnet-5` | Claude model used for chat. Any current Claude model ID works. | No |
 | `CHAT_GLOBAL_DAILY_LIMIT` | `2000` | Most chat requests the API will serve in any 24 hours, across everyone. Must be a positive whole number. | No |

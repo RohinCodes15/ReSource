@@ -16,11 +16,10 @@ def account_export(client, env, monkeypatch):
     store = get_store()
     original_list = store.list
     report = client.post("/reports", headers=ALICE, json=report_body()).json()
-    user = SimpleNamespace(id=USER_ID, email="resident@example.test", app_metadata={},
-                           user_metadata={"full_name": "Do not export"}, phone="5105550100")
-    verify = Mock(side_effect=lambda token: SimpleNamespace(user=user if token == "valid-session" else None))
+    user = {"id": USER_ID, "email": "resident@example.test"}
     monkeypatch.setattr(store, "mode", "supabase")
-    monkeypatch.setattr(store, "client", SimpleNamespace(auth=SimpleNamespace(get_user=verify)), raising=False)
+    monkeypatch.setattr(store, "client", SimpleNamespace(auth=SimpleNamespace(get_user=Mock())), raising=False)
+    monkeypatch.setattr("routers.account.signed_in_user", lambda request: user if request.headers.get("authorization") == "Bearer valid-session" else None)
     records = [
         {"user_id": USER_ID, "policy_version": "2026-10-16", "accepted_at": "2026-10-17T10:00:00Z", "private": "hidden"},
         {"user_id": "another-account", "policy_version": "other-policy", "accepted_at": "2026-10-17T11:00:00Z"},
