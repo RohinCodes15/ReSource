@@ -14,7 +14,7 @@ ALICE = {"X-Client-Token": "test-install-token-alice-01"}
 BOB = {"X-Client-Token": "test-install-token-bob-0002"}
 CAROL = {"X-Client-Token": "test-install-token-carol-03"}
 DAVE = {"X-Client-Token": "test-install-token-dave-004"}
-ADMIN = {"X-Admin-Token": "test-admin-token"}
+ADMIN = {"X-Admin-Token": "test-admin-token-for-suite-01"}
 CONSENT = {"consent": True, "age_confirmed": True}
 
 
@@ -24,7 +24,7 @@ def env(tmp_path, monkeypatch):
     for name in ("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "ANTHROPIC_API_KEY", "SMTP_HOST", "EMAIL_FROM", "PUBLIC_API_URL"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("LOCAL_STATE_DIR", str(tmp_path / "state"))
-    monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token")
+    monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token-for-suite-01")
     monkeypatch.setenv("OWNER_HASH_SALT", "test-salt")
     monkeypatch.setenv("RATE_LIMIT_ENABLED", "0")
     return monkeypatch

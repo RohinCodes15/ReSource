@@ -13,6 +13,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 
+from admin_audit import record_admin_action
 from community_guard import guard
 from routers.public import public_row, verified_reports
 from schemas import (
@@ -57,6 +58,7 @@ def moderate_report(report_id: str, body: ModerateReportIn) -> Row:
     row = get_store().update("reports", report_id, {"status": body.status, "reviewed_at": now_iso()})
     if row is None:
         raise HTTPException(status_code=404, detail="report_not_found")
+    record_admin_action(f"report.moderate:{body.status}", report_id)
     return _report_view(row)
 
 
@@ -74,6 +76,7 @@ def moderate_post(post_id: str, body: ModeratePostIn) -> Row:
     row = store.update("posts", post_id, {"status": body.status})
     if row is None:
         raise HTTPException(status_code=404, detail="post_not_found")
+    record_admin_action(f"post.moderate:{body.status}", post_id)
     if body.status == "approved":  # an approved post starts again with a clean record
         store.delete("post_flags", {"post_id": post_id})
         guard.clear_flags(post_id)
@@ -88,6 +91,7 @@ def update_service(service_id: str, body: ServiceStatusIn) -> Row:
     row = get_store().update("services", service_id, changes)
     if row is None:
         raise HTTPException(status_code=404, detail="service_not_found")
+    record_admin_action(f"service.update:{body.status}", service_id)
     return row
 
 
@@ -105,6 +109,7 @@ def close_deletion_request(request_id: str, body: DeletionRequestStatusIn) -> Ro
     row = get_store().update("deletion_requests", request_id, changes)
     if row is None:
         raise HTTPException(status_code=404, detail="request_not_found")
+    record_admin_action(f"deletion_request.close:{body.status}", request_id)
     return row
 
 

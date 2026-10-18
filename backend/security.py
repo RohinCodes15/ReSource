@@ -95,6 +95,9 @@ def require_admin(request: Request) -> str:
     user = signed_in_user(request)
     if user and user.get("role") == "admin":
         return "user"
+    # Count only failed authentication attempts. This guard is intentionally independent of
+    # RATE_LIMIT_ENABLED, which is for disabling resident-facing limits during local tests.
+    limiter.check(f"admin-auth:ip:{client_fingerprint(request)}", 5, 15 * 60)
     raise HTTPException(status_code=403, detail="admin_required")
 
 

@@ -3,6 +3,8 @@ import re
 from datetime import date
 from pathlib import Path
 
+import pytest
+
 from settings import POLICY_VERSION, get_settings
 
 
@@ -30,3 +32,14 @@ def test_policy_versions_match_shared_constants():
     assert version is not None
     assert version.group(1) == POLICY_VERSION
     assert date.fromisoformat(POLICY_VERSION).isoformat() == POLICY_VERSION
+
+
+@pytest.mark.parametrize("length", [1, 23])
+def test_configured_admin_token_must_be_at_least_24_characters(env, length):
+    env.setenv("ADMIN_TOKEN", "x" * length)
+    get_settings.cache_clear()
+    try:
+        with pytest.raises(ValueError, match="ADMIN_TOKEN must be at least 24 characters"):
+            get_settings()
+    finally:
+        get_settings.cache_clear()

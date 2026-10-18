@@ -293,7 +293,10 @@ def test_feedback_is_stored_without_identifiers(client):
 # ---- Admin and the impact dashboard -----------------------------------------------------------
 
 def test_admin_routes_need_the_token(client):
+    from security import limiter
+
     for path in ("/admin/me", "/admin/reports", "/admin/posts", "/impact/export.csv"):
+        limiter.reset()
         assert client.get(path).status_code == 403, path
         assert client.get(path, headers={"X-Admin-Token": "wrong"}).status_code == 403, path
         assert client.get(path, headers=ADMIN).status_code == 200, path

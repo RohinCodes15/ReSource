@@ -107,6 +107,9 @@ def get_settings() -> Settings:
     state_dir = Path(os.getenv("LOCAL_STATE_DIR", BACKEND_DIR / ".local_state"))
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     origins = tuple(o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", DEFAULT_CORS).split(",") if o.strip())
+    admin_token = os.getenv("ADMIN_TOKEN", "").strip()
+    if admin_token and len(admin_token) < 24:
+        raise ValueError("ADMIN_TOKEN must be at least 24 characters when configured")
     return Settings(
         supabase_url=os.getenv("SUPABASE_URL", "").strip(),
         supabase_service_role_key=service_role_key,
@@ -114,7 +117,7 @@ def get_settings() -> Settings:
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY", "").strip(),
         claude_model=os.getenv("CLAUDE_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         cors_origins=origins,
-        admin_token=os.getenv("ADMIN_TOKEN", "").strip(),
+        admin_token=admin_token,
         owner_salt=_owner_salt(state_dir, service_role_key),
         data_dir=Path(os.getenv("DATA_DIR", BACKEND_DIR.parent / "shared" / "data")),
         state_dir=state_dir,

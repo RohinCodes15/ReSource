@@ -42,7 +42,7 @@ Without Docker, follow "Run it" in the README.
    | --- | --- |
    | `SUPABASE_URL` | from step 1 |
    | `SUPABASE_SERVICE_ROLE_KEY` | from step 1 |
-   | `ADMIN_TOKEN` | a random value; keep it private |
+   | `ADMIN_TOKEN` | at least 24 random characters; keep it private |
    | `OWNER_HASH_SALT` | a random value; never change it afterwards |
    | `CORS_ORIGINS` | the web app's address from step 3, for example `https://resource-fremont.vercel.app` |
    | `TRUST_PROXY` | `1` (Railway puts a proxy in front; read S4 in `docs/SECURITY.md`) |

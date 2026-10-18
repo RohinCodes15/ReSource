@@ -13,7 +13,7 @@ Every variable the project reads, in one place. All are optional: with none set,
 | `CLAUDE_MODEL` | `claude-sonnet-5` | Claude model used for chat. Any current Claude model ID works. | No |
 | `CHAT_GLOBAL_DAILY_LIMIT` | `2000` | Most chat requests the API will serve in any 24 hours, across everyone. Must be a positive whole number. | No |
 | `CHAT_DAILY_TOKEN_BUDGET` | `400000` | Most tokens (input plus output) Claude may use in any 24 hours, across everyone. When it is spent, chat answers in basic search mode until older usage ages out. 400,000 is about 300 answers, roughly $3 a day at Sonnet 5 prices. Must be a positive whole number. | No |
-| `ADMIN_TOKEN` | empty | Passcode for Admin Tools and the CSV export. Empty means nobody can moderate. Use 32 or more random characters. | **Yes** |
+| `ADMIN_TOKEN` | empty | Passcode for Admin Tools and the CSV export. Empty means nobody can moderate. If set, it must be at least 24 characters; use 32 or more random characters. | **Yes** |
 | `OWNER_HASH_SALT` | derived | Secret used to hash install tokens. Set it once and never change it: changing it cuts every resident off from their own data. | **Yes** |
 | `CORS_ORIGINS` | `http://localhost:8081,http://localhost:19006,http://localhost:3000` | Web addresses allowed to call the API, comma separated. Set to the deployed site's address. | No |
 | `TRUST_PROXY` | `0` | Set to `1` only behind a proxy you control, so rate limits see the visitor's address. | No |
