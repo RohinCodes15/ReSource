@@ -43,3 +43,50 @@ def test_configured_admin_token_must_be_at_least_24_characters(env, length):
             get_settings()
     finally:
         get_settings.cache_clear()
+
+
+def test_owner_hash_salt_is_required_for_supabase_mode(env):
+    env.setenv("SUPABASE_URL", "https://example.supabase.co")
+    env.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-key")
+    env.delenv("OWNER_HASH_SALT", raising=False)
+    get_settings.cache_clear()
+    try:
+        with pytest.raises(ValueError, match="OWNER_HASH_SALT is required"):
+            get_settings()
+    finally:
+        get_settings.cache_clear()
+
+
+def test_supabase_development_mode_can_use_local_persisted_salt(env):
+    env.setenv("APP_ENV", "development")
+    env.setenv("SUPABASE_URL", "https://example.supabase.co")
+    env.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-key")
+    env.delenv("OWNER_HASH_SALT", raising=False)
+    get_settings.cache_clear()
+    try:
+        settings = get_settings()
+        assert settings.use_supabase and settings.is_development and settings.owner_salt
+    finally:
+        get_settings.cache_clear()
+
+
+def test_wildcard_cors_is_rejected_outside_development(env):
+    env.setenv("APP_ENV", "production")
+    env.setenv("CORS_ORIGINS", "*")
+    get_settings.cache_clear()
+    try:
+        with pytest.raises(ValueError, match="CORS_ORIGINS cannot contain '\\*'"):
+            get_settings()
+    finally:
+        get_settings.cache_clear()
+
+
+def test_wildcard_cors_is_allowed_in_development(env):
+    env.setenv("APP_ENV", "development")
+    env.setenv("CORS_ORIGINS", "*")
+    get_settings.cache_clear()
+    try:
+        assert get_settings().cors_origins == ("*",)
+        assert get_settings().is_development
+    finally:
+        get_settings.cache_clear()

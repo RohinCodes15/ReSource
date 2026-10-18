@@ -45,12 +45,13 @@ app = FastAPI(
     description="Fremont city service status, community resources, impact reports and a grounded assistant. "
                 "An independent student project, not a City of Fremont service.",
     version="1.0.0",
+    docs_url="/docs" if settings.is_development else None,
+    redoc_url="/redoc" if settings.is_development else None,
+    openapi_url="/openapi.json" if settings.is_development else None,
 )
 
 app.add_middleware(PhotoBodyLimit)
 
-if "*" in settings.cors_origins:
-    logger.warning("CORS_ORIGINS contains '*'; set it to the web app's exact origin before going live")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),

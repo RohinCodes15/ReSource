@@ -1,12 +1,11 @@
 """Environment-driven settings for the ReSource API.
 
-Every variable is optional. With none set the API runs in "local" mode: it serves the bundled
+With no deployment variables set the API runs in "local" mode: it serves the bundled
 data in shared/data and keeps reports, posts and subscriptions in backend/.local_state, so the
 whole stack works with zero accounts. deployment/ENV.md lists every variable.
 """
 from __future__ import annotations
 
-import hashlib
 import os
 import secrets
 from dataclasses import dataclass
@@ -22,6 +21,7 @@ load_dotenv(BACKEND_DIR.parent / ".env")
 # Bumped whenever the Privacy Policy or Terms change; stored with each consent record.
 POLICY_VERSION = "2026-10-20"
 DEFAULT_CORS = "http://localhost:8081,http://localhost:19006,http://localhost:3000"
+DEVELOPMENT_ENVS = frozenset({"local", "dev", "development", "debug", "test"})
 # The general-purpose assistant. Override with CLAUDE_MODEL (any current Claude model ID).
 DEFAULT_MODEL = "claude-sonnet-5"
 # Tokens (input + output) the assistant may spend per rolling 24 hours before chat drops to
@@ -36,6 +36,7 @@ def _flag(name: str, default: bool = False) -> bool:
 
 @dataclass(frozen=True)
 class Settings:
+    app_env: str
     supabase_url: str
     supabase_service_role_key: str
     supabase_jwt_secret: str
@@ -66,6 +67,10 @@ class Settings:
         return bool(self.supabase_url and self.supabase_service_role_key)
 
     @property
+    def is_development(self) -> bool:
+        return self.app_env in DEVELOPMENT_ENVS
+
+    @property
     def ai_enabled(self) -> bool:
         return bool(self.anthropic_api_key)
 
@@ -75,17 +80,13 @@ class Settings:
         return False
 
 
-def _owner_salt(state_dir: Path, service_role_key: str) -> str:
-    """Secret used to hash install tokens. Set OWNER_HASH_SALT in production.
-
-    Without it: derive one from the service-role key (Supabase mode), or create a random one
-    in the local state folder (local mode) so hashes survive a restart but never leave the machine.
-    """
+def _owner_salt(state_dir: Path, require_configured: bool) -> str:
+    """Secret used to hash install tokens; Supabase deployments must provide a stable value."""
     configured = os.getenv("OWNER_HASH_SALT", "").strip()
     if configured:
         return configured
-    if service_role_key:
-        return hashlib.sha256(f"resource-owner-salt:{service_role_key}".encode()).hexdigest()
+    if require_configured:
+        raise ValueError("OWNER_HASH_SALT is required in production Supabase mode")
     salt_file = state_dir / "salt"
     try:
         if salt_file.exists():
@@ -108,15 +109,22 @@ def get_settings() -> Settings:
         raise ValueError("CHAT_DAILY_TOKEN_BUDGET must be a positive integer")
     state_dir = Path(os.getenv("LOCAL_STATE_DIR", BACKEND_DIR / ".local_state"))
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    use_supabase = bool(supabase_url and service_role_key)
+    app_env = os.getenv("APP_ENV", "production" if use_supabase else "local").strip().lower()
+    app_env = app_env or ("production" if use_supabase else "local")
     origins = tuple(o.strip().rstrip("/") for o in os.getenv("CORS_ORIGINS", DEFAULT_CORS).split(",") if o.strip())
     admin_token = os.getenv("ADMIN_TOKEN", "").strip()
     if admin_token and len(admin_token) < 24:
         raise ValueError("ADMIN_TOKEN must be at least 24 characters when configured")
+    if "*" in origins and app_env not in DEVELOPMENT_ENVS:
+        raise ValueError("CORS_ORIGINS cannot contain '*' outside development mode")
     jwt_algorithm = os.getenv("SUPABASE_JWT_ALGORITHM", "HS256").strip().upper() or "HS256"
     if jwt_algorithm not in {"HS256", "RS256", "ES256", "ES384", "ES512"}:
         raise ValueError("SUPABASE_JWT_ALGORITHM must be a supported asymmetric algorithm or HS256")
     return Settings(
-        supabase_url=os.getenv("SUPABASE_URL", "").strip(),
+        app_env=app_env,
+        supabase_url=supabase_url,
         supabase_service_role_key=service_role_key,
         supabase_jwt_secret=os.getenv("SUPABASE_JWT_SECRET", "").strip(),
         supabase_jwt_algorithm=jwt_algorithm,
@@ -125,7 +133,7 @@ def get_settings() -> Settings:
         claude_model=os.getenv("CLAUDE_MODEL", DEFAULT_MODEL).strip() or DEFAULT_MODEL,
         cors_origins=origins,
         admin_token=admin_token,
-        owner_salt=_owner_salt(state_dir, service_role_key),
+        owner_salt=_owner_salt(state_dir, use_supabase and app_env not in DEVELOPMENT_ENVS),
         data_dir=Path(os.getenv("DATA_DIR", BACKEND_DIR.parent / "shared" / "data")),
         state_dir=state_dir,
         trust_proxy=_flag("TRUST_PROXY"),

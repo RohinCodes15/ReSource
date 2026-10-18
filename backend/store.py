@@ -20,6 +20,8 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from fastapi import HTTPException
+
 from settings import get_settings
 
 logger = logging.getLogger("resource.store")
@@ -31,6 +33,22 @@ USER_TABLES = (
 )
 REFERENCE_FILES = ("council", "votes", "budget", "zips")
 Row = dict[str, Any]
+UUID_ID_TABLES = {
+    "reports", "posts", "post_votes", "post_flags", "subscriptions", "email_subscriptions",
+    "consent_records", "deletion_requests", "feedback",
+}
+UUID_REFERENCE_COLUMNS = {("post_votes", "post_id"), ("post_flags", "post_id")}
+
+
+def _validate_supabase_uuid(table: str, field: str, value: Any) -> None:
+    if not ((field == "id" and table in UUID_ID_TABLES) or (table, field) in UUID_REFERENCE_COLUMNS):
+        return
+    try:
+        parsed = uuid.UUID(str(value))
+    except (ValueError, TypeError, AttributeError) as exc:
+        raise HTTPException(status_code=400, detail="invalid_id") from exc
+    if str(parsed) != str(value).lower():
+        raise HTTPException(status_code=400, detail="invalid_id")
 
 
 class StoreError(Exception):
@@ -205,6 +223,7 @@ class SupabaseStore:
                 return rows
 
     def get(self, table: str, row_id: str) -> Row | None:
+        _validate_supabase_uuid(table, "id", row_id)
         rows = self._run(self.client.table(table).select("*").eq("id", row_id).limit(1)).data or []
         return rows[0] if rows else None
 
@@ -215,12 +234,15 @@ class SupabaseStore:
         return rows[0]
 
     def update(self, table: str, row_id: str, changes: Row) -> Row | None:
+        _validate_supabase_uuid(table, "id", row_id)
         rows = self._run(self.client.table(table).update(changes).eq("id", row_id)).data or []
         return rows[0] if rows else None
 
     def delete(self, table: str, filters: Row) -> int:
         if not filters:
             raise ValueError("delete() needs at least one filter")
+        for field, value in filters.items():
+            _validate_supabase_uuid(table, field, value)
         return len(self._run(self._filtered(self.client.table(table).delete(), filters)).data or [])
 
     def count(self, table: str, filters: Row | None = None) -> int:

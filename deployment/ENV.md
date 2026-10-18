@@ -6,6 +6,7 @@ Every variable the project reads, in one place. All are optional: with none set,
 
 | Variable | Default | What it does | Secret? |
 | --- | --- | --- | --- |
+| `APP_ENV` | `local` | Use `production` on a deployed server. Development modes (`local`, `dev`, `development`, `debug`, `test`) keep API docs enabled and permit wildcard CORS for local work. | No |
 | `SUPABASE_URL` | empty | Project address. With `SUPABASE_SERVICE_ROLE_KEY`, switches the API from local files to Supabase. If set but unusable, the API refuses to start rather than fall back. | No |
 | `SUPABASE_SERVICE_ROLE_KEY` | empty | Key that can read and write every table. Server only. | **Yes** |
 | `SUPABASE_STORAGE_BUCKET` | `report-photos` | Private bucket for report photos | No |
@@ -16,7 +17,7 @@ Every variable the project reads, in one place. All are optional: with none set,
 | `CHAT_GLOBAL_DAILY_LIMIT` | `2000` | Most chat requests the API will serve in any 24 hours, across everyone. Must be a positive whole number. | No |
 | `CHAT_DAILY_TOKEN_BUDGET` | `400000` | Most tokens (input plus output) Claude may use in any 24 hours, across everyone. When it is spent, chat answers in basic search mode until older usage ages out. 400,000 is about 300 answers, roughly $3 a day at Sonnet 5 prices. Must be a positive whole number. | No |
 | `ADMIN_TOKEN` | empty | Passcode for Admin Tools and the CSV export. Empty means nobody can moderate. If set, it must be at least 24 characters; use 32 or more random characters. | **Yes** |
-| `OWNER_HASH_SALT` | derived | Secret used to hash install tokens. Set it once and never change it: changing it cuts every resident off from their own data. | **Yes** |
+| `OWNER_HASH_SALT` | generated local-only | Required in production Supabase mode. Secret used to hash install tokens. Set it once and never change it: changing it cuts every resident off from their own data. | **Yes** |
 | `CORS_ORIGINS` | `http://localhost:8081,http://localhost:19006,http://localhost:3000` | Web addresses allowed to call the API, comma separated. Set to the deployed site's address. | No |
 | `TRUST_PROXY` | `0` | Set to `1` only behind a proxy you control, so rate limits see the visitor's address. | No |
 | `RATE_LIMIT_ENABLED` | `1` | `0` turns rate limits off. For tests only. | No |
@@ -48,7 +49,7 @@ Everything named `EXPO_PUBLIC_*` is compiled into the app and is visible to anyo
 
 ## Minimum for a public deployment
 
-API: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `ADMIN_TOKEN`, `OWNER_HASH_SALT`, `CORS_ORIGINS`, and `TRUST_PROXY=1` if the host puts a proxy in front. Add `ANTHROPIC_API_KEY` for Claude answers in chat, and set `CHAT_DAILY_TOKEN_BUDGET` to the most you are willing to spend a day.
+API: `APP_ENV=production`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` for signed-in actions, `ADMIN_TOKEN` (24+ characters), `OWNER_HASH_SALT`, `CORS_ORIGINS`, and `TRUST_PROXY=1` if the host puts a proxy in front. Add `ANTHROPIC_API_KEY` for Claude answers in chat, and set `CHAT_DAILY_TOKEN_BUDGET` to the most you are willing to spend a day.
 
 App: `EXPO_PUBLIC_API_URL`.
 
