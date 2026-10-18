@@ -33,7 +33,7 @@
     "cookies": "Cookie 政策",
     "credits": "致谢与许可",
     "dataRequest": "数据删除请求",
-    "signIn": "登录",
+    "signIn": "管理员登录",
     "forMe": "对我有什么影响"
   },
   "common": {
@@ -207,7 +207,9 @@
     "cardFooter": "由 ReSource 制作。ReSource 是一个独立的学生项目。这不是弗里蒙特市政府的官方文件。这张卡上没有个人信息。",
     "cardPrivacy": "卡片只列出您的地区和主题，不含姓名、地址或位置。",
     "cardFailed": "无法打印或分享卡片。",
-    "cardCopied": "卡片已复制为文字。"
+    "cardCopied": "卡片已复制为文字。",
+    "before": "变更前",
+    "after": "变更后"
   },
   "more": {
     "city": "城市与预算",
@@ -377,12 +379,17 @@
     "notifyDenied": "未获得通知权限。您可以在设备设置中开启。",
     "notifyUnsupported": "这里无法使用通知。新动态会显示在这个列表中。",
     "notificationTitle": "ReSource 新动态",
-    "emailTitle": "电子邮件提醒",
+    "emailTitle": "通过邮件接收更新",
     "emailLabel": "电子邮件地址",
     "emailInvalid": "请输入有效的电子邮件地址。",
     "emailConsent": "我同意 ReSource 保存我的电子邮件地址，以便向我发送我选择的提醒。我可以随时退订。",
-    "emailSubscribe": "给我发送电子邮件提醒",
+    "emailSubscribe": "给我发送更新",
     "emailSaved": "您已订阅电子邮件提醒。每封邮件都有退订链接。",
+    "emailBody": "当 ReSource 发布与上方主题和地区相符的更新时，我们会给您发邮件。无需账户，每封邮件都可以退订。",
+    "emailCheckInbox": "快完成了：请查看收件箱并点击链接确认。在您确认之前，我们不会发送任何其他邮件。",
+    "emailConfirmed": "您的邮箱已确认。您将收到与您的选择相符的更新。",
+    "emailUnsubscribed": "您已退订。我们已删除您的邮箱地址。",
+    "emailLinkExpired": "该链接已过期或已被使用。如仍想接收更新，请在下方重新订阅。",
     "feedTitle": "动态",
     "viewLabel": "显示动态",
     "viewAll": "全部（{{count}}）",
@@ -396,11 +403,11 @@
     "emptyBody": "目前没有符合您的主题和地区的内容。"
   },
   "chat": {
-    "noticeTitle": "您的消息会发送给一项人工智能服务",
-    "noticeBody": "请不要透露个人信息。答案来自 ReSource 的数据，但仍可能出错。这些不是弗里蒙特市政府的官方说明。",
+    "noticeTitle": "您的消息会发送给 Anthropic 的 AI 助手 Claude",
+    "noticeBody": "这个助手可以回答一般问题。AI 的回答可能有误，重要信息请自行核实。如需有来源的弗里蒙特预算和服务信息，请查看“预算”和“资源”页面。回答不代表弗里蒙特市政府的官方立场。请勿分享个人信息。",
     "emergency": "这不是紧急服务。紧急情况请拨打 911。需要转介请拨打 211。",
-    "welcome": "您好！您可以问我弗里蒙特哪些市政服务因预算而变化，或者去哪里找食物、医疗、住房帮助和其他资源。",
-    "placeholder": "询问服务或求助信息",
+    "welcome": "您好！什么都可以问我：日常问题、写作帮助，或有关弗里蒙特的问题。关于弗里蒙特的预算数字和服务，我会引导您查看“预算”和“资源”页面中有来源的信息。",
+    "placeholder": "什么都可以问我",
     "messageLabel": "您的问题",
     "send": "发送消息",
     "stop": "停止生成",
@@ -409,8 +416,8 @@
     "failed": "无法加载回答。",
     "sources": "来源",
     "noSources": "无",
-    "modeAi": "根据 ReSource 数据的 AI 回答",
-    "modeBasic": "ReSource 数据的基本搜索",
+    "modeAi": "Claude AI",
+    "modeBasic": "基础搜索",
     "s1": "哪些服务被削减了？",
     "s2": "哪里可以领取免费食物？",
     "s3": "有收费低的诊所吗？",
@@ -635,7 +642,7 @@
     "dataBody": "预算事实来自弗里蒙特市政府的公开文件。资源列表来自各机构自己的网站。每一项都标明来源和我们最后核对的日期。信息会变化，所以请向相关机构确认。",
     "dataChecked": "所有来源的最后核对日期",
     "aiTitle": "如何使用人工智能",
-    "aiBody": "助手使用 Anthropic 的一个人工智能模型，并且只向它提供 ReSource 的数据。开发本应用时也使用了人工智能编程工具，这一点已在项目的提交材料中说明。",
+    "aiBody": "聊天助手是 Claude，Anthropic 的通用 AI 模型。它根据自身知识回答，而不是根据 ReSource 有来源的数据，因此回答可能有误。如果 Claude 无法使用，聊天会改用对 ReSource 数据的基础搜索。本应用的开发也借助了 AI 编程工具，这一点已在项目提交材料中说明。",
     "feedbackTitle": "报告问题",
     "feedbackBody": "发现错误或有功能无法使用？请在“设置”中告诉我们。",
     "feedbackButton": "发送反馈"
@@ -661,7 +668,12 @@
     "byEmail": "您也可以把请求发邮件至 {{email}}。"
   },
   "signIn": {
-    "intro": "登录是可选的。登录后，您的报告和留言可以跟随您到另一台设备。",
+    "intro": "团队成员在此登录以审核报告和管理列表。使用 ReSource 无需账户。",
+    "eyebrow": "ReSource 团队专用",
+    "heading": "管理员登录",
+    "or": "或",
+    "adminBadge": "管理员权限",
+    "googleSignIn": "使用 Google 登录",
     "offTitle": "登录功能已关闭",
     "consent": "我同意 ReSource 保存我的电子邮件地址以便登录；如果我通过 Google 继续，也保存 Google 提供的姓名和头像。",
     "send": "把登录链接发到我的邮箱",
@@ -672,7 +684,6 @@
     "signOut": "退出登录",
     "signedOut": "您已退出登录。",
     "webOnly": "通过邮件链接登录只适用于 ReSource 的网页版。您不需要账户：本应用的全部功能不登录也能使用。",
-    "google": "使用 Google 继续",
     "googleFailed": "无法开始 Google 登录。请重试。",
     "openAdmin": "打开管理工具",
     "googleNote": "使用 Google 时，Google 会将您账户的电子邮件地址、姓名和头像提供给我们的登录服务商。管理工具仅对 ReSource 运营人员设为管理员的账户开放。"

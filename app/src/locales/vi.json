@@ -33,7 +33,7 @@
     "cookies": "Chính sách cookie",
     "credits": "Ghi công và giấy phép",
     "dataRequest": "Yêu cầu xóa dữ liệu",
-    "signIn": "Đăng nhập",
+    "signIn": "Đăng nhập quản trị",
     "forMe": "Điều gì thay đổi với tôi"
   },
   "common": {
@@ -207,7 +207,9 @@
     "cardFooter": "Được tạo bằng ReSource, một dự án độc lập của học sinh. Đây không phải tài liệu chính thức của Thành phố Fremont. Thẻ này không có thông tin cá nhân.",
     "cardPrivacy": "Thẻ chỉ ghi khu vực và chủ đề của quý vị. Không có tên, địa chỉ hay vị trí.",
     "cardFailed": "Không in hoặc chia sẻ được thẻ.",
-    "cardCopied": "Thẻ đã được sao chép dưới dạng văn bản."
+    "cardCopied": "Thẻ đã được sao chép dưới dạng văn bản.",
+    "before": "Trước",
+    "after": "Sau"
   },
   "more": {
     "city": "Thành phố và ngân sách",
@@ -377,12 +379,17 @@
     "notifyDenied": "Quyền thông báo không được cấp. Quý vị có thể bật trong cài đặt thiết bị.",
     "notifyUnsupported": "Ở đây không dùng được thông báo. Tin mới sẽ hiện trong danh sách này.",
     "notificationTitle": "Tin mới từ ReSource",
-    "emailTitle": "Thông báo qua email",
+    "emailTitle": "Nhận cập nhật qua email",
     "emailLabel": "Địa chỉ email",
     "emailInvalid": "Hãy nhập một địa chỉ email hợp lệ.",
     "emailConsent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi nhằm gửi các thông báo tôi đã chọn. Tôi có thể hủy đăng ký bất cứ lúc nào.",
-    "emailSubscribe": "Gửi thông báo qua email cho tôi",
+    "emailSubscribe": "Gửi cập nhật cho tôi",
     "emailSaved": "Quý vị đã đăng ký nhận thông báo qua email. Mỗi email đều có liên kết hủy đăng ký.",
+    "emailBody": "Chúng tôi sẽ gửi email khi ReSource đăng cập nhật phù hợp với chủ đề và khu vực ở trên. Không cần tài khoản, và bạn có thể hủy đăng ký từ bất kỳ email nào.",
+    "emailCheckInbox": "Sắp xong: hãy kiểm tra hộp thư và bấm vào liên kết để xác nhận. Chúng tôi sẽ không gửi gì khác cho đến khi bạn xác nhận.",
+    "emailConfirmed": "Email của bạn đã được xác nhận. Bạn sẽ nhận các cập nhật phù hợp với lựa chọn của mình.",
+    "emailUnsubscribed": "Bạn đã hủy đăng ký. Chúng tôi đã xóa địa chỉ email của bạn.",
+    "emailLinkExpired": "Liên kết này đã hết hạn hoặc đã được dùng. Hãy đăng ký lại bên dưới nếu bạn vẫn muốn nhận cập nhật.",
     "feedTitle": "Tin cập nhật",
     "viewLabel": "Hiển thị tin",
     "viewAll": "Tất cả ({{count}})",
@@ -396,11 +403,11 @@
     "emptyBody": "Hiện chưa có gì khớp với chủ đề và khu vực của quý vị."
   },
   "chat": {
-    "noticeTitle": "Tin nhắn của quý vị được gửi đến một dịch vụ AI",
-    "noticeBody": "Đừng chia sẻ thông tin cá nhân. Câu trả lời lấy từ dữ liệu của ReSource và vẫn có thể sai. Đây không phải là phát ngôn chính thức của Thành phố Fremont.",
+    "noticeTitle": "Tin nhắn của bạn được gửi đến Claude, một AI của Anthropic",
+    "noticeBody": "Trợ lý này có thể trả lời các câu hỏi chung. Câu trả lời của AI có thể sai, vì vậy hãy kiểm tra những điều quan trọng. Để xem thông tin có nguồn về ngân sách và dịch vụ của Fremont, hãy dùng các thẻ Ngân sách và Tài nguyên. Câu trả lời không phải là tuyên bố chính thức của Thành phố Fremont. Đừng chia sẻ thông tin cá nhân.",
     "emergency": "Đây không phải dịch vụ khẩn cấp. Khi khẩn cấp hãy gọi 911. Để được giới thiệu dịch vụ hãy gọi 211.",
-    "welcome": "Xin chào! Hãy hỏi tôi dịch vụ nào của thành phố Fremont đã thay đổi theo ngân sách, hoặc nơi tìm thực phẩm, chăm sóc sức khỏe, hỗ trợ nhà ở và các trợ giúp khác.",
-    "placeholder": "Hỏi về dịch vụ hoặc trợ giúp",
+    "welcome": "Xin chào! Hãy hỏi tôi bất cứ điều gì: câu hỏi hằng ngày, giúp viết, hoặc câu hỏi về Fremont. Với số liệu ngân sách và dịch vụ của Fremont, tôi sẽ chỉ bạn đến thông tin có nguồn trong các thẻ Ngân sách và Tài nguyên.",
+    "placeholder": "Hỏi tôi bất cứ điều gì",
     "messageLabel": "Câu hỏi của quý vị",
     "send": "Gửi tin nhắn",
     "stop": "Dừng trả lời",
@@ -409,8 +416,8 @@
     "failed": "Không tải được câu trả lời.",
     "sources": "Nguồn",
     "noSources": "không có",
-    "modeAi": "Câu trả lời của AI từ dữ liệu ReSource",
-    "modeBasic": "Tìm kiếm cơ bản trong dữ liệu ReSource",
+    "modeAi": "Claude AI",
+    "modeBasic": "Tìm kiếm cơ bản",
     "s1": "Những dịch vụ nào đã bị cắt giảm?",
     "s2": "Tôi có thể nhận thực phẩm miễn phí ở đâu?",
     "s3": "Có phòng khám chi phí thấp không?",
@@ -635,7 +642,7 @@
     "dataBody": "Số liệu ngân sách lấy từ tài liệu công khai của Thành phố Fremont. Danh sách nơi trợ giúp lấy từ trang web của chính từng tổ chức. Mỗi mục đều ghi nguồn và ngày chúng tôi kiểm tra lần cuối. Thông tin có thể thay đổi, vì vậy hãy xác nhận với tổ chức.",
     "dataChecked": "Lần kiểm tra cuối của tất cả các nguồn",
     "aiTitle": "AI được dùng thế nào",
-    "aiBody": "Trợ lý dùng một mô hình AI của Anthropic và chỉ được cung cấp dữ liệu của ReSource. Các công cụ lập trình AI cũng được dùng để hỗ trợ xây dựng ứng dụng này; điều đó được nêu trong hồ sơ nộp của dự án.",
+    "aiBody": "Trợ lý trò chuyện là Claude, một mô hình AI đa năng của Anthropic. Claude trả lời từ kiến thức của chính nó, không phải từ dữ liệu có nguồn của ReSource, nên câu trả lời có thể sai. Nếu Claude không khả dụng, trò chuyện sẽ chuyển sang tìm kiếm cơ bản trong dữ liệu của ReSource. Các công cụ AI cũng được dùng để giúp xây dựng ứng dụng này, điều này được nêu trong tài liệu nộp dự án.",
     "feedbackTitle": "Báo lỗi",
     "feedbackBody": "Thấy sai sót hoặc có gì không hoạt động? Hãy cho chúng tôi biết trong Cài đặt.",
     "feedbackButton": "Gửi góp ý"
@@ -661,7 +668,12 @@
     "byEmail": "Quý vị cũng có thể gửi yêu cầu qua email đến {{email}}."
   },
   "signIn": {
-    "intro": "Đăng nhập là tùy chọn. Nó giúp báo cáo và bài đăng đi theo quý vị sang thiết bị khác.",
+    "intro": "Thành viên nhóm đăng nhập tại đây để xem xét báo cáo và quản lý danh sách. Bạn không cần tài khoản để dùng ReSource.",
+    "eyebrow": "Dành cho nhóm ReSource",
+    "heading": "Đăng nhập quản trị",
+    "or": "hoặc",
+    "adminBadge": "Quyền quản trị",
+    "googleSignIn": "Đăng nhập bằng Google",
     "offTitle": "Chức năng đăng nhập đang tắt",
     "consent": "Tôi đồng ý để ReSource lưu địa chỉ email của tôi để tôi có thể đăng nhập, và nếu tôi tiếp tục với Google, cả tên và ảnh hồ sơ mà Google chia sẻ.",
     "send": "Gửi liên kết đăng nhập qua email cho tôi",
@@ -672,7 +684,6 @@
     "signOut": "Đăng xuất",
     "signedOut": "Quý vị đã đăng xuất.",
     "webOnly": "Đăng nhập bằng liên kết qua email chỉ hoạt động trên bản web của ReSource. Quý vị không cần tài khoản: mọi thứ trong ứng dụng này đều hoạt động mà không cần tài khoản.",
-    "google": "Tiếp tục với Google",
     "googleFailed": "Không thể bắt đầu đăng nhập bằng Google. Vui lòng thử lại.",
     "openAdmin": "Mở công cụ quản trị",
     "googleNote": "Với Google, Google chia sẻ email, tên và ảnh hồ sơ của tài khoản bạn với nhà cung cấp đăng nhập của chúng tôi. Công cụ quản trị chỉ mở cho những tài khoản được những người điều hành ReSource cấp quyền quản trị."

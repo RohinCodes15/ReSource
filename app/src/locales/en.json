@@ -33,7 +33,7 @@
     "cookies": "Cookie Policy",
     "credits": "Credits & Licenses",
     "dataRequest": "Data Deletion Request",
-    "signIn": "Sign in",
+    "signIn": "Admin sign-in",
     "forMe": "What Changed for Me"
   },
   "common": {
@@ -207,7 +207,9 @@
     "cardFooter": "Made with ReSource, an independent student project. This is not an official City of Fremont document. No personal information is on this card.",
     "cardPrivacy": "The card lists your area and topics only. It has no name, address or location on it.",
     "cardFailed": "The card could not be printed or shared.",
-    "cardCopied": "The card was copied as text."
+    "cardCopied": "The card was copied as text.",
+    "before": "Before",
+    "after": "After"
   },
   "more": {
     "city": "City and budget",
@@ -377,12 +379,17 @@
     "notifyDenied": "Notification permission was not given. You can turn it on in your device settings.",
     "notifyUnsupported": "Notifications are not available here. New updates will appear in this list.",
     "notificationTitle": "New ReSource update",
-    "emailTitle": "Email alerts",
+    "emailTitle": "Get updates by email",
     "emailLabel": "Email address",
     "emailInvalid": "Enter a valid email address.",
     "emailConsent": "I agree that ReSource may store my email address to send me the alerts I chose. I can unsubscribe at any time.",
-    "emailSubscribe": "Send me email alerts",
+    "emailSubscribe": "Email me updates",
     "emailSaved": "You are signed up for email alerts. Every email has an unsubscribe link.",
+    "emailBody": "We'll email you when ReSource posts an update that matches the topics and areas above. No account needed, and you can unsubscribe from any email.",
+    "emailCheckInbox": "Almost done: check your inbox and click the link to confirm. We won't send anything else until you do.",
+    "emailConfirmed": "Your email is confirmed. You'll get updates that match your choices.",
+    "emailUnsubscribed": "You're unsubscribed. We've deleted your email address.",
+    "emailLinkExpired": "That link has expired or was already used. Sign up again below if you still want updates.",
     "feedTitle": "Updates",
     "viewLabel": "Show updates",
     "viewAll": "All ({{count}})",
@@ -396,11 +403,11 @@
     "emptyBody": "Nothing matches your topics and areas right now."
   },
   "chat": {
-    "noticeTitle": "Your messages are sent to an AI service",
-    "noticeBody": "Don't share personal information. Answers come from ReSource's data and can still be wrong. They are not official City of Fremont statements.",
+    "noticeTitle": "Your messages are sent to Claude, an AI from Anthropic",
+    "noticeBody": "This assistant can answer general questions. AI answers can be wrong, so check anything important. For sourced Fremont budget and service details, use the Budget and Resources tabs. Answers are not official City of Fremont statements. Don't share personal information.",
     "emergency": "This is not an emergency service. In an emergency call 911. For referrals call 211.",
-    "welcome": "Hi! Ask me which Fremont city services changed with the budget, or where to find food, health care, housing help and other resources.",
-    "placeholder": "Ask about services or help",
+    "welcome": "Hi! Ask me anything: everyday questions, writing help, or questions about Fremont. For Fremont budget figures and services, I'll point you to the sourced details in the Budget and Resources tabs.",
+    "placeholder": "Ask me anything",
     "messageLabel": "Your question",
     "send": "Send message",
     "stop": "Stop generating",
@@ -409,8 +416,8 @@
     "failed": "The answer could not be loaded.",
     "sources": "Sources",
     "noSources": "none",
-    "modeAi": "AI answer from ReSource data",
-    "modeBasic": "Basic search of ReSource data",
+    "modeAi": "Claude AI",
+    "modeBasic": "Basic search",
     "s1": "Which services were cut?",
     "s2": "Where can I get free food?",
     "s3": "Is there a low-cost clinic?",
@@ -635,7 +642,7 @@
     "dataBody": "Budget facts come from City of Fremont public documents. Resource listings come from each organization's own website. Every item shows its source and the date we last checked it. Information changes, so confirm with the organization.",
     "dataChecked": "All sources last checked",
     "aiTitle": "How AI is used",
-    "aiBody": "The assistant uses an AI model from Anthropic that is given only ReSource's data. AI coding tools were also used to help build this app, which is disclosed in the project's submission materials.",
+    "aiBody": "The chat assistant is Claude, a general-purpose AI model from Anthropic. It answers from its own knowledge, not from ReSource's sourced data, so its answers can be wrong. If Claude is unavailable, the chat falls back to a basic search of ReSource's data. AI coding tools were also used to help build this app, which is disclosed in the project's submission materials.",
     "feedbackTitle": "Report a problem",
     "feedbackBody": "Found a mistake or something that does not work? Tell us in Settings.",
     "feedbackButton": "Send feedback"
@@ -661,7 +668,12 @@
     "byEmail": "You can also email your request to {{email}}."
   },
   "signIn": {
-    "intro": "Signing in is optional. It lets your reports and posts follow you to another device.",
+    "intro": "Team members sign in here to review reports and manage listings. You don't need an account to use ReSource.",
+    "eyebrow": "For the ReSource team",
+    "heading": "Admin sign-in",
+    "or": "or",
+    "adminBadge": "Admin access",
+    "googleSignIn": "Sign in with Google",
     "offTitle": "Sign-in is turned off",
     "consent": "I agree that ReSource may store my email address so I can sign in, and, if I continue with Google, the name and profile picture Google shares.",
     "send": "Email me a sign-in link",
@@ -672,7 +684,6 @@
     "signOut": "Sign out",
     "signedOut": "You are signed out.",
     "webOnly": "Signing in by email link works in the web version of ReSource only. You do not need an account: everything in this app works without one.",
-    "google": "Continue with Google",
     "googleFailed": "Google sign-in could not start. Please try again.",
     "openAdmin": "Open admin tools",
     "googleNote": "With Google, Google shares your account's email address, name and profile picture with our sign-in provider. Admin tools open only for accounts the people who run ReSource have made admins."

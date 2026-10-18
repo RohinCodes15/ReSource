@@ -33,7 +33,7 @@
     "cookies": "Política de cookies",
     "credits": "Créditos y licencias",
     "dataRequest": "Solicitud de eliminación de datos",
-    "signIn": "Iniciar sesión",
+    "signIn": "Acceso de administradores",
     "forMe": "Qué cambió para mí"
   },
   "common": {
@@ -207,7 +207,9 @@
     "cardFooter": "Hecha con ReSource, un proyecto estudiantil independiente. No es un documento oficial de la Ciudad de Fremont. Esta tarjeta no contiene información personal.",
     "cardPrivacy": "La tarjeta solo muestra su zona y sus temas. No lleva nombre, dirección ni ubicación.",
     "cardFailed": "No se pudo imprimir ni compartir la tarjeta.",
-    "cardCopied": "La tarjeta se copió como texto."
+    "cardCopied": "La tarjeta se copió como texto.",
+    "before": "Antes",
+    "after": "Después"
   },
   "more": {
     "city": "Ciudad y presupuesto",
@@ -377,12 +379,17 @@
     "notifyDenied": "No se dio permiso para notificaciones. Puede activarlo en la configuración de su dispositivo.",
     "notifyUnsupported": "Las notificaciones no están disponibles aquí. Las novedades aparecerán en esta lista.",
     "notificationTitle": "Nueva novedad de ReSource",
-    "emailTitle": "Alertas por correo",
+    "emailTitle": "Recibe novedades por correo",
     "emailLabel": "Correo electrónico",
     "emailInvalid": "Escriba un correo electrónico válido.",
     "emailConsent": "Acepto que ReSource guarde mi correo electrónico para enviarme las alertas que elegí. Puedo darme de baja en cualquier momento.",
-    "emailSubscribe": "Enviarme alertas por correo",
+    "emailSubscribe": "Envíenme novedades",
     "emailSaved": "Se inscribió en las alertas por correo. Cada correo tiene un enlace para darse de baja.",
+    "emailBody": "Te enviaremos un correo cuando ReSource publique una novedad que coincida con los temas y zonas de arriba. No necesitas una cuenta y puedes darte de baja desde cualquier correo.",
+    "emailCheckInbox": "Ya casi: revisa tu bandeja de entrada y haz clic en el enlace para confirmar. No enviaremos nada más hasta que lo hagas.",
+    "emailConfirmed": "Tu correo está confirmado. Recibirás las novedades que coincidan con tus opciones.",
+    "emailUnsubscribed": "Te diste de baja. Eliminamos tu dirección de correo.",
+    "emailLinkExpired": "Ese enlace venció o ya se usó. Vuelve a suscribirte abajo si aún quieres novedades.",
     "feedTitle": "Novedades",
     "viewLabel": "Mostrar novedades",
     "viewAll": "Todas ({{count}})",
@@ -396,11 +403,11 @@
     "emptyBody": "Nada coincide con sus temas y zonas en este momento."
   },
   "chat": {
-    "noticeTitle": "Sus mensajes se envían a un servicio de IA",
-    "noticeBody": "No comparta información personal. Las respuestas provienen de los datos de ReSource y aun así pueden estar equivocadas. No son declaraciones oficiales de la Ciudad de Fremont.",
+    "noticeTitle": "Tus mensajes se envían a Claude, una IA de Anthropic",
+    "noticeBody": "Este asistente puede responder preguntas generales. Las respuestas de la IA pueden estar equivocadas, así que verifica lo importante. Para datos con fuentes sobre el presupuesto y los servicios de Fremont, usa las pestañas Presupuesto y Recursos. Las respuestas no son declaraciones oficiales de la Ciudad de Fremont. No compartas información personal.",
     "emergency": "Este no es un servicio de emergencias. En una emergencia llame al 911. Para referencias llame al 211.",
-    "welcome": "¡Hola! Pregúnteme qué servicios de la ciudad de Fremont cambiaron con el presupuesto, o dónde encontrar comida, atención médica, ayuda de vivienda y otros recursos.",
-    "placeholder": "Pregunte sobre servicios o ayuda",
+    "welcome": "¡Hola! Pregúntame lo que quieras: preguntas cotidianas, ayuda para escribir o preguntas sobre Fremont. Para cifras del presupuesto y servicios de Fremont, te indicaré los datos con fuentes en las pestañas Presupuesto y Recursos.",
+    "placeholder": "Pregúntame lo que quieras",
     "messageLabel": "Su pregunta",
     "send": "Enviar mensaje",
     "stop": "Detener la respuesta",
@@ -409,8 +416,8 @@
     "failed": "No se pudo cargar la respuesta.",
     "sources": "Fuentes",
     "noSources": "ninguna",
-    "modeAi": "Respuesta de IA con datos de ReSource",
-    "modeBasic": "Búsqueda básica en los datos de ReSource",
+    "modeAi": "Claude IA",
+    "modeBasic": "Búsqueda básica",
     "s1": "¿Qué servicios se recortaron?",
     "s2": "¿Dónde puedo conseguir comida gratis?",
     "s3": "¿Hay una clínica de bajo costo?",
@@ -635,7 +642,7 @@
     "dataBody": "Los datos del presupuesto provienen de documentos públicos de la Ciudad de Fremont. Los recursos provienen del sitio web de cada organización. Cada elemento muestra su fuente y la fecha en que lo revisamos por última vez. La información cambia: confírmela con la organización.",
     "dataChecked": "Última revisión de todas las fuentes",
     "aiTitle": "Cómo se usa la IA",
-    "aiBody": "El asistente usa un modelo de IA de Anthropic que solo recibe los datos de ReSource. También se usaron herramientas de programación con IA para ayudar a crear esta aplicación, lo cual se declara en los materiales de presentación del proyecto.",
+    "aiBody": "El asistente del chat es Claude, un modelo de IA de uso general de Anthropic. Responde con su propio conocimiento, no con los datos con fuentes de ReSource, así que sus respuestas pueden estar equivocadas. Si Claude no está disponible, el chat usa una búsqueda básica en los datos de ReSource. También se usaron herramientas de IA para programar esta app, lo cual se indica en los materiales de presentación del proyecto.",
     "feedbackTitle": "Reportar un problema",
     "feedbackBody": "¿Encontró un error o algo que no funciona? Cuéntenos en Configuración.",
     "feedbackButton": "Enviar comentario"
@@ -661,7 +668,12 @@
     "byEmail": "También puede enviar su solicitud por correo a {{email}}."
   },
   "signIn": {
-    "intro": "Iniciar sesión es opcional. Permite que sus reportes y publicaciones lo acompañen a otro dispositivo.",
+    "intro": "Los miembros del equipo inician sesión aquí para revisar reportes y administrar listados. No necesitas una cuenta para usar ReSource.",
+    "eyebrow": "Para el equipo de ReSource",
+    "heading": "Acceso de administradores",
+    "or": "o",
+    "adminBadge": "Acceso de administrador",
+    "googleSignIn": "Iniciar sesión con Google",
     "offTitle": "El inicio de sesión está desactivado",
     "consent": "Acepto que ReSource guarde mi correo electrónico para poder iniciar sesión y, si continúo con Google, el nombre y la foto de perfil que comparte Google.",
     "send": "Enviarme un enlace para iniciar sesión",
@@ -672,7 +684,6 @@
     "signOut": "Cerrar sesión",
     "signedOut": "Cerró la sesión.",
     "webOnly": "Iniciar sesión con un enlace por correo solo funciona en la versión web de ReSource. No necesita una cuenta: todo en esta aplicación funciona sin ella.",
-    "google": "Continuar con Google",
     "googleFailed": "No se pudo iniciar sesión con Google. Inténtalo de nuevo.",
     "openAdmin": "Abrir herramientas de administración",
     "googleNote": "Con Google, Google comparte el correo electrónico, el nombre y la foto de perfil de tu cuenta con nuestro proveedor de inicio de sesión. Las herramientas de administración solo se abren para las cuentas que las personas que gestionan ReSource han hecho administradoras."

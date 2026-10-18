@@ -39,6 +39,7 @@ const GROUPS: { key: string; items: { href: string; title: string; icon: IconNam
   {
     key: 'staff',
     items: [
+      { href: '/sign-in', title: 'signIn', icon: 'login' },
       { href: '/admin', title: 'admin', icon: 'shield-account' },
     ],
   },

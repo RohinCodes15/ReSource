@@ -1,10 +1,10 @@
 import { Tabs, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { Icon, type IconName } from '../../components/ui';
 import { useTranslation } from '../../lib/i18n';
-import { colors, fonts, MIN_TOUCH, SCREEN_PADDING, spacing } from '../../theme';
+import { colors, fonts, MAX_CONTENT_WIDTH, MIN_TOUCH, SCREEN_PADDING, spacing } from '../../theme';
 
 // The six destinations in the tab bar. `key` picks the translated title (titles.<key>) and label (tabs.<key>).
 const TABS: { name: string; key: string; icon: IconName; iconOutline: IconName }[] = [
@@ -42,6 +42,10 @@ function BackButton() {
 export default function TabsLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  // On a laptop the header and tab bar line up with the centered content column instead of
+  // stretching to the screen edges. On a phone the gutter is 0 and nothing changes.
+  const gutter = Math.max(0, (width - MAX_CONTENT_WIDTH) / 2);
   return (
     <Tabs
       // Back returns to the screen you came from (More, Home...), not always to the first tab.
@@ -49,18 +53,19 @@ export default function TabsLayout() {
       screenOptions={{
         sceneStyle: { backgroundColor: colors.background },
         headerStyle: { backgroundColor: colors.background },
+        headerLeftContainerStyle: { paddingStart: gutter },
+        headerTitleStyle: { fontFamily: fonts.display, fontWeight: '600', fontSize: 20, color: colors.text },
         headerTintColor: colors.text,
         headerTitleAlign: 'left',
-        headerTitleStyle: { fontFamily: fonts.display, fontWeight: '600', fontSize: 20, color: colors.text },
         // A long title shortens with "…" on a narrow phone and never runs under the language button.
         // The header reserves 52px for the right side, and the language button is wider than that.
         headerTitleContainerStyle: { flexShrink: 1, maxWidth: '100%' },
-        headerRightContainerStyle: { flexBasis: 'auto', flexShrink: 0 },
+        headerRightContainerStyle: { flexBasis: 'auto', flexShrink: 0, paddingEnd: gutter },
         headerShadowVisible: false,
         headerRight: () => <View style={styles.headerRight}><LanguageSelector /></View>,
         tabBarActiveTintColor: colors.navy,
         tabBarInactiveTintColor: colors.muted,
-        tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 4 }],
+        tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom, paddingTop: 4, paddingBottom: insets.bottom + 4, paddingHorizontal: gutter }],
         // 10px with tight tracking: each tab has 50px for its label on a 360px phone, and "Resources" must fit.
         tabBarLabelStyle: TAB_LABEL,
         // The bar has a fixed height; the label stays one size so six tabs always fit.

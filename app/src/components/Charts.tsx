@@ -233,9 +233,10 @@ const styles = StyleSheet.create({
   tableHead: { backgroundColor: colors.navyLight, borderTopWidth: 0 },
   cell: { flex: 1, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm, justifyContent: 'center' },
   cellFirst: { flex: 1.6 },
-  ledgerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.md, minHeight: MIN_TOUCH },
+  // On a narrow phone the label drops under the figure rather than squeezing into a thin column.
+  ledgerRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.lg, rowGap: spacing.xs, paddingVertical: spacing.md, minHeight: MIN_TOUCH },
   ledgerValue: { minWidth: 112, flexShrink: 0, fontVariant: ['tabular-nums'] },
-  ledgerText: { flex: 1, gap: spacing.xs },
+  ledgerText: { flexGrow: 1, flexShrink: 1, flexBasis: 200, gap: spacing.xs },
   shares: { gap: spacing.md },
   shareBar: { flexDirection: 'row', height: 28, gap: 2 },
   shareSegment: { height: 28, minWidth: 6 },
