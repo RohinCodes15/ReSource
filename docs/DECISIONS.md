@@ -30,7 +30,7 @@ The choices that shaped ReSource and the reasoning behind each, so that the crea
 
 **Row-level security even though the API bypasses it.** The API uses the service-role key, which skips RLS. RLS is there for the public anon key that ships inside the app for sign-in: with RLS on, that key can read only the public catalog and approved posts.
 
-**Location stays on the device.** Distances are worked out on the device. The one exception is chat, which sends a rounded position so the assistant can suggest nearby places; the policy says so.
+**Location stays on the device.** Distances are worked out on the device. The one exception is chat, which sends a rounded position to our server so basic search can sort nearby places; the policy says so. Since 2026-10-18 that position is not passed on to Anthropic.
 
 **Strip personal details before saving.** Emails, phone numbers and street addresses are removed from descriptions and posts on the server, and photos are re-encoded so their embedded GPS position is dropped.
 
@@ -40,11 +40,11 @@ The choices that shaped ReSource and the reasoning behind each, so that the crea
 
 ## The assistant
 
-**Two modes.** With an API key, a model answers from the reference data only. Without one, a keyword lookup returns matching rows directly. The app labels which mode produced each answer. The second mode means the app works with no accounts and no cost, and still works if the AI service fails.
+**Two modes: a general-purpose Claude assistant, with basic search as the fallback.** With an API key and a successful call, Claude (Claude Sonnet 5 by default, `CLAUDE_MODEL` to change it) answers questions using its general knowledge. Basic search takes over when there is no key, the API call fails, the daily token budget is spent, or a Fremont answer includes an unverified phone number or street address. The app labels each answer "Claude AI" or "Basic search". The fallback means chat still works without the AI service.
 
-**The model sees only the app's data.** The system prompt contains the services, resources, budget and council data and tells the model to answer from nothing else, to say when it does not know, and to point to 211 or the City.
+**Why the assistant is no longer limited to the app's data (changed 2026-10-18).** Until then the model saw only the services, resources, budget and council data and was told to answer from nothing else. That kept its Fremont facts tied to our sources, but it refused or said "I don't know" to most of what people actually typed, which made the chat feel broken. We chose more useful, general-purpose help and gave up the factual-accuracy guarantee against our civic dataset: Claude's primary answers are not constrained to or verified against that data, and can be wrong. The visible disclaimer now carries that weight: it says AI answers can be wrong and points residents to the sourced Budget and Resources tabs to check Fremont-specific facts. We also prompt Claude to flag local civic claims and replace an unverified phone number or street address with basic search (`answer_validation.py`); those checks reduce some risks, but do not guarantee the rest of an answer is right.
 
-**Haiku by default, with output and daily limits.** The answers are short lookups. A small model keeps cost and abuse bounded.
+**Sonnet 5 by default, with output, request and token limits.** General questions produce longer and more varied answers than the old lookups, so cost is bounded three ways: at most 1,500 output tokens per answer, request limits per visitor and across everyone (`CHAT_GLOBAL_DAILY_LIMIT`), and a daily token budget across everyone (`CHAT_DAILY_TOKEN_BUDGET`, default 400,000 tokens, about $3 a day).
 
 ## Engineering
 

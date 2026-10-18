@@ -12,8 +12,8 @@ A draft for the submission. The contest rules require full disclosure of AI use 
 
 ## AI used inside the app
 
-- The "Ask ReSource" chat can use a Claude model from Anthropic. It is given only the app's own data and is told to answer from nothing else. The chat screen tells people their messages go to an AI service and that answers can be wrong.
-- With no API key, chat uses a keyword lookup with no AI model. The app labels which one produced each answer.
+- The "Ask ReSource" chat uses Claude Sonnet 5, a general-purpose model from Anthropic. It answers from its own knowledge, not from the app's sourced data, so its answers can be wrong. It is told to flag Fremont-specific facts and point people to the app's sourced Budget and Resources tabs, and the chat screen says AI answers can be wrong.
+- With no API key, when the Claude call fails, or when the daily token budget is spent, chat uses a keyword lookup of the app's data with no AI model. The app labels each answer "Claude AI" or "Basic search".
 - No AI is used to decide what the budget data says. Every figure was read from a City of Fremont document and entered with its source.
 
 ## What I did myself

@@ -7,7 +7,7 @@ Every outside service the app or the API can contact, what it receives, and whet
 | ReSource API | App | Requests, the install token, and what a person submits | Yes, for live data and anything that is sent. Without it the app shows the data bundled inside it. | `EXPO_PUBLIC_API_URL` |
 | OpenStreetMap tile server | Web browser | IP address, map area viewed | Only for the web map. The list view works without it. | Opening the Map screen on the web |
 | Apple Maps / Google Maps | Phone | IP address, map area viewed | Only for the phone map | Opening the Map screen on a phone |
-| Anthropic | API server | Chat messages, language, reference data, rounded position if set | No. Without a key, chat answers by direct lookup. | `ANTHROPIC_API_KEY` |
+| Anthropic | API server | Chat messages and language (no location since 2026-10-18) | No. Without a key, chat answers by basic search. | `ANTHROPIC_API_KEY` |
 | Supabase (database, storage) | API server | Everything stored | No. Without it the API uses local files. | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` |
 | Supabase Auth | App | Email address | No. Sign-in is optional and off by default. | `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` |
 | Expo push service | Nobody | Nothing | Not used. Notifications are local to the device; no push token is requested. | |

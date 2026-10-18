@@ -31,10 +31,10 @@ The first time a device sends something, the app creates a random token and keep
 The server stores `HMAC-SHA256(secret, token)`, not the token (`_hmac` in `backend/security.py`). With a plain SHA-256, anyone who obtained a copy of the database and a list of candidate tokens could hash the candidates and match them to rows, and the same token would hash to the same value on every server. An HMAC mixes in a secret key that only the server has, so the database alone cannot be used to link rows to a device, and each deployment produces different values. The trade-off: if that secret is lost or changed, everyone loses the link to their own data, which is why `OWNER_HASH_SALT` must be set once and kept.
 
 **9. How does the chat avoid making things up?**
-The model is not asked what it knows. `backend/grounding.py` builds a prompt containing the app's data (services, resources, budget, council) inside `<reference_data>` tags, and rules that say: use only this, say "I don't know" otherwise, and point to 211 or the City. The API also rejects a model answer that contains a phone number or street address not found in the data (`backend/answer_validation.py`). That file's own comment is honest about its limit: it checks contact facts; it does not prove every sentence is right. The chat screen tells people answers can be wrong.
+Honestly, the primary path does not avoid making things up the way the earlier grounded version tried to. Claude Sonnet 5 is a general-purpose model, so its answers—including Fremont-specific answers—can be wrong and are not guaranteed to match the civic dataset. A visible disclaimer says AI answers can be wrong. Residents should check Fremont facts against the app's own sourced Budget and Resources tabs. The system prompt also asks Claude to flag local civic facts and direct residents to those sources. The server replaces an unverified Fremont phone number or street address with basic search (`backend/answer_validation.py`), but that does not verify every claim in the answer.
 
 **10. How does the basic-mode matcher work?**
-It is `local_answer` in `backend/grounding.py`, used when there is no API key. It lower-cases the question and then:
+It is `local_answer` in `backend/grounding.py`, used whenever Claude is unavailable (see question 12). It lower-cases the question and then:
 1. checks for emergency words and, if found, leads with 911 and 988;
 2. finds resource categories whose keyword list matches (for example "food", "comida", "食物", "غذا", "thực phẩm" all mean Food) and takes up to four resources from them;
 3. adds any resource whose name contains a distinctive whole word from the question, ignoring generic words like "services" or "center";
@@ -44,11 +44,11 @@ It is `local_answer` in `backend/grounding.py`, used when there is no API key. I
 Latin-script keywords must start a word, so "eat" does not match "weather"; other scripts use plain containment because they have no spaces.
 
 **11. What went wrong with that matcher?**
-The first suggested question, "Which services were cut?", answered with a housing nonprofit called Abode Services, because the matcher treated "services" as part of a name. And "I was fired" listed fire department cuts. The fix was whole-word matching, a list of generic words to ignore, and a test that runs every suggested question in every language (`backend/tests/`). It is bug B1 in `review/BUGS.md`.
+The first suggested question, "Which services were cut?", answered with a housing nonprofit called Abode Services, because the matcher treated "services" as part of a name. And "I was fired" listed fire department cuts. The fix was whole-word matching, a list of generic words to ignore, and a test that runs every suggested question in every language (`backend/tests/`). This B1 fix applies to `local_answer`, the keyword matcher now used for fallback, not to Claude's primary path.
 
 **12. What is "fallback mode"? What happens when things fail?**
 Three separate fallbacks:
-- **No AI, or the AI fails:** chat uses the keyword lookup above and labels the answer "Basic search".
+- **Basic-search fallback:** chat uses the keyword lookup above and labels the answer "Basic search" if there is no `ANTHROPIC_API_KEY`, the Claude call fails or times out, the daily token budget is spent, or a Fremont-specific Claude answer contains a phone number or street address the app cannot verify. Otherwise, Claude Sonnet 5 gives general-purpose answers labeled "Claude AI". Basic search uses the app's own rows and is limited to the topics its keyword matcher recognizes.
 - **No database:** with no Supabase settings the API runs in local mode, serving the bundled data and keeping submissions in a local folder. If Supabase is configured but broken, the API refuses to start instead of silently switching, because that would lose data.
 - **No connection:** the app carries a copy of the data. Screens show that copy with a banner, and reload when the connection returns (`app/src/hooks/useData.ts`). Things that need the server, like sending a report, say so and can be retried.
 
@@ -56,7 +56,7 @@ Three separate fallbacks:
 Nothing about requests that go through the API: the service-role key bypasses RLS, so those depend on the API's own checks. RLS protects against the other key. The app contains Supabase's public "anon" key (for sign-in), and anyone can extract it. With RLS on (`backend/database/rls_policies.sql`), that key can read only the public catalog and approved posts without their owner id. Reports, votes, subscriptions, consent records and photos are closed to it. Honest gap: those policies were read, not tested by a script.
 
 **14. How do you stop spam or one person faking many reports?**
-Rate limits per network and per device on every route that writes (`rate_limit` in `backend/security.py`), a daily cap on chat for everyone together, a honeypot field, and reports count publicly only after a moderator verifies them. Votes and flags need distinct devices and distinct networks. Honest limits: the counters live in one server's memory, so they reset on restart and need one worker; and a determined person with many networks could still get through. Moderation is the real backstop.
+Rate limits per network and per device on every route that writes (`rate_limit` in `backend/security.py`), a daily cap on chat requests and on Claude tokens for everyone together, a honeypot field, and reports count publicly only after a moderator verifies them. Votes and flags need distinct devices and distinct networks. Honest limits: the counters live in one server's memory, so they reset on restart and need one worker; and a determined person with many networks could still get through. Moderation is the real backstop.
 
 **15. What personal data do you hold?**
 No names, no precise location, no device id. Report and post text with emails, phone numbers and addresses removed; a ZIP area; a keyed hash of the device token. An email address only if someone files a deletion request, erased when the request is closed. `docs/PRIVACY.md` lists every table. Anyone can download or delete their data in Settings with one tap.

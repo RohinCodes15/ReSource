@@ -46,7 +46,8 @@ Without Docker, follow "Run it" in the README.
    | `OWNER_HASH_SALT` | a random value; never change it afterwards |
    | `CORS_ORIGINS` | the web app's address from step 3, for example `https://resource-fremont.vercel.app` |
    | `TRUST_PROXY` | `1` (Railway puts a proxy in front; read S4 in `docs/SECURITY.md`) |
-   | `ANTHROPIC_API_KEY` | optional, for AI answers |
+   | `ANTHROPIC_API_KEY` | optional: an Anthropic API key from console.anthropic.com, for the Claude assistant in chat |
+   | `CHAT_DAILY_TOKEN_BUDGET` | optional: daily token cap for Claude (default `400000`, about $3 a day) |
 
 3. Generate a public domain for the service. Open `https://<that domain>/health`; it should answer `{"status":"ok","mode":"supabase",...}`. If it says `"mode":"local"`, the Supabase variables are missing. If the service will not start, the Supabase values are wrong: the API refuses to fall back to local files when they are set.
 4. Keep the service at one instance.
@@ -92,7 +93,7 @@ Do these on the deployed site, on a phone and on a computer.
 
 ## Costs to expect
 
-All four services have free tiers at the time of writing; check each one's current pricing page. The only usage-priced part is the AI model. `CHAT_GLOBAL_DAILY_LIMIT` (default 2,000 requests a day) and the per-visitor limits cap it, and leaving `ANTHROPIC_API_KEY` empty costs nothing.
+All four services have free tiers at the time of writing; check each one's current pricing page. The only usage-priced part is the Claude model (`claude-sonnet-5` by default). `CHAT_DAILY_TOKEN_BUDGET` (default 400,000 tokens a day, roughly $3) caps what it can spend; after that chat switches to basic search until older usage ages out. `CHAT_GLOBAL_DAILY_LIMIT` (default 2,000 requests a day) and the per-visitor limits cap how often people can ask. Leaving `ANTHROPIC_API_KEY` empty costs nothing.
 
 ## Rolling back
 

@@ -20,22 +20,20 @@ Fremont cut services to balance its budget, but the details sit in long PDFs. I 
 
 Give every resident a sourced, plain-language summary of budget changes that affect them, nearby places to get help, and a way to tell the City how a change affects them.
 
-## A technical challenge and how you solved it (1,500 characters at most): 1174
+## A technical challenge and how you solved it (1,500 characters at most): 1458
 
-The hardest problem was making the chat assistant safe to trust. A language model will happily invent a phone number or a budget figure, and in a civic app one wrong answer about where to get food does real harm.
+The hardest problem was deciding what the chat could promise. My first version gave the model the app's services, resources, budget and council data and told it to answer only from those sources. That kept answers tied to our civic dataset, but the model refused most questions residents actually asked. I changed the primary path to general-purpose Claude Sonnet 5 so residents can ask beyond the app's data. We gave up the dataset-based factual-accuracy guarantee: Claude may be wrong about Fremont. A visible disclaimer now says AI answers can be wrong and asks residents to check Fremont-specific facts in the app's sourced Budget and Resources tabs.
 
-The solution has three parts. First, the model never answers from memory. Each request builds a prompt from the app's own data (services, resources, budget and council records, each with a source) and tells the model to use only that, to say "I don't know" otherwise, and to point people to 211 or the City.
+I added guardrails, not a guarantee. Claude is prompted to flag local claims and direct people to official sources; when a Fremont answer contains a phone number or address not in ReSource's data, the server replaces it with a keyword-search answer. Basic search is also used when there is no API key, Claude's call fails, or the daily token budget is spent. It is labeled "Basic search" and uses ReSource's data.
 
-Second, the app works with no model at all. A keyword matcher in the API maps a question to categories in five languages and returns the matching rows directly. It runs when no API key is set and also when the AI service fails, so chat never breaks. A bug here taught me the most: the question "Which services were cut?" returned a housing nonprofit, because the matcher treated the word "services" in "Abode Services" as a name match. The fix was to match only distinctive whole words and to test every suggested question in every language.
+That matcher is the fallback path, not the primary assistant, and covers five languages. B1 exposed a bug: "Which services were cut?" matched Abode Services because "services" counted as a distinctive name word. I fixed the matcher to ignore generic words and require distinctive whole-word matches, then tested every suggestion in every language. A daily token budget limits model cost.
 
-Third, the app shows which mode answered and lists the sources under every answer, so a reader can check it.
-
-**Choose a challenge you can explain in person.** This one is real: the bug and its fix are in the repository (`review/BUGS.md`, B1, and `backend/grounding.py`). It is written in the first person because the form asks for your experience, so only submit it if you understand it and it reflects work you directed and can walk through. Read `judge_qa.md`, questions 9 to 12, and the function `local_answer` first. If AI tools wrote the fix, say so in the AI disclosure.
+**Choose a challenge you can explain in person.** This one is real: the bug and its fix are in the repository (`review/BUGS.md`, B1, and `local_answer` in `backend/grounding.py`; the Fremont contact check is in `backend/answer_validation.py`). It is written in the first person because the form asks for your experience, so only submit it if you understand it and it reflects work you directed and can walk through. Read `judge_qa.md`, questions 9 to 12, and the function `local_answer` first. If AI tools wrote the fix, say so in the AI disclosure.
 
 ## Longer description, for anywhere a paragraph is allowed
 
 ReSource is a free app for Fremont, California residents living through the city's budget reductions. It answers one question first: what changed for me? A resident enters a ZIP code, picks what matters to them (kids, older adults, streets, health, parks) and gets a short summary of the service changes that touch them. Every item links to the City of Fremont document it came from, and where the City has not published a detail the app says so instead of guessing.
 
-From there a resident can see services on a map, find food, clinics, housing and legal help sorted by distance, read the budget figures with their sources, report how a change affects them, write to their council member, and ask questions in a chat that answers only from the app's data. It works in English, Spanish, Dari, Chinese and Vietnamese, with no account, no ads and no tracking, and it keeps working when the connection drops.
+From there a resident can see services on a map, find food, clinics, housing and legal help sorted by distance, read the budget figures with their sources, report how a change affects them, write to their council member, and ask an AI assistant anything, with a reminder to check Fremont facts against the sourced Budget and Resources tabs. It works in English, Spanish, Dari, Chinese and Vietnamese, with no account, no ads and no tracking, and it keeps working when the connection drops.
 
 ReSource is an independent student project. It is not an official City of Fremont service, and the City has not reviewed it.

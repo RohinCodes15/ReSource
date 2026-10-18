@@ -31,7 +31,7 @@ Every setting is optional. `backend/.env.example` and `app/.env.example` list th
 | To get | Set |
 | --- | --- |
 | Admin tools (moderating reports and posts, the CSV export) | `ADMIN_TOKEN` in `backend/.env` |
-| AI answers in chat, grounded in the same data | `ANTHROPIC_API_KEY` in `backend/.env` |
+| General-purpose Claude answers in chat (otherwise chat uses basic search of the app's data) | `ANTHROPIC_API_KEY` in `backend/.env` |
 | A hosted database in place of local files | `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` in `backend/.env`, after applying `backend/database/schema.sql`, `rls_policies.sql` and `seed.sql` |
 | Sign-in by email link (web only) | `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` in `app/.env` |
 | The map in an Android build | `GOOGLE_MAPS_ANDROID_KEY` at build time; without it an Android build shows the service list |
@@ -47,7 +47,7 @@ Without `ADMIN_TOKEN` nobody can moderate, so reports stay "Waiting for review";
 - **Budget Transparency**: the figures behind the reductions, each linked to the City document it was read from.
 - **Report an Impact and Community Impact**: residents describe how a change affects them; totals of the reports a moderator has verified are public.
 - **Rep Tracker**: the mayor and council members, with contact details and a letter draft.
-- **Ask ReSource**: a chat assistant that answers only from the app's data.
+- **Ask ReSource**: a general-purpose Claude chat assistant, with a reminder to check Fremont facts in the sourced Budget and Resources tabs. With no AI key it falls back to a keyword search of the app's data.
 - **Alerts and Community Board**: updates by topic and area, and short tips from neighbors.
 
 No account is needed. Location stays on the device. Reports and posts are stored without a name, and "Delete my data" in Settings removes them from the server.

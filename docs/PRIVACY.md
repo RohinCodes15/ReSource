@@ -31,7 +31,7 @@ None of these are written to the database. A restart clears them.
 
 | To | What | When |
 | --- | --- | --- |
-| Anthropic | The chat messages, the chosen language, and the app's reference data. If a location is set, a position rounded to two decimal places is used to sort nearby places. | Only when `ANTHROPIC_API_KEY` is set and someone uses chat |
+| Anthropic | The current question, earlier turns of the same conversation (held in server memory for up to ten minutes) and the chosen language. No location: since 2026-10-18 the rounded position stays on our server, where basic search uses it to sort nearby places. | Only when `ANTHROPIC_API_KEY` is set, the daily token budget is not spent, and someone uses chat |
 | Supabase | Everything in the tables above, and sign-in emails | Only when Supabase is configured |
 | Nobody else | | The server makes no other outbound calls |
 

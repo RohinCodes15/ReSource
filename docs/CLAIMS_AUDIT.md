@@ -33,9 +33,9 @@ Last run: 53 files, 18 rules, no matches.
 | Counts on Home are counted from the database | Home | `/stats` counts rows on each request; a test compares the screen with the API. Offline, the note says the counts come from the saved copy. |
 | Reports are counted only after a moderator verifies them | Report, Community Impact, Terms | The public count and the impact totals use verified reports only (backend test). |
 | No ads, analytics or trackers | Storage banner, Privacy Policy, About | `check:storage` and the network test in `e2e/compliance.spec.ts`. |
-| Location stays on your device | Location dialog, Privacy Policy | True for the stored location. A rounded position is sent with a chat question when a location is set; the policy says so. |
+| Location stays on your device | Location dialog, Privacy Policy | True for the stored location. A rounded position is sent to our server with a chat question when a location is set (it is not passed to Anthropic); the policy says so. |
 | Under 13: the app collects nothing | Consent notice, Privacy Policy | Forms, voting, flagging and feedback are replaced by a browse-only notice (test "under 13"). The API also refuses a report or post without the age confirmation. Someone who bypasses the app and calls the API directly is not stopped from sending feedback or a vote, so "collects nothing" is a statement about the app, not a technical barrier. |
-| Answers come from ReSource's data and can still be wrong | Chat | The model receives only the reference data; the notice is always visible. |
+| AI answers can be wrong; check Fremont facts in the Budget and Resources tabs | Chat | True. Since 2026-10-18 Claude answers from its own knowledge, not the app's data; the notice is always visible. Basic search answers come from the app's data and list their sources. |
 | Translations were not reviewed by native speakers | Language list | True. Stated in the app and in `docs/I18N_REVIEW.md`. |
 | The code is MIT-licensed | Credits | `LICENSE`. |
 | Free, no purchases | About | No payment package is installed. |

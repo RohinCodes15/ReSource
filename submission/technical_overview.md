@@ -31,7 +31,7 @@ flowchart LR
   App --- Copy
   App -->|map images only| Tiles
   API --> DB
-  API -->|question + reference data| LLM
+  API -->|question + language| LLM
   API --> Lookup
   Data -->|seed| DB
   Data -->|built into the app| Copy
@@ -61,9 +61,9 @@ flowchart LR
 ## What happens when someone asks a question
 
 1. The app sends the question and the chosen language to `POST /chat/stream`.
-2. If no model is configured, `grounding.local_answer` matches words in the question against keyword lists for each category, in five languages, and returns the matching rows with their names as sources.
-3. If a model is configured, `grounding.py` builds a prompt holding the rules and all the reference data, and the API streams the model's answer back. If the model call fails, step 2 runs instead.
-4. The app shows the answer, a label saying which mode produced it, and the sources.
+2. If an API key is set and the daily token budget is not spent, the API sends the question to Claude Sonnet 5 with a system prompt of rules (`RULES` in `grounding.py`). The prompt does not contain the app's data: Claude answers from its own knowledge, is told to flag Fremont-specific facts and point to the sourced Budget and Resources tabs, and can be wrong. If the answer is about Fremont and contains a phone number or street address not in the app's data, step 3 runs instead (`answer_validation.py`).
+3. Otherwise, or if the Claude call fails, `grounding.local_answer` (basic search) matches words in the question against keyword lists for each category, in five languages, and returns the matching rows with their names as sources.
+4. The app shows the answer and a label, "Claude AI" or "Basic search". Basic search answers list their sources; Claude answers show "Sources: none" because they do not come from the app's sourced data.
 
 ## What happens with no connection
 
