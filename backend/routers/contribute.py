@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 
 from community_guard import guard
-from moderation import clean_text, needs_review, scrub_pii
+from moderation import clean_text, scrub_pii
 from routers.public import public_row
 from schemas import FeedbackIn, PostIn, ReportIn
 from security import client_fingerprint, rate_limit, require_owner
@@ -145,8 +145,8 @@ def create_post(post: PostIn, request: Request) -> Row:
         "body": body,
         "area": post.area,
         "upvotes": 0,
-        # Clean posts appear at once; anything the filter catches waits for a moderator.
-        "status": "pending" if needs_review(body) else "approved",
+        # Every new post waits for moderator review; the word filter no longer auto-publishes.
+        "status": "pending",
         "is_sample": False,
         "owner_hash": owner,
         "policy_version": POLICY_VERSION,

@@ -162,8 +162,11 @@ def post(client, headers, body="The food bank on Joseph St was quick today."):
 
 def test_post_vote_once_flag_and_delete(client):
     created = post(client, ALICE).json()
-    assert created["status"] == "approved" and created["mine"] is True and "owner_hash" not in created
+    assert created["status"] == "pending" and created["mine"] is True and "owner_hash" not in created
     post_id = created["id"]
+    assert post_id not in [row["id"] for row in client.get("/posts", headers=CAROL).json()]
+    assert client.post(f"/posts/{post_id}/vote", headers=BOB).status_code == 404
+    assert client.post(f"/admin/posts/{post_id}", json={"status": "approved"}, headers=ADMIN).json()["status"] == "approved"
 
     assert client.post(f"/posts/{post_id}/vote", headers=BOB).json() == {"id": post_id, "upvotes": 1, "voted": True}
     assert TestClient(client.app, client=("192.0.2.3", 1234)).post(f"/posts/{post_id}/vote", headers=CAROL).json()["upvotes"] == 2
@@ -178,8 +181,17 @@ def test_post_vote_once_flag_and_delete(client):
     assert post_id not in [p["id"] for p in client.get("/posts").json()]
 
 
+def test_flagged_and_unflagged_posts_both_wait_for_moderation(client):
+    clean = post(client, ALICE, "The food pantry opens at nine.").json()
+    flagged = post(client, BOB, "I will hurt you.").json()
+    assert clean["status"] == flagged["status"] == "pending"
+    assert clean["id"] not in [row["id"] for row in client.get("/posts").json()]
+    assert flagged["id"] not in [row["id"] for row in client.get("/posts").json()]
+
+
 def test_three_flags_hide_a_post_until_reviewed(client):
     post_id = post(client, ALICE).json()["id"]
+    assert client.post(f"/admin/posts/{post_id}", json={"status": "approved"}, headers=ADMIN).json()["status"] == "approved"
     for flagger in (BOB, BOB, CAROL):  # the same person flagging twice counts once
         TestClient(client.app, client=("192.0.2.2" if flagger == BOB else "192.0.2.3", 1234)).post(f"/posts/{post_id}/flag", headers=flagger)
     assert post_id in [p["id"] for p in client.get("/posts").json()]
@@ -225,6 +237,8 @@ def test_delete_my_data_removes_everything_and_leaves_others_alone(client):
     client.post("/reports", json=report_body(), headers=ALICE)
     alice_post = post(client, ALICE).json()["id"]
     bob_post = post(client, BOB, body="Senior InfoLine called me back in a day.").json()["id"]
+    for post_id in (alice_post, bob_post):
+        assert client.post(f"/admin/posts/{post_id}", json={"status": "approved"}, headers=ADMIN).status_code == 200
     client.post(f"/posts/{bob_post}/vote", headers=ALICE)
     client.post(f"/posts/{alice_post}/vote", headers=BOB)
     client.put("/subscriptions", json={"categories": ["budget"]}, headers=ALICE)

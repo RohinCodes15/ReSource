@@ -3,7 +3,7 @@ import time
 from types import SimpleNamespace
 
 import pytest
-from conftest import ALICE, CONSENT, report_body
+from conftest import ADMIN, ALICE, CONSENT, report_body
 
 from settings import get_settings
 from store import get_store
@@ -70,7 +70,10 @@ def test_community_votes_and_chat_accept_only_device_token(client, account_mode,
         "body": "A useful tip for neighbors.", "area": "citywide", **CONSENT,
     })
     assert post.status_code == 201
-    vote = client.post(f"/posts/{post.json()['id']}/vote", headers=ALICE)
+    post_id = post.json()["id"]
+    assert post.json()["status"] == "pending"
+    assert client.post(f"/admin/posts/{post_id}", headers=ADMIN, json={"status": "approved"}).status_code == 200
+    vote = client.post(f"/posts/{post_id}/vote", headers=ALICE)
     assert vote.status_code == 200 and vote.json()["voted"] is True
     body = {"messages": [{"role": "user", "content": "Where can I get free food?"}]}
     assert client.post("/chat", headers=ALICE, json=body).status_code == 200
@@ -98,6 +101,8 @@ def test_all_resident_actions_work_with_only_device_token(client, account_mode, 
     assert post.status_code == 201
     post_id = post.json()["id"]
     assert post_id
+    assert post.json()["status"] == "pending"
+    assert client.post(f"/admin/posts/{post_id}", headers=ADMIN, json={"status": "approved"}).status_code == 200
 
     vote = client.post(f"/posts/{post_id}/vote", headers=headers)
     assert vote.status_code == 200
