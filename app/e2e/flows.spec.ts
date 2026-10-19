@@ -129,11 +129,11 @@ test('resources: search, chips, sort, call, directions, website, share and save'
 
 // ---- Map ------------------------------------------------------------------------------------
 
-test('map: a group of pins says how many services it holds and which', async ({ page }) => {
+test('map: a group of pins says how many places it holds and which', async ({ page }) => {
   await open(page, '/map');
   const group = page.locator('[data-testid="pin-cluster"][data-members*="svc-human-services"]');
   await expect(group).toHaveAttribute('role', 'button');
-  await expect(group).toHaveAttribute('aria-label', /services close together: .*Human Services/);
+  await expect(group).toHaveAttribute('aria-label', /places close together: .*Human Services/);
 });
 
 test('map: when the map images fail, the map stays blank with a note and the pins still work', async ({ page }) => {
@@ -364,7 +364,7 @@ test('reps: contacts, sources, unverified votes and the letter flow', async ({ p
 
 // ---- Community Board -------------------------------------------------------------------------
 
-test('community: post, one vote per person, report abuse, delete own post', async ({ page, browser }) => {
+test('community: post, one vote per person, report abuse, delete own post', async ({ page, browser, request }) => {
   await open(page, '/community');
   await v(page, 'post-submit').click();
   await expect(v(page, 'post-body-error')).toBeVisible();
@@ -372,11 +372,18 @@ test('community: post, one vote per person, report abuse, delete own post', asyn
   await v(page, 'post-submit').click();
   await expect(v(page, 'consent-fields')).toContainText('Tick this box');
   await tick(page);
+  const createdResponse = page.waitForResponse((response) => response.url() === `${API}/posts` && response.request().method() === 'POST');
   await v(page, 'post-submit').click();
-  await expect(v(page, 'community-notice')).toContainText('now visible');
-  const mine = page.locator('[data-testid^="post-"]:visible:not([inert] *)', { hasText: 'called me back the next morning' });
+  const created = await (await createdResponse).json() as { id: string; status: string };
+  expect(created.status).toBe('pending');
+  await expect(v(page, 'community-notice')).toContainText('waiting for a moderator');
+  const mine = page.locator(`[data-testid="post-${created.id}"]:visible:not([inert] *)`);
+  await expect(mine).toHaveCount(0); // pending posts are hidden from public lists
+  const approved = await request.post(`${API}/admin/posts/${created.id}`, { headers: { 'X-Admin-Token': ADMIN_TOKEN }, data: { status: 'approved' } });
+  expect(approved.ok()).toBeTruthy();
+  await open(page, '/community');
   await expect(mine).toContainText('Your post');
-  const id = ((await mine.getAttribute('data-testid')) ?? '').replace('post-', '');
+  const id = created.id;
 
   // Voting twice toggles the vote; it can never count twice.
   await v(page, `vote-${id}`).click();
@@ -415,7 +422,8 @@ test('community: post, one vote per person, report abuse, delete own post', asyn
 
 test('chat: suggestion chip, typed question, sources, "I don\'t know", clear', async ({ page }) => {
   await open(page, '/chat');
-  await expect(v(page, 'chat-notice')).toContainText('sent to an AI service');
+  await expect(v(page, 'chat-notice')).toContainText('Your messages are sent to Claude');
+  await expect(v(page, 'chat-notice')).toContainText('AI answers can be wrong');
   await expect(v(page, 'chat-emergency')).toContainText('911');
   await v(page, 'suggestion-s2').click();
   await expect(v(page, 'chat-assistant').last()).toContainText('TCV Food Bank');

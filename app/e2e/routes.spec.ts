@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectNoSidewaysScroll, open, prepare, ROUTES, trackErrors, v } from './helpers';
+import { API, expectNoSidewaysScroll, open, prepare, ROUTES, trackErrors, v } from './helpers';
 
 // Every route, loaded directly (the same as a deep link or a browser refresh), at three widths.
 for (const width of [360, 768, 1280]) {
@@ -80,7 +80,7 @@ test('an unknown address shows a 404 screen with a Home button', async ({ page }
 
 test('home shows real counts from the database and the independent-project notice', async ({ page, request }) => {
   await prepare(page);
-  const stats = await (await request.get('http://localhost:8000/stats')).json();
+  const stats = await (await request.get(`${API}/stats`)).json();
   await open(page, '/');
   await expect(v(page, 'stat-reduced-value')).toHaveText(String(stats.services_reduced + stats.services_closed));
   await expect(v(page, 'stat-reduced')).toContainText(`of the ${stats.services_tracked} City services`);

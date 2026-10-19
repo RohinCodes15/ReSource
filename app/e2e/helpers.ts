@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export const API = 'http://localhost:8000';
+export const API = 'http://localhost:8001';
 
 /** Every route in the app: [path, name used for screenshots]. */
 export const ROUTES: [string, string][] = [
@@ -26,6 +26,15 @@ export async function answerStorageBanner(page: Page, choice: 'all' | 'essential
   }, choice);
 }
 
+/** Keeps first-launch UI out of tests unless a test explicitly opts into the tour. */
+export async function seedTourSeen(page: Page, seen = true) {
+  await page.addInitScript((value) => {
+    if (window.localStorage.getItem('resource.tourSeen') === null) {
+      window.localStorage.setItem('resource.tourSeen', JSON.stringify(value));
+    }
+  }, seen);
+}
+
 // One pixel of the map's paper color (#ECE6D8), stretched over each tile: a quiet blank map.
 const TILE = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGN48+wGAAVsAquswEprAAAAAElFTkSuQmCC', 'base64');
 
@@ -38,7 +47,9 @@ export async function stubTiles(page: Page) {
 export async function mapServiceCount(page: Page): Promise<number> {
   return page.evaluate(() => {
     const single = document.querySelectorAll('[data-testid^="pin-svc-"]').length;
-    const grouped = Array.from(document.querySelectorAll('[data-testid="pin-cluster"]')).reduce((sum, el) => sum + Number(el.getAttribute('data-count')), 0);
+    // Groups can mix in places to get help; count only the City services inside them.
+    const grouped = Array.from(document.querySelectorAll('[data-testid="pin-cluster"]'))
+      .reduce((sum, el) => sum + (el.getAttribute('data-members') ?? '').split('|').filter((id) => id.startsWith('svc-')).length, 0);
     return single + grouped;
   });
 }
@@ -73,5 +84,6 @@ export async function prepare(page: Page) {
   // Tests run with reduced motion so nothing is measured or clicked half-way through a fade.
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await answerStorageBanner(page);
+  await seedTourSeen(page);
   await stubTiles(page);
 }

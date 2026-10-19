@@ -1,6 +1,6 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-import { open, prepare, ROUTES, stubTiles, v } from './helpers';
+import { open, prepare, ROUTES, seedTourSeen, stubTiles, v } from './helpers';
 
 // ---- Accessibility: axe-core on every route ---------------------------------------------------
 
@@ -88,6 +88,7 @@ test('text can be enlarged to 200% without losing content', async ({ page }) => 
 // ---- Storage consent --------------------------------------------------------------------------
 
 test('storage banner: three equal choices, nothing optional before a choice, and the choice sticks', async ({ page }) => {
+  await seedTourSeen(page);
   await stubTiles(page);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await open(page, '/');
@@ -134,6 +135,7 @@ test('with "Reject all", the app talks only to its own API and, on the map, the 
     if (!hosts.has(url.host)) hosts.set(url.host, new Set());
     hosts.get(url.host)?.add(current);
   });
+  await seedTourSeen(page);
   await stubTiles(page);
   await open(page, '/');
   await v(page, 'cookie-reject').click();
@@ -142,7 +144,7 @@ test('with "Reject all", the app talks only to its own API and, on the map, the 
     await open(page, path);
     await page.waitForTimeout(250);
   }
-  const allowed = ['localhost:4173', 'localhost:8000'];
+  const allowed = ['localhost:4173', 'localhost:8001'];
   const thirdParty = [...hosts.entries()].filter(([host]) => !allowed.includes(host));
   // The only third party is OpenStreetMap, and only on the map screen.
   expect(thirdParty.map(([host]) => host)).toEqual(['tile.openstreetmap.org']);
@@ -157,7 +159,7 @@ test('the cookie policy lists exactly the storage keys the app uses', async ({ p
   await prepare(page);
   await open(page, '/cookies');
   const listed = await page.locator('[data-testid^="storage-"]:visible:not([inert] *)').count();
-  expect(listed).toBe(9);
+  expect(listed).toBe(10);
   await expect(v(page, 'storage-chat')).toContainText('Optional');
   await expect(v(page, 'storage-installToken')).toContainText('Essential');
 });

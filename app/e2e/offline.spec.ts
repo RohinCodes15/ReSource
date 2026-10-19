@@ -50,7 +50,7 @@ test('offline: report and chat fail politely and can be retried when the API ret
   await v(page, 'chat-send').click();
   await expect(v(page, 'chat-failed')).toBeVisible();
 
-  await page.unroute('http://localhost:8000/**');
+  await page.unroute(`${API}/**`);
   await v(page, 'chat-retry').click();
   await expect(v(page, 'chat-assistant').last()).toContainText('TCV Food Bank');
   await expect(v(page, 'offline-banner')).toHaveCount(0);

@@ -1,14 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * End-to-end tests for the web build. Before running: `npm run build:web`.
- * The config starts the API in local mode (no accounts, throwaway data folder, rate limits off)
- * and serves the exported site the way a static host would, with every path falling back to
- * index.html.
+ * End-to-end tests for the web build. The config starts the API in local mode (no accounts,
+ * throwaway data folder, rate limits off), then builds and serves the exported site with an
+ * isolated API URL and every path falling back to index.html.
  */
-export const ADMIN_TOKEN = 'e2e-admin-token';
+export const ADMIN_TOKEN = 'e2e-admin-token-for-playwright';
 // Not 8081: that is the Expo dev server's port, which is often already running.
 const WEB_PORT = 4173;
+const API_PORT = 8001;
 
 export default defineConfig({
   testDir: './e2e',
@@ -26,13 +26,13 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `bash -c 'cd ../backend && LOCAL_STATE_DIR=$(mktemp -d) ADMIN_TOKEN=${ADMIN_TOKEN} RATE_LIMIT_ENABLED=0 CORS_ORIGINS=http://localhost:${WEB_PORT} \${PYTHON:-.venv/bin/python} -m uvicorn main:app --port 8000 --log-level warning'`,
-      url: 'http://127.0.0.1:8000/health',
+      command: `bash -c 'cd ../backend && APP_ENV=local SUPABASE_URL= SUPABASE_SERVICE_ROLE_KEY= ANTHROPIC_API_KEY= LOCAL_STATE_DIR=$(mktemp -d) ADMIN_TOKEN=${ADMIN_TOKEN} RATE_LIMIT_ENABLED=0 CORS_ORIGINS=http://localhost:${WEB_PORT} \${PYTHON:-.venv/bin/python} -m uvicorn main:app --port ${API_PORT} --log-level warning'`,
+      url: `http://127.0.0.1:${API_PORT}/health`,
       reuseExistingServer: false,
       timeout: 60_000,
     },
     {
-      command: `npx serve dist --single --listen ${WEB_PORT} --no-clipboard`,
+      command: `EXPO_NO_DOTENV=1 EXPO_PUBLIC_API_URL=http://localhost:${API_PORT} npm run build:web && npx serve dist --single --listen ${WEB_PORT} --no-clipboard`,
       url: `http://localhost:${WEB_PORT}`,
       reuseExistingServer: false,
       timeout: 60_000,
