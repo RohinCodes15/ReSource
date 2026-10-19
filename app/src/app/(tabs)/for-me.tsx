@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import type { Service } from '../../../../shared/types';
+import { HelpfulPrompt } from '../../components/HelpfulPrompt';
 import { LocationChip } from '../../components/LocationChip';
 import { Screen } from '../../components/Page';
 import { AppButton, AppText, Banner, Card, Chip, FadeIn, type IconName, LinkText, LoadingList, Pill, Section, SourceLine, StatusBadge } from '../../components/ui';
@@ -158,6 +159,7 @@ export default function ForMeScreen() {
           <AppText variant="caption">{t('forMe.cardPrivacy')}</AppText>
           <AppButton variant="navy" icon={Platform.OS === 'web' ? 'printer' : 'share-variant'} label={t(Platform.OS === 'web' ? 'forMe.print' : 'forMe.share')} onPress={makeCard} testID="for-me-card" />
           {notice && <Banner tone="info" body={notice} live />}
+          {sections.length > 0 && <HelpfulPrompt context="for_me" />}
         </FadeIn>
       )}
     </Screen>

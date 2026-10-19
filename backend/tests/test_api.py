@@ -42,7 +42,8 @@ def test_services_filter_by_status_category_and_text(client):
 
 def test_resources_are_sorted_by_distance_when_a_position_is_given(client):
     rows = client.get("/resources", params={"lat": 37.5773, "lng": -121.9806}).json()  # by Niles Library
-    assert rows[0]["id"] == "res-library-niles" and rows[0]["distance_miles"] < 0.1
+    assert rows[0]["id"] == "res-niles-essanay-silent-film-museum-and-edison-thea-bb5f86c"
+    assert rows[0]["distance_miles"] < 0.1
     placed = [r["distance_miles"] for r in rows if r["distance_miles"] is not None]
     assert placed == sorted(placed)
     # Phone lines have no position: they keep distance None and come after every placed row.
@@ -303,6 +304,42 @@ def test_feedback_is_stored_without_identifiers(client):
     assert client.post("/feedback", json={"kind": "data_error", "message": "The library phone number looks wrong."}).status_code == 201
     rows = client.get("/admin/feedback", headers=ADMIN).json()
     assert rows[0]["kind"] == "data_error" and "owner_hash" not in rows[0]
+
+
+def test_helpful_rating_is_stored_and_shown_to_admins(client):
+    body = {"kind": "helpful_rating", "was_helpful": True, "context": "for_me"}
+    assert client.post("/feedback", json=body).status_code == 201
+    row = client.get("/admin/feedback", headers=ADMIN).json()[0]
+    assert (row["kind"], row["was_helpful"], row["context"], row["message"]) == ("helpful_rating", True, "for_me", "")
+    assert "owner_hash" not in row
+
+
+def test_helpful_rating_message_is_scrubbed_like_other_feedback(client):
+    body = {"kind": "helpful_rating", "was_helpful": False, "context": "chat", "message": "Call me at 510-555-0123 please"}
+    assert client.post("/feedback", json=body).status_code == 201
+    row = client.get("/admin/feedback", headers=ADMIN).json()[0]
+    assert row["was_helpful"] is False and "555-0123" not in row["message"]
+
+
+def test_helpful_rating_fields_are_validated(client):
+    bad = [
+        {"kind": "helpful_rating", "context": "for_me"},  # no rating
+        {"kind": "helpful_rating", "was_helpful": True, "context": "x" * 41},  # context too long
+        {"kind": "helpful_rating", "was_helpful": True, "context": "For Me!"},  # not an identifier
+        {"kind": "problem", "message": "The map is blank.", "was_helpful": True},  # rating on another kind
+        {"kind": "problem", "message": "hi"},  # other kinds still need a message
+    ]
+    for body in bad:
+        assert client.post("/feedback", json=body).status_code == 422, body
+    assert client.get("/admin/feedback", headers=ADMIN).json() == []
+
+
+def test_helpful_ratings_share_the_feedback_rate_limit(client, env):
+    env.setenv("RATE_LIMIT_ENABLED", "1")
+    restart()
+    body = {"kind": "helpful_rating", "was_helpful": True, "context": "chat"}
+    codes = [client.post("/feedback", json=body).status_code for _ in range(6)]
+    assert codes == [201] * 5 + [429]
 
 
 # ---- Admin and the impact dashboard -----------------------------------------------------------

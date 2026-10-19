@@ -51,9 +51,30 @@ class PostIn(Consented):
 
 
 class FeedbackIn(Strict):
-    kind: Literal["problem", "idea", "data_error"] = "problem"
-    message: str = Field(min_length=5, max_length=1000)
+    """A problem, an idea or a data error, or a yes/no "was this helpful?" rating.
+
+    A rating needs `was_helpful` and may leave `message` empty; every other kind needs a message.
+    `context` names the screen or feature (e.g. "for_me", "chat"), so it is a short identifier
+    and never free text.
+    """
+
+    kind: Literal["problem", "idea", "data_error", "helpful_rating"] = "problem"
+    message: str = Field(default="", max_length=1000)
+    was_helpful: bool | None = None
+    context: str | None = Field(default=None, max_length=40, pattern=r"^[a-z][a-z0-9_]*$")
     website: str = Field(default="", max_length=200)
+
+    @model_validator(mode="after")
+    def fits_kind(self) -> FeedbackIn:
+        if self.kind == "helpful_rating":
+            if self.was_helpful is None:
+                raise ValueError("was_helpful is required for a helpful_rating")
+        else:
+            if len(self.message) < 5:
+                raise ValueError("message must be at least 5 characters")
+            if self.was_helpful is not None:
+                raise ValueError("was_helpful is only for a helpful_rating")
+        return self
 
 
 class SubscriptionIn(Strict):

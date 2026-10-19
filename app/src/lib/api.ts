@@ -102,6 +102,8 @@ export const votePost = (id: string) => request<{ id: string; upvotes: number; v
 export const flagPost = (id: string) => request<{ id: string; flagged: boolean }>(`/posts/${encodeURIComponent(id)}/flag`, { method: 'POST' });
 export const deletePost = (id: string) => request<{ id: string; deleted: boolean }>(`/posts/${encodeURIComponent(id)}`, { method: 'DELETE' });
 export const sendFeedback = (kind: 'problem' | 'idea' | 'data_error', message: string) => request<{ id: string }>('/feedback', { body: { kind, message, website: '' } });
+/** A yes/no "was this helpful?" answer. `context` names the screen, e.g. "for_me". */
+export const sendHelpfulRating = (context: string, wasHelpful: boolean) => request<{ id: string }>('/feedback', { body: { kind: 'helpful_rating', was_helpful: wasHelpful, context, message: '', website: '' } });
 
 // ---- Alerts, export, deletion --------------------------------------------------------------
 
@@ -149,7 +151,13 @@ export const adminPosts = (status: string) => request<AdminPost[]>(`/admin/posts
 export const moderatePost = (id: string, status: 'approved' | 'rejected' | 'pending') => request<Post>(`/admin/posts/${encodeURIComponent(id)}`, { ...admin, body: { status } });
 export const updateServiceStatus = (id: string, status: ServiceStatus) => request<Service>(`/admin/services/${encodeURIComponent(id)}`, { ...admin, body: { status } });
 export const adminDeletionRequests = () => request<DeletionRequest[]>('/admin/deletion-requests', admin);
-export type FeedbackRow = { id: string; kind: 'problem' | 'idea' | 'data_error'; message: string; created_at: string };
+export type FeedbackRow = {
+  id: string; kind: 'problem' | 'idea' | 'data_error' | 'helpful_rating'; message: string; created_at: string;
+  /** Set only on a helpful_rating. */
+  was_helpful?: boolean | null;
+  /** The screen or feature the feedback came from, e.g. "for_me". */
+  context?: string | null;
+};
 export const adminFeedback = () => request<FeedbackRow[]>('/admin/feedback', admin);
 export const closeDeletionRequest = (id: string) => request<DeletionRequest>(`/admin/deletion-requests/${encodeURIComponent(id)}`, { ...admin, body: { status: 'completed' } });
 export const getImpactSummary = () => request<ImpactSummary>('/impact/summary');

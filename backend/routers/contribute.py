@@ -215,8 +215,13 @@ def delete_post(post_id: str, request: Request) -> dict[str, Any]:
 
 @router.post("/feedback", status_code=201, dependencies=[Depends(rate_limit("feedback", 5, 3600))])
 def send_feedback(feedback: FeedbackIn) -> dict[str, Any]:
-    """Report a problem with the app or its data. Stored without any identifier."""
+    """Report a problem with the app or its data, or rate a screen. Stored without any identifier."""
     reject_bots(feedback.website)
     message, _ = scrub_pii(clean_text(feedback.message))
-    row = get_store().insert("feedback", {"kind": feedback.kind, "message": message, "status": "open"})
+    values: Row = {"kind": feedback.kind, "message": message, "status": "open"}
+    if feedback.was_helpful is not None:
+        values["was_helpful"] = feedback.was_helpful
+    if feedback.context is not None:
+        values["context"] = feedback.context
+    row = get_store().insert("feedback", values)
     return {"id": row["id"], "received_at": row.get("created_at") or now_iso()}

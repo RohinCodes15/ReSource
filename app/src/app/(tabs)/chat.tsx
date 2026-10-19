@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { BrowseOnly } from '../../components/ConsentFields';
+import { HelpfulPrompt } from '../../components/HelpfulPrompt';
 import { LocationChip } from '../../components/LocationChip';
 import { Screen } from '../../components/Page';
 import { Icon, AppButton, AppText, Banner, Chip, LinkText, Pill } from '../../components/ui';
@@ -168,6 +169,8 @@ export default function ChatScreen() {
                     <AppText variant="caption" testID="chat-sources">{t('chat.sources')}: {item.sources?.length ? item.sources.join(' · ') : t('chat.noSources')}</AppText>
                   </View>
                 )}
+                {/* `mode` arrives with the finished answer, so a reply still being written, stopped or failed is not rated. */}
+                {!mine && !!item.mode && <HelpfulPrompt context="chat" id={item.id} testID={`helpful-chat-${item.id}`} />}
               </View>
             );
           }}

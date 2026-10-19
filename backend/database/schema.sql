@@ -169,8 +169,10 @@ create table if not exists public.deletion_requests (
 
 create table if not exists public.feedback (
   id uuid primary key default gen_random_uuid(),
-  kind text not null check (kind in ('problem', 'idea', 'data_error')),
+  kind text not null check (kind in ('problem', 'idea', 'data_error', 'helpful_rating')),
   message text not null check (char_length(message) <= 1000),
+  was_helpful boolean,          -- only set on a helpful_rating
+  context text check (char_length(context) <= 40),  -- which screen or feature a rating came from, e.g. 'for_me'
   status text not null default 'open',
   created_at timestamptz not null default now()
 );

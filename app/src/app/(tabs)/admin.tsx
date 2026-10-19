@@ -192,7 +192,9 @@ function Feedback() {
       {data.map((item) => (
         <Card key={item.id} style={styles.block} testID={`admin-feedback-${item.id}`}>
           <AppText variant="caption">{formatDate(item.created_at, locale)} · {t(`settings.kind_${item.kind}`)}</AppText>
-          <AppText color={colors.text} selectable>{item.message}</AppText>
+          {item.was_helpful != null && <AppText variant="label">{t(item.was_helpful ? 'admin.ratingYes' : 'admin.ratingNo')}</AppText>}
+          {!!item.context && <AppText variant="caption">{t('admin.feedbackFrom', { context: item.context })}</AppText>}
+          {!!item.message && <AppText color={colors.text} selectable>{item.message}</AppText>}
         </Card>
       ))}
     </>
