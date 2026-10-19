@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import { colors, statusTone } from '../theme';
+import { colors } from '../theme';
 import type { ServiceMapProps } from './ServiceMap.types';
 
 const CITY_DELTA = 0.14;
@@ -11,7 +11,7 @@ export default function ServiceMap({ pins, selectedId, onSelect, center, you, re
   const mapRef = useRef<MapView>(null);
 
   useEffect(() => {
-    const pin = pins.find((p) => p.service.id === selectedId);
+    const pin = pins.find((p) => p.id === selectedId);
     if (pin) {
       // Center a little below the pin so the detail sheet does not cover it.
       mapRef.current?.animateToRegion({ latitude: pin.latitude - 0.006, longitude: pin.longitude, latitudeDelta: 0.03, longitudeDelta: 0.03 }, 300);
@@ -38,22 +38,22 @@ export default function ServiceMap({ pins, selectedId, onSelect, center, you, re
         </Marker>
       )}
       {pins.map((pin) => {
-        const selected = pin.service.id === selectedId;
-        const tone = statusTone(pin.service.status);
+        const selected = pin.id === selectedId;
+        const resource = pin.kind === 'resource';
         const size = selected ? 40 : 32;
         return (
           <Marker
             // The key changes with selection so the custom pin redraws.
-            key={`${pin.service.id}-${selected}`}
+            key={`${pin.id}-${selected}`}
             coordinate={{ latitude: pin.latitude, longitude: pin.longitude }}
             anchor={{ x: 0.5 - pin.dx / size, y: 0.5 - pin.dy / size }}
             tracksViewChanges={false}
             accessibilityLabel={pin.label}
-            onPress={() => onSelect(pin.service.id)}
+            onPress={() => onSelect(pin.id)}
           >
-            {/* A glyph inside the pin carries the status, so it does not depend on color. */}
-            <View style={[styles.pin, { backgroundColor: tone.bg }, selected && styles.pinSelected]}>
-              <Text style={[styles.glyph, { color: tone.text }, selected && styles.glyphSelected]}>{tone.glyph}</Text>
+            {/* Shape and glyph carry the meaning (status disc, or "+" square for a place to get help), not color alone. */}
+            <View style={[styles.pin, { backgroundColor: pin.bg }, selected && styles.pinSelected, resource && styles.square, resource && selected && styles.squareSelected]}>
+              <Text style={[styles.glyph, { color: pin.fg }, selected && styles.glyphSelected]}>{pin.glyph}</Text>
             </View>
           </Marker>
         );
@@ -68,6 +68,8 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 5,
   },
   pinSelected: { width: 40, height: 40, borderRadius: 20, borderWidth: 3, borderColor: colors.navyDark },
+  square: { borderRadius: 8 },
+  squareSelected: { borderColor: colors.gold },
   glyph: { fontSize: 16, fontWeight: '700' },
   glyphSelected: { fontSize: 20 },
   you: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.navy, borderWidth: 3, borderColor: colors.white },

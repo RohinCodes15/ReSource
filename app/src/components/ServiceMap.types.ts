@@ -1,9 +1,14 @@
-import type { Service } from '../../../shared/types';
 import type { LatLng } from '../utils/geo';
 
-/** A service that has a position, plus the point where its pin is drawn. */
+/** A City service or a place to get help that has a position, plus the point where its pin is drawn. */
 export type MapPin = {
-  service: Service;
+  id: string;
+  /** City services are round status discs; places to get help are navy squares. */
+  kind: 'service' | 'resource';
+  /** Drawn inside the pin (a status mark, or "+" for a place to get help), so a pin never depends on color alone. */
+  glyph: string;
+  fg: string;
+  bg: string;
   latitude: number;
   longitude: number;
   label: string;

@@ -1,16 +1,17 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import type { Service, ServiceStatus } from '../../../../shared/types';
+import type { Resource, Service, ServiceStatus } from '../../../../shared/types';
 import { LocationChip } from '../../components/LocationChip';
 import { Footer, Screen } from '../../components/Page';
 import ServiceMap from '../../components/ServiceMap';
 import type { MapPin } from '../../components/ServiceMap.types';
 import { Sheet } from '../../components/Sheet';
 import { Icon, AppButton, AppText, Banner, Card, Chip, EmptyState, ErrorState, IconAction, LoadingList, Segmented, SourceLine, StatusBadge } from '../../components/ui';
-import { bundledServices, SERVICE_ICONS } from '../../data';
+import type { IconName } from '../../components/icons';
+import { bundledResources, bundledServices, RESOURCE_ICONS, SERVICE_ICONS } from '../../data';
 import { useApi } from '../../hooks/useData';
-import { getServices } from '../../lib/api';
+import { getResources, getServices } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
 import { directionsUrl, MAP_AVAILABLE, telUrl } from '../../lib/platform';
 import { useOrigin } from '../../state/stores';
@@ -18,24 +19,33 @@ import { colors, fonts, MIN_TOUCH, radius, spacing, statusTone } from '../../the
 
 const STATUS_FILTERS: ('all' | ServiceStatus)[] = ['all', 'reduced', 'closed', 'open'];
 
+/** Which kinds of place the map shows: City services, places to get help, or both. */
+type Layer = 'all' | 'services' | 'resources';
+const LAYERS: { value: Layer; icon?: IconName }[] = [
+  { value: 'all' },
+  { value: 'services', icon: 'office-building' },
+  { value: 'resources', icon: 'hand-heart' },
+];
+
+const hasStreetAddress = (address: string) => /^\d+\s/.test(address);
+
 /**
- * Several services share one building (City Hall), which would stack their pins exactly on top
+ * Several places share one building (City Hall), which would stack their pins exactly on top
  * of each other. Pins at the same point are drawn in a small ring around it (a fixed number
  * of pixels at every zoom), so each one can be selected.
  */
-function spread(services: Service[], label: (s: Service) => string): MapPin[] {
-  const groups = new Map<string, Service[]>();
-  services.forEach((s) => {
-    if (s.lat == null || s.lng == null) return;
-    const key = `${s.lat},${s.lng}`;
-    groups.set(key, [...(groups.get(key) ?? []), s]);
+function spread(points: Omit<MapPin, 'dx' | 'dy'>[]): MapPin[] {
+  const groups = new Map<string, Omit<MapPin, 'dx' | 'dy'>[]>();
+  points.forEach((p) => {
+    const key = `${p.latitude},${p.longitude}`;
+    groups.set(key, [...(groups.get(key) ?? []), p]);
   });
   const pins: MapPin[] = [];
   groups.forEach((group) => {
-    group.forEach((service, i) => {
+    group.forEach((point, i) => {
       const angle = (2 * Math.PI * i) / group.length - Math.PI / 2;
       const radius = group.length > 1 ? Math.max(24, group.length * 7) : 0;
-      pins.push({ service, latitude: service.lat as number, longitude: service.lng as number, label: label(service), dx: Math.round(radius * Math.cos(angle)), dy: Math.round(radius * Math.sin(angle)) });
+      pins.push({ ...point, dx: Math.round(radius * Math.cos(angle)), dy: Math.round(radius * Math.sin(angle)) });
     });
   });
   return pins;
@@ -86,13 +96,42 @@ function ServiceDetail({ service, onClose }: { service: Service; onClose: () => 
   );
 }
 
+/** A place to get help, with the ways to reach it. */
+function ResourceDetail({ resource }: { resource: Resource }) {
+  const { t, tx } = useTranslation();
+  return (
+    <View style={styles.detail} testID="resource-detail">
+      <AppText variant="caption" color={colors.text}>{tx('resourceCategory', resource.category)}</AppText>
+      <AppText>{resource.description}</AppText>
+      <View style={styles.facts}>
+        <AppText variant="bodySmall" color={colors.text} selectable>{resource.address}</AppText>
+        {!!resource.hours && <AppText variant="bodySmall" color={colors.text}>{t('common.hours')}: {resource.hours}</AppText>}
+        {resource.languages.length > 0 && <AppText variant="bodySmall" color={colors.text}>{t('resources.languages')}: {resource.languages.join(', ')}</AppText>}
+        {!!resource.language_note && <AppText variant="caption">{resource.language_note}</AppText>}
+        {resource.coords === 'approximate' && <AppText variant="caption">{t('map.approximate')}</AppText>}
+      </View>
+      <View style={styles.actions}>
+        {!!resource.phone && <AppButton variant="outline" icon="phone" label={t('common.callNumber', { phone: resource.phone })} href={telUrl(resource.phone)} style={styles.action} testID="resource-detail-call" />}
+        {hasStreetAddress(resource.address) && <AppButton variant="outline" icon="directions" label={t('common.directions')} href={directionsUrl(resource.address)} style={styles.action} />}
+        {!!resource.website && <AppButton variant="outline" icon="web" label={t('map.website')} href={resource.website} style={styles.action} />}
+      </View>
+      <SourceLine title={t('resources.sourceLabel')} url={resource.source_url} retrieved={resource.retrieved} />
+    </View>
+  );
+}
+
+type ListRow = { kind: 'service'; item: Service } | { kind: 'resource'; item: Resource };
+
 export default function MapScreen() {
   const { t, tx } = useTranslation();
   const params = useLocalSearchParams<{ service?: string }>();
-  const { data, loading, error, reload } = useApi(getServices, () => bundledServices);
+  const { data, loading: servicesLoading, error, reload } = useApi(getServices, () => bundledServices);
+  const { data: resourceData, loading: resourcesLoading } = useApi(getResources, () => bundledResources);
+  const loading = servicesLoading || resourcesLoading;
   const { origin, location } = useOrigin();
   const [view, setView] = useState<'map' | 'list'>(MAP_AVAILABLE ? 'map' : 'list');
   const [query, setQuery] = useState('');
+  const [layer, setLayer] = useState<Layer>('all');
   const [status, setStatus] = useState<'all' | ServiceStatus>('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [recenterKey, setRecenterKey] = useState(0);
@@ -104,15 +143,46 @@ export default function MapScreen() {
     if (params.service) setSelectedId(params.service);
   }
 
+  // A status filter is about City services, so places to get help show only while it is "All".
+  const showServices = layer !== 'resources';
+  const showResources = layer !== 'services' && status === 'all';
+
   const visible = useMemo(() => {
+    if (!showServices) return [];
     const q = query.trim().toLowerCase();
     return (data ?? []).filter((s) =>
       (status === 'all' || s.status === status) &&
       (!q || [s.name, s.summary, s.address, s.location_note ?? '', tx('category', s.category), tx('area', s.area)].some((v) => v.toLowerCase().includes(q))));
-  }, [data, query, status, tx]);
+  }, [data, query, status, tx, showServices]);
 
-  const pins = useMemo(() => spread(visible, (s) => `${s.name}, ${t(`status.${statusTone(s.status).key}`)}`), [visible, t]);
+  // Only places with a position belong on the map; phone lines stay in Resources.
+  const visibleResources = useMemo(() => {
+    if (!showResources) return [];
+    const q = query.trim().toLowerCase();
+    return (resourceData ?? []).filter((r) =>
+      r.lat != null && r.lng != null &&
+      (!q || [r.name, r.description, r.address, tx('resourceCategory', r.category)].some((v) => v.toLowerCase().includes(q))));
+  }, [resourceData, query, tx, showResources]);
+
+  const pins = useMemo(() => spread([
+    ...visible.filter((s) => s.lat != null && s.lng != null).map((s) => {
+      const tone = statusTone(s.status);
+      return { id: s.id, kind: 'service' as const, glyph: tone.glyph, fg: tone.text, bg: tone.bg, latitude: s.lat as number, longitude: s.lng as number, label: `${s.name}, ${t(`status.${tone.key}`)}` };
+    }),
+    ...visibleResources.map((r) => ({
+      id: r.id, kind: 'resource' as const, glyph: '+', fg: colors.white, bg: colors.navy, latitude: r.lat as number, longitude: r.lng as number,
+      label: t('map.resourcePin', { name: r.name, category: tx('resourceCategory', r.category) }),
+    })),
+  ]), [visible, visibleResources, t, tx]);
+  const rows = useMemo<ListRow[]>(() => [
+    ...visible.map((item) => ({ kind: 'service' as const, item })),
+    ...visibleResources.map((item) => ({ kind: 'resource' as const, item })),
+  ], [visible, visibleResources]);
   const selected = (data ?? []).find((s) => s.id === selectedId) ?? null;
+  const selectedResource = selected ? null : (resourceData ?? []).find((r) => r.id === selectedId) ?? null;
+  const countText = showServices && showResources
+    ? t('map.countBoth', { services: visible.length, resources: visibleResources.length })
+    : showResources ? t('map.countResources', { count: visibleResources.length }) : t('map.count', { count: visible.length });
   const mapLabels = useMemo(() => ({
     map: t('map.mapLabel'), you: t('map.you'), zoomIn: t('map.zoomIn'), zoomOut: t('map.zoomOut'), tilesFailed: t('map.tilesFailed'),
     cluster: (count: number, names: string) => t('map.cluster', { count, names }),
@@ -139,10 +209,15 @@ export default function MapScreen() {
         )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {LAYERS.map(({ value, icon }) => (
+          <Chip key={value} label={t(`map.layer.${value}`)} icon={icon} selected={layer === value} onPress={() => { setLayer(value); if (value === 'resources') setStatus('all'); }} testID={`map-layer-${value}`} />
+        ))}
+      </ScrollView>
+      {showServices && <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
         {STATUS_FILTERS.map((value) => (
           <Chip key={value} label={t(value === 'all' ? 'common.all' : `status.${value}`)} icon={value === 'all' ? undefined : statusTone(value).icon} selected={status === value} onPress={() => setStatus(value)} testID={`map-filter-${value}`} />
         ))}
-      </ScrollView>
+      </ScrollView>}
       <View style={styles.row}>
         {MAP_AVAILABLE
           ? <Segmented label={t('map.viewLabel')} value={view} onChange={setView} options={[{ value: 'map', label: t('map.viewMap') }, { value: 'list', label: t('map.viewList') }]} />
@@ -151,7 +226,7 @@ export default function MapScreen() {
         {view === 'map' && <IconAction icon="image-filter-center-focus" label={t('map.recenter')} onPress={() => setRecenterKey((key) => key + 1)} testID="map-recenter" />}
       </View>
       <LocationChip compact />
-      <AppText variant="caption" live="polite" testID="map-count">{t('map.count', { count: visible.length })}</AppText>
+      <AppText variant="caption" live="polite" testID="map-count">{countText}</AppText>
     </View>
   );
 
@@ -172,36 +247,51 @@ export default function MapScreen() {
               recenterKey={recenterKey}
               labels={mapLabels}
             />
-            {!visible.length && <View style={styles.mapEmpty}><Banner tone="info" body={t('map.none')} live /></View>}
+            {!pins.length && <View style={styles.mapEmpty}><Banner tone="info" body={t('map.none')} live /></View>}
           </View>
-          <AppText variant="caption" style={styles.mapNote}>{t('map.pinsNote')}{Platform.OS === 'web' ? ` ${t('map.osmCredit')}` : ''}</AppText>
+          <AppText variant="caption" style={styles.mapNote}>{t('map.legend')} {t('map.pinsNote')}{Platform.OS === 'web' ? ` ${t('map.osmCredit')}` : ''}</AppText>
         </ScrollView>
       ) : (
         <FlatList
-          data={visible}
-          keyExtractor={(s) => s.id}
+          data={rows}
+          keyExtractor={(row) => row.item.id}
           contentContainerStyle={styles.list}
           ListHeaderComponent={controls}
           ListEmptyComponent={<EmptyState art="niles" icon="map-search-outline" title={t('map.none')} body={t('map.noneBody')} />}
           ListFooterComponent={<Footer />}
-          renderItem={({ item }) => (
+          renderItem={({ item: row }) => row.kind === 'resource' ? (
             <Card style={styles.listCard}>
               <View style={styles.listHead}>
-                <View style={styles.listIcon}><Icon name={SERVICE_ICONS[item.category] ?? 'office-building'} size={22} color={colors.navy} /></View>
+                <View style={[styles.listIcon, styles.listIconResource]}><Icon name={RESOURCE_ICONS[row.item.category] ?? 'hand-heart'} size={22} color={colors.white} /></View>
                 <View style={styles.flex}>
-                  <AppText variant="h4" heading={2}>{item.name}</AppText>
-                  <AppText variant="caption">{tx('category', item.category)} · {tx('area', item.area)}</AppText>
+                  <AppText variant="h4" heading={2}>{row.item.name}</AppText>
+                  <AppText variant="caption">{tx('resourceCategory', row.item.category)}</AppText>
                 </View>
               </View>
-              <StatusBadge status={item.status} />
-              <AppText variant="bodySmall" color={colors.text}>{item.summary}</AppText>
-              <AppButton variant="outline" small label={t('map.details')} accessibilityLabel={`${t('map.details')}: ${item.name}`} onPress={() => setSelectedId(item.id)} testID={`service-${item.id}`} />
+              <AppText variant="bodySmall" color={colors.text}>{row.item.description}</AppText>
+              <AppButton variant="outline" small label={t('map.details')} accessibilityLabel={`${t('map.details')}: ${row.item.name}`} onPress={() => setSelectedId(row.item.id)} testID={`place-${row.item.id}`} />
+            </Card>
+          ) : (
+            <Card style={styles.listCard}>
+              <View style={styles.listHead}>
+                <View style={styles.listIcon}><Icon name={SERVICE_ICONS[row.item.category] ?? 'office-building'} size={22} color={colors.navy} /></View>
+                <View style={styles.flex}>
+                  <AppText variant="h4" heading={2}>{row.item.name}</AppText>
+                  <AppText variant="caption">{tx('category', row.item.category)} · {tx('area', row.item.area)}</AppText>
+                </View>
+              </View>
+              <StatusBadge status={row.item.status} />
+              <AppText variant="bodySmall" color={colors.text}>{row.item.summary}</AppText>
+              <AppButton variant="outline" small label={t('map.details')} accessibilityLabel={`${t('map.details')}: ${row.item.name}`} onPress={() => setSelectedId(row.item.id)} testID={`service-${row.item.id}`} />
             </Card>
           )}
         />
       )}
       <Sheet visible={!!selected} onClose={() => setSelectedId(null)} title={selected?.name ?? ''} testID="service-sheet">
         {selected && <ServiceDetail service={selected} onClose={() => setSelectedId(null)} />}
+      </Sheet>
+      <Sheet visible={!!selectedResource} onClose={() => setSelectedId(null)} title={selectedResource?.name ?? ''} testID="resource-sheet">
+        {selectedResource && <ResourceDetail resource={selectedResource} />}
       </Sheet>
     </Screen>
   );
@@ -225,6 +315,7 @@ const styles = StyleSheet.create({
   listCard: { marginHorizontal: spacing.lg, gap: spacing.sm },
   listHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   listIcon: { width: 40, height: 40, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
+  listIconResource: { backgroundColor: colors.navy },
   detail: { gap: spacing.md },
   comparison: { gap: spacing.sm },
   comparisonPart: { gap: spacing.xs },

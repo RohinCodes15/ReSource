@@ -1,6 +1,6 @@
 import type * as Leaflet from 'leaflet';
 import { useEffect, useRef, useState } from 'react';
-import { colors, statusTone } from '../theme';
+import { colors } from '../theme';
 import type { MapPin, ServiceMapProps } from './ServiceMap.types';
 
 // OpenStreetMap's own tile server is fine for a demo. For real traffic set EXPO_PUBLIC_MAP_TILE_URL
@@ -27,19 +27,23 @@ function loadLeafletCss(): Promise<void> {
   });
 }
 
-/** A paper-colored disc with a status glyph and a navy edge, so status never depends on color alone. */
-function pinHtml(status: string, selected: boolean): string {
-  const tone = statusTone(status);
+/**
+ * A City service is a paper-colored disc with a status glyph and a navy edge; a place to get help
+ * is a navy square with "+". Shape and glyph carry the meaning, so it never depends on color alone.
+ */
+function pinHtml(pin: MapPin, selected: boolean): string {
   const size = selected ? 38 : 30;
-  const ring = selected ? `border:3px solid ${colors.navyDark};` : `border:2px solid ${colors.navy};`;
+  const resource = pin.kind === 'resource';
+  const edge = resource ? (selected ? colors.gold : colors.white) : (selected ? colors.navyDark : colors.navy);
+  const ring = `border:${selected ? 3 : 2}px solid ${edge};`;
   return (
-    `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${tone.bg};${ring}box-sizing:border-box;` +
+    `<div style="width:${size}px;height:${size}px;border-radius:${resource ? '8px' : '50%'};background:${pin.bg};${ring}box-sizing:border-box;` +
     `box-shadow:0 1px 3px rgba(26,34,51,.25);display:flex;align-items:center;justify-content:center;` +
-    `color:${tone.text};font:700 ${selected ? 18 : 15}px/1 system-ui,sans-serif">${tone.glyph}</div>`
+    `color:${pin.fg};font:700 ${selected ? 18 : 15}px/1 system-ui,sans-serif">${pin.glyph}</div>`
   );
 }
 
-/** A group of pins: a navy disc with the number of services in it. */
+/** A group of pins: a navy disc with the number of places in it. */
 function clusterHtml(count: number): string {
   return (
     `<div style="width:40px;height:40px;border-radius:50%;background:${colors.navy};border:3px solid ${colors.background};` +
@@ -67,7 +71,7 @@ function cluster(L: typeof Leaflet, map: Leaflet.Map, pins: MapPin[], zoom: numb
       groups.push({ key: '', pins: [pin], lat: pin.latitude, lng: pin.longitude, x: point.x, y: point.y });
     }
   });
-  return groups.map((g) => ({ key: g.pins.map((p) => p.service.id).sort().join('|'), pins: g.pins, lat: g.lat, lng: g.lng }));
+  return groups.map((g) => ({ key: g.pins.map((p) => p.id).sort().join('|'), pins: g.pins, lat: g.lat, lng: g.lng }));
 }
 
 /** Web map built on Leaflet and OpenStreetMap tiles (react-native-maps is phones only). */
@@ -141,21 +145,21 @@ export default function ServiceMap({ pins, selectedId, onSelect, center, you, re
       Object.entries(extra ?? {}).forEach(([name, value]) => element?.setAttribute(name, value));
     };
     const drawPin = (pin: MapPin, lat: number, lng: number, dx = 0, dy = 0) => {
-      const selected = pin.service.id === selectedId;
+      const selected = pin.id === selectedId;
       const size = selected ? 38 : 30;
       const marker = L.marker([lat, lng], {
-        icon: L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2 - dx, size / 2 - dy], html: pinHtml(pin.service.status, selected) }),
+        icon: L.divIcon({ className: '', iconSize: [size, size], iconAnchor: [size / 2 - dx, size / 2 - dy], html: pinHtml(pin, selected) }),
         title: pin.label,
         alt: pin.label,
         keyboard: true,
         zIndexOffset: selected ? 1000 : 0,
-      }).on('click', () => onSelectRef.current(pin.service.id)).addTo(layer);
-      tag(marker, pin.label, `pin-${pin.service.id}`);
+      }).on('click', () => onSelectRef.current(pin.id)).addTo(layer);
+      tag(marker, pin.label, `pin-${pin.id}`);
     };
     cluster(L, map, pins, zoom).forEach((group) => {
       if (group.pins.length === 1) { drawPin(group.pins[0], group.pins[0].latitude, group.pins[0].longitude); return; }
-      // An opened group, or one holding the selected service, is drawn as a ring around its center.
-      if (group.key === opened || group.pins.some((pin) => pin.service.id === selectedId)) {
+      // An opened group, or one holding the selected pin, is drawn as a ring around its center.
+      if (group.key === opened || group.pins.some((pin) => pin.id === selectedId)) {
         const radius = Math.max(28, group.pins.length * 9);
         group.pins.forEach((pin, i) => {
           const angle = (2 * Math.PI * i) / group.pins.length - Math.PI / 2;
@@ -187,7 +191,7 @@ export default function ServiceMap({ pins, selectedId, onSelect, center, you, re
 
   // Bring the selected pin into view, a little above center so the detail sheet does not hide it.
   useEffect(() => {
-    const pin = pins.find((p) => p.service.id === selectedId);
+    const pin = pins.find((p) => p.id === selectedId);
     if (pin && mapRef.current) mapRef.current.setView([pin.latitude - 0.004, pin.longitude], Math.max(mapRef.current.getZoom(), 14));
     // Only when the selection changes, not when the filter does.
     // eslint-disable-next-line react-hooks/exhaustive-deps
