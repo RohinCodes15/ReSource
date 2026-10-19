@@ -23,7 +23,7 @@ LANGUAGE_NAMES: dict[str, str] = {
     "zh": "Mandarin Chinese (Simplified characters)",
     "vi": "Vietnamese",
 }
-MAX_ROWS_PER_KIND = 40
+MAX_ROWS_PER_KIND = 100
 
 RULES = """You are ReSource's AI assistant. ReSource is an independent student project for residents \
 of Fremont, California: it tracks city budget reductions and helps people find services nearby. \
@@ -80,7 +80,9 @@ def with_distance(rows: list[Row], lat: float | None, lng: float | None) -> list
 
 def load_rows(lat: float | None = None, lng: float | None = None) -> tuple[list[Row], list[Row]]:
     store = get_store()
-    services = sorted(store.list("services"), key=lambda s: s["id"])[:MAX_ROWS_PER_KIND]
+    # Keep every current catalog row available to chat; if the catalog grows beyond the
+    # prompt cap, preserve changed services ahead of the open directory entries.
+    services = sorted(store.list("services"), key=lambda s: (s.get("status") == "open", s["id"]))[:MAX_ROWS_PER_KIND]
     resources = with_distance(sorted(store.list("resources"), key=lambda r: r["id"]), lat, lng)[:MAX_ROWS_PER_KIND]
     return services, resources
 
@@ -95,6 +97,8 @@ def build_system(language: str) -> list[dict]:
 
 # ---- Basic mode: a direct lookup, used whenever Claude is unavailable -------------------------
 
+FREE_HINTS = ("free", "gratis", "gratuito", "gratuita", "sin costo", "sin cargo",
+              "miễn phí", "免费", "رایگان", "مجانی")
 CATEGORY_HINTS: dict[str, tuple[str, ...]] = {
     "Food": ("food", "hungry", "meal", "grocer", "pantry", "eat", "comida", "alimento", "despensa", "hambre", "食物", "食品", "吃", "饭", "غذا", "خوراک", "نان", "thức ăn", "thực phẩm", "đói", "ăn"),
     "Health": ("health", "clinic", "doctor", "medical", "dental", "dentist", "vision", "clínica", "clinica", "médico", "medico", "salud", "诊所", "医生", "医疗", "صحی", "کلینیک", "داکتر", "phòng khám", "bác sĩ", "y tế"),
@@ -123,7 +127,7 @@ GENERIC_NAME_WORDS = frozenset((
     "fremont", "city", "county", "area", "bay", "community", "health", "library", "services", "service", "center", "clinic",
     "resource", "family", "food", "bank", "senior", "institute", "league", "volunteers", "mobile", "pantry", "crisis",
     "lifeline", "suicide", "immigration", "alameda", "the", "and", "for",
-    "centers", "clinics", "resources", "nonprofit", "nonprofits", "support",
+    "centers", "clinics", "resources", "nonprofit", "nonprofits", "support", "council",
 ))
 COUNCIL_HINTS = ("council", "mayor", "vote", "representative", "district", "concejal", "alcalde", "voto", "议员", "市长", "投票", "شورا", "شهردار", "رأی", "نماینده", "hội đồng", "thị trưởng", "bỏ phiếu", "nghị viên")
 
@@ -180,7 +184,6 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
         lines.append(text["emergency"])
 
     categories = [c for c, hints in CATEGORY_HINTS.items() if c not in ("Referral", "Crisis") and _has(q, hints)]
-    picked = [r for r in resources if r["category"] in categories][:4]
     words = set(re.findall(r"[a-z0-9]+", q))
     named = []
     for resource in resources:
@@ -188,9 +191,12 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
         distinctive = {word for word in name_words - GENERIC_NAME_WORDS if len(word) >= 3}
         if distinctive & words:
             named.append(resource)
-    for row in named:
-        if row not in picked:
-            picked.append(row)
+    # A named provider is a more precise answer than every item in its broad category.
+    picked = named[:4] if named else [r for r in resources if r["category"] in categories][:4]
+    if "Food" in categories and _has(q, FREE_HINTS):
+        free_terms = ("free groceries", "free food", "food is free", "comida gratis", "comida gratuita",
+                      "gratis", "sin costo", "miễn phí", "免费", "رایگان", "مجانی")
+        picked = [r for r in picked if any(term in (r["name"] + " " + r.get("description", "")).lower() for term in free_terms)]
     if picked:
         lines.append(text["found"])
         for r in picked[:5]:
@@ -208,7 +214,7 @@ def local_answer(query: str, language: str, lat: float | None, lng: float | None
     # A resource that merely shares a word with the question must not hide the list of reductions.
     if reduced and (topic_words or (_has(q, SERVICE_HINTS) and not categories)):
         lines.append(text["services"])
-        for s in reduced[:6]:
+        for s in reduced[:12]:
             lines.append(f"• {s['name']}: {s['summary']}")
             sources.append(s["name"])
 
