@@ -3,17 +3,18 @@
 Uses the U.S. Census Bureau Geocoder, a free public government service with no API key:
 https://geocoding.geo.census.gov/geocoder/
 
-Why this script exists: on 2026-10-12 the Census geocoder's firewall rejected every request
-from the development network, and the open geocoders built on OpenStreetMap (Nominatim,
-Photon) disallow automated lookups in robots.txt, which this project obeys. So the
-coordinates in shared/data were estimated by hand and every row is marked
-`"coords": "approximate"`. Run this script from a home or school network to fix that.
+City of Fremont's parks directory includes map coordinates for its park facilities; those
+source coordinates are marked `"coords": "city-directory"` and kept as published. Other
+rows marked `"approximate"` or without coordinates are looked up with the U.S. Census
+Geocoder. OpenStreetMap geocoders are not used because their robots.txt disallows automated
+lookups.
 
 Reads and rewrites, in place:
     shared/data/services.json
     shared/data/resources.json
 Only `lat`, `lng` and `coords` change, and only on rows that have a street address. A row
-that is geocoded gets `"coords": "census"`. Phone lines and PO boxes keep lat/lng = null.
+that is geocoded gets `"coords": "census"`. Published City directory points are preserved unless
+`--all` is passed. Phone lines and PO boxes keep lat/lng = null.
 
 Run:
     python scraper/geocode.py            # geocode every row still marked approximate
@@ -29,7 +30,8 @@ import sys
 from pathlib import Path
 from urllib.parse import urlencode
 
-from polite import PoliteClient
+from polite import PoliteClient, RobotsDisallowed
+from requests import RequestException
 
 REPO_DIR = Path(__file__).resolve().parent.parent
 DATA_FILES = [REPO_DIR / "shared" / "data" / "services.json", REPO_DIR / "shared" / "data" / "resources.json"]
@@ -37,9 +39,13 @@ GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddre
 # A real street address starts with a house number. "Phone service" or "PO Box 1170" do not.
 STREET_ADDRESS_RE = re.compile(r"^\d+\s+\S+")
 # Suite and building numbers confuse the geocoder and do not change where the door is.
-UNIT_RE = re.compile(r",?\s*(?:\b(?:Suite|Ste|Building|Bldg|Unit)\b\.?|#)\s*[A-Za-z0-9/]+", re.I)
+UNIT_RE = re.compile(r",?\s*(?:\b(?:Suite|Ste|Building|Bldg|Unit)\b\.?|#)\s*[A-Za-z0-9/]+", re.IGNORECASE)
 # Everything we list is in or next to Fremont; reject a match that lands somewhere else.
 BOUNDS = {"lat": (37.40, 37.65), "lng": (-122.20, -121.80)}
+# The Census geocoder does not resolve the City-listed market intersection as a street number.
+GEOCODER_ADDRESS_OVERRIDES = {
+    "res-fremont-irvington-farmers-market-1adad67": "Bay Street and Chapel Avenue, Fremont, CA 94538",
+}
 
 
 def street_address(address: str) -> str | None:
@@ -71,12 +77,12 @@ def main() -> int:
         rows = json.loads(path.read_text(encoding="utf-8"))
         changed = 0
         for row in rows:
-            address = street_address(row.get("address") or "")
-            if address is None or (row.get("coords") == "census" and not args.all):
+            address = GEOCODER_ADDRESS_OVERRIDES.get(row["id"]) or street_address(row.get("address") or "")
+            if address is None or (row.get("coords") in {"census", "city-directory"} and not args.all):
                 continue
             try:
                 result = geocode(client, address)
-            except Exception as exc:  # a firewall page or a timeout should not stop the rest
+            except (RequestException, RobotsDisallowed, ValueError, KeyError) as exc:  # one bad address should not stop the rest
                 client.log.warning("geocoder error for %s: %s", address, exc)
                 result = None
             if result is None:
@@ -91,7 +97,7 @@ def main() -> int:
             path.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         print(f"{path.relative_to(REPO_DIR)}: {changed} row(s) {'would change' if args.dry_run else 'updated'}")
     if failures:
-        print(f"{failures} address(es) were not geocoded and keep their approximate position.", file=sys.stderr)
+        print(f"{failures} address(es) were not geocoded; existing coordinates were preserved or remain null.", file=sys.stderr)
     return 1 if failures else 0
 
 
