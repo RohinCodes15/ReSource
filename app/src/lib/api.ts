@@ -8,7 +8,8 @@ import type { Alert, AlertCategory, AreaCode, Budget, ChatTurn, Council, ImpactL
 import { adminTokenStore, authTokenStore, getInstallToken, offlineStore } from '../state/stores';
 
 const DEFAULT_API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
-const configured = process.env.EXPO_PUBLIC_API_URL;
+const configured = process.env.EXPO_PUBLIC_API_URL?.trim();
+const DEFAULT_REQUEST_TIMEOUT_MS = configured ? 10000 : 1500;
 // An Android emulator reaches the development computer at 10.0.2.2, not localhost.
 const forAndroid = configured?.replace('://localhost', '://10.0.2.2').replace('://127.0.0.1', '://10.0.2.2');
 export const API_URL = ((Platform.OS === 'android' ? forAndroid : configured) || DEFAULT_API_URL).replace(/\/$/, '');
@@ -37,7 +38,7 @@ async function headersFor(options: Options): Promise<Record<string, string>> {
 
 async function request<T>(path: string, options: Options = {}): Promise<T> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 10000);
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS);
   options.signal?.addEventListener('abort', () => controller.abort());
   let response: Response;
   try {
