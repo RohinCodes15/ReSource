@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useRef } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { APP_NAME } from '../../../../shared/constants';
@@ -6,6 +7,7 @@ import type { Budget } from '../../../../shared/types';
 import { LedgerRow, ShareBar } from '../../components/Charts';
 import { LanguageSelector } from '../../components/LanguageSelector';
 import { LocationChip } from '../../components/LocationChip';
+import { Tour } from '../../components/Tour';
 import { Illustration } from '../../components/illustrations';
 import { Footer, Screen } from '../../components/Page';
 import { AppButton, AppText, Eyebrow, FadeIn, Icon, type IconName, Rule, Skeleton, SourceLine } from '../../components/ui';
@@ -13,6 +15,7 @@ import { ALERT_ICONS, bundledAlerts, bundledBudget, bundledResources, bundledSer
 import { useApi } from '../../hooks/useData';
 import { getAlerts, getBudget, getStats, type Stats } from '../../lib/api';
 import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
+import { tourSeenStore } from '../../state/stores';
 import { colors, MAX_CONTENT_WIDTH, radius, spacing } from '../../theme';
 
 // The Community Board and Community Impact are reached from More.
@@ -51,6 +54,13 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { t, dirIcon, locale } = useTranslation();
+  const tourSeen = tourSeenStore.use();
+  const forMeTarget = useRef<View | null>(null);
+  const mapTarget = useRef<View | null>(null);
+  const resourcesTarget = useRef<View | null>(null);
+  const chatTarget = useRef<View | null>(null);
+  const reportTarget = useRef<View | null>(null);
+  const tourTargets = { forMe: forMeTarget, map: mapTarget, resources: resourcesTarget, chat: chatTarget, report: reportTarget };
   const stats = useApi(getStats, bundledStats);
   const alerts = useApi(getAlerts, () => bundledAlerts);
   // The hero shows the copy bundled with the app straight away, then the server's copy when it arrives.
@@ -121,7 +131,7 @@ export default function HomeScreen() {
         </View>
 
         {/* The main thing the app is for, and the one gold button on this screen. */}
-        <View style={styles.forMe} testID="home-for-me">
+        <View ref={forMeTarget} style={styles.forMe} testID="home-for-me">
           <AppText variant="h2" heading={2}>{t('home.forMeTitle')}</AppText>
           <AppText color={colors.text} style={styles.measure}>{t('home.forMeBody')}</AppText>
           <AppButton variant="gold" icon="text-box-search" label={t('home.forMeButton')} onPress={() => router.push('/for-me' as never)} style={styles.forMeButton} testID="home-action-forMe" />
@@ -190,9 +200,15 @@ export default function HomeScreen() {
               const subtitle = action.key === 'resources'
                 ? t('home.resourcesSubtitle', { count: s?.resources ?? bundledResources.length })
                 : t(`home.${action.key}Subtitle`);
+              const tourTarget = action.key === 'map' ? mapTarget
+                : action.key === 'resources' ? resourcesTarget
+                  : action.key === 'chat' ? chatTarget
+                    : action.key === 'report' ? reportTarget
+                      : undefined;
               return (
                 <Pressable
                   key={action.href}
+                  ref={tourTarget}
                   onPress={() => router.push(action.href as never)}
                   accessibilityRole="button"
                   accessibilityLabel={`${title}. ${subtitle}`}
@@ -219,6 +235,7 @@ export default function HomeScreen() {
         {latest && <SourceLine title={t('home.dataSources')} retrieved={latest.retrieved} />}
         <Footer />
       </View>
+      {!tourSeen && <Tour targets={tourTargets} />}
     </Screen>
   );
 }

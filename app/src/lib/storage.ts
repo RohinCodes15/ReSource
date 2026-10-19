@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   location: { key: 'resource.location', category: 'essential', i18n: 'location' },
   installToken: { key: 'resource.installToken', category: 'essential', i18n: 'installToken' },
   favorites: { key: 'resource.favorites', category: 'essential', i18n: 'favorites' },
+  tourSeen: { key: 'resource.tourSeen', category: 'essential', i18n: 'tourSeen' },
   alerts: { key: 'resource.alerts', category: 'essential', i18n: 'alerts' },
   age: { key: 'resource.age', category: 'essential', i18n: 'age' },
   consent: { key: 'resource.storageConsent', category: 'essential', i18n: 'consent' },

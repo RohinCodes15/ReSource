@@ -12,7 +12,7 @@ import { ApiError, deleteMyData, exportMyData, sendFeedback } from '../../lib/ap
 import { applyDocumentLanguage, formatDate, languageStore, useTranslation } from '../../lib/i18n';
 import { saveTextFile } from '../../lib/platform';
 import { authEnabled, signInAvailable } from '../../lib/supabase';
-import { ageStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore } from '../../state/stores';
+import { ageStore, consentStore, locationStore, resetDeviceData, TEXT_SCALES, textScaleStore, tourSeenStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
 
 type Notice = { tone: 'success' | 'warning' | 'info'; text: string };
@@ -101,6 +101,10 @@ export default function SettingsScreen() {
         <LocationChip />
         {location && <AppButton variant="outline" icon="map-marker-off" label={t('location.clear')} onPress={() => locationStore.set(null)} testID="settings-clear-location" />}
         <AppText variant="caption">{t('location.privacy')}</AppText>
+      </Card>
+
+      <Card style={styles.block}>
+        <AppButton variant="outline" icon="refresh" label={t('settings.showTour')} onPress={() => { tourSeenStore.set(false); router.replace('/' as never); }} testID="settings-show-tour" />
       </Card>
 
       <Card style={styles.block}>

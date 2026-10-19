@@ -90,6 +90,9 @@ export const favoritesStore = createStore<string[]>([], 'favorites');
 export const toggleFavorite = (id: string) =>
   favoritesStore.set((ids) => (ids.includes(id) ? ids.filter((other) => other !== id) : [...ids, id]));
 
+export const tourSeenStore = createStore<boolean>(false, 'tourSeen');
+export const markTourSeen = () => tourSeenStore.set(true);
+
 export type AlertPrefs = { subscribed: boolean; categories: AlertCategory[]; areas: AreaCode[]; notifications: boolean; read: string[]; notified: string[] };
 export const alertPrefsStore = createStore<AlertPrefs>({ subscribed: false, categories: [], areas: [], notifications: false, read: [], notified: [] }, 'alerts');
 
@@ -153,7 +156,7 @@ export function getInstallToken(): Promise<string> {
 
 // ---- Startup and reset ---------------------------------------------------------------------
 
-const persisted = [locationStore, textScaleStore, favoritesStore, alertPrefsStore, consentStore, ageStore];
+const persisted = [locationStore, textScaleStore, favoritesStore, tourSeenStore, alertPrefsStore, consentStore, ageStore];
 
 /** Load everything saved on the device. Called once before the first screen renders. */
 export async function hydrateStores(): Promise<void> {
