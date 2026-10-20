@@ -244,7 +244,12 @@
     "cardFailed": "无法打印或分享卡片。",
     "cardCopied": "卡片已复制为文字。",
     "before": "变更前",
-    "after": "变更后"
+    "after": "变更后",
+    "contextTitle": "全市及您所在的地区",
+    "contextCitywide": "{{count}} 项全市性变化影响弗里蒙特每一位居民（在市政府列出金额的项目中，合计 {{amount}}）。",
+    "contextCitywideNone": "ReSource 读过的市政府文件没有显示全市性的削减。",
+    "contextArea": "位于{{area}}的 {{count}} 项服务已削减或关闭。",
+    "contextAreaNone": "ReSource 读过的市政府文件没有显示位于{{area}}的服务有削减或关闭。"
   },
   "more": {
     "city": "城市与预算",

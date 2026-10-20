@@ -68,6 +68,30 @@ export function whatChangedForMe(services: Service[], resources: Resource[], are
   });
 }
 
+export type AreaContext = {
+  /** Citywide services the data lists as reduced or closed. */
+  citywideCount: number;
+  /** Sum of `cut_amount` over those services, counting only rows that have a published amount. */
+  citywideAmount: number;
+  /** Reduced or closed services located in the person's ZIP area; null when no ZIP area is chosen. */
+  areaCount: number | null;
+};
+
+/**
+ * Two separate facts, not a comparison: what changed citywide, and what changed among the
+ * services located in the person's area. Most ZIP areas have no local change in the data, and
+ * the citywide changes reach everyone, so ranking areas against each other would mislead.
+ */
+export function getAreaContext(services: Service[], area: AreaCode | null | undefined): AreaContext {
+  const changed = services.filter((service) => service.status !== 'open');
+  const citywide = changed.filter((service) => service.area === 'citywide');
+  return {
+    citywideCount: citywide.length,
+    citywideAmount: citywide.reduce((total, service) => total + (service.cut_amount ?? 0), 0),
+    areaCount: area && area !== 'citywide' ? changed.filter((service) => inMyArea(service, area)).length : null,
+  };
+}
+
 // ---- The printable card ---------------------------------------------------------------------
 
 /** Every piece of text on the card that is not data, already in the reader's language. */

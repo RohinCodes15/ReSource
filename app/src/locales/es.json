@@ -244,7 +244,12 @@
     "cardFailed": "No se pudo imprimir ni compartir la tarjeta.",
     "cardCopied": "La tarjeta se copió como texto.",
     "before": "Antes",
-    "after": "Después"
+    "after": "Después",
+    "contextTitle": "En toda la ciudad y en su zona",
+    "contextCitywide": "{{count}} cambios en toda la ciudad afectan a todos los residentes de Fremont ({{amount}} en total donde la Ciudad indica un monto).",
+    "contextCitywideNone": "Los documentos de la Ciudad que ReSource ha leído no muestran recortes en toda la ciudad.",
+    "contextArea": "{{count}} servicios ubicados en {{area}} están reducidos o cerrados.",
+    "contextAreaNone": "Los documentos de la Ciudad que ReSource ha leído no muestran servicios reducidos o cerrados ubicados en {{area}}."
   },
   "more": {
     "city": "Ciudad y presupuesto",

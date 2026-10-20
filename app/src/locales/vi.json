@@ -244,7 +244,12 @@
     "cardFailed": "Không in hoặc chia sẻ được thẻ.",
     "cardCopied": "Thẻ đã được sao chép dưới dạng văn bản.",
     "before": "Trước",
-    "after": "Sau"
+    "after": "Sau",
+    "contextTitle": "Toàn thành phố và trong khu vực của quý vị",
+    "contextCitywide": "{{count}} thay đổi trên toàn thành phố ảnh hưởng đến mọi cư dân Fremont (tổng cộng {{amount}} ở những mục Thành phố có nêu số tiền).",
+    "contextCitywideNone": "Các tài liệu của Thành phố mà ReSource đã đọc không cho thấy cắt giảm nào trên toàn thành phố.",
+    "contextArea": "{{count}} dịch vụ nằm trong {{area}} bị cắt giảm hoặc đóng cửa.",
+    "contextAreaNone": "Các tài liệu của Thành phố mà ReSource đã đọc không cho thấy dịch vụ nào nằm trong {{area}} bị cắt giảm hoặc đóng cửa."
   },
   "more": {
     "city": "Thành phố và ngân sách",

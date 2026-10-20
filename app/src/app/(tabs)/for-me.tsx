@@ -13,7 +13,7 @@ import { formatDate, formatMoney, useTranslation } from '../../lib/i18n';
 import { printHtml, shareText } from '../../lib/platform';
 import { locationStore } from '../../state/stores';
 import { colors, spacing } from '../../theme';
-import { type CardLabels, type ForMeSection, impactCardHtml, impactCardText, inMyArea, INTERESTS, type Interest, RESOURCE_CATEGORIES, whatChangedForMe } from '../../utils/forMe';
+import { type CardLabels, type ForMeSection, getAreaContext, impactCardHtml, impactCardText, inMyArea, INTERESTS, type Interest, RESOURCE_CATEGORIES, whatChangedForMe } from '../../utils/forMe';
 
 const ICONS: Record<Interest, IconName> = { kids: 'account-child', seniors: 'human-cane', transit: 'road-variant', health: 'hospital-box', parks: 'tree' };
 
@@ -37,6 +37,7 @@ export default function ForMeScreen() {
     () => (shown ? whatChangedForMe(services.data ?? [], resources.data ?? [], area, shown) : []),
     [shown, services.data, resources.data, area],
   );
+  const context = useMemo(() => getAreaContext(services.data ?? [], area), [services.data, area]);
 
   const toggle = (interest: Interest) => {
     setPicked((current) => (current.includes(interest) ? current.filter((value) => value !== interest) : [...current, interest]));
@@ -103,6 +104,19 @@ export default function ForMeScreen() {
           <AppText variant="caption" live="polite">{t('forMe.cardArea', { area: tx('area', area ?? 'citywide') })}</AppText>
           {(services.bundled || resources.bundled) && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
           <Banner tone="info" icon="translate" body={t('forMe.englishNote')} />
+
+          {/* Two separate facts, not a comparison: see getAreaContext. */}
+          <Card style={styles.context} testID="for-me-context">
+            <AppText variant="h4" heading={3}>{t('forMe.contextTitle')}</AppText>
+            <AppText variant="bodySmall" color={colors.text} testID="for-me-context-citywide">
+              {context.citywideCount > 0 ? t('forMe.contextCitywide', { count: context.citywideCount, amount: formatMoney(context.citywideAmount) }) : t('forMe.contextCitywideNone')}
+            </AppText>
+            {context.areaCount != null && area && (
+              <AppText variant="bodySmall" color={colors.text} testID="for-me-context-area">
+                {t(context.areaCount > 0 ? 'forMe.contextArea' : 'forMe.contextAreaNone', { count: context.areaCount, area: tx('area', area) })}
+              </AppText>
+            )}
+          </Card>
 
           {sections.map((section) => (
             <Section key={section.key} title={sectionTitle(section.key)} level={3} testID={`for-me-section-${section.key}`}>
@@ -173,6 +187,7 @@ const styles = StyleSheet.create({
   resultsHead: { paddingTop: spacing.lg },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  context: { gap: spacing.xs },
   comparison: { gap: spacing.sm },
   comparisonPart: { gap: spacing.xs },
   item: { gap: spacing.xs, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },

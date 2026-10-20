@@ -244,7 +244,12 @@
     "cardFailed": "The card could not be printed or shared.",
     "cardCopied": "The card was copied as text.",
     "before": "Before",
-    "after": "After"
+    "after": "After",
+    "contextTitle": "Citywide and in your area",
+    "contextCitywide": "{{count}} citywide changes affect every Fremont resident ({{amount}} in total where the City lists an amount).",
+    "contextCitywideNone": "The City documents ReSource has read show no citywide reductions.",
+    "contextArea": "{{count}} services located in {{area}} are reduced or closed.",
+    "contextAreaNone": "The City documents ReSource has read show no reduced or closed services located in {{area}}."
   },
   "more": {
     "city": "City and budget",
