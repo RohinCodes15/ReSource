@@ -40,6 +40,16 @@ export function Icon({ name, size = 24, color = colors.text, style }: { name: Ic
 export const NATIVE_DRIVER = Platform.OS !== 'web';
 const isWeb = Platform.OS === 'web';
 
+/** A subtle hover cue on web that leaves touch interactions unchanged. */
+function useWebHover() {
+  const [hovered, setHovered] = useState(false);
+  return {
+    hovered,
+    onHoverIn: isWeb ? () => setHovered(true) : undefined,
+    onHoverOut: isWeb ? () => setHovered(false) : undefined,
+  };
+}
+
 /**
  * accessibilityState for phones. On the web React Native turns `selected` into aria-selected,
  * which is not allowed on buttons, radios or switches, so there the role-specific attribute
@@ -234,12 +244,15 @@ type AppButtonProps = {
 
 /** The app's button: gold for the main action, navy for secondary, outline for the rest. */
 export function AppButton({ label, onPress, href, variant = 'navy', icon, disabled, loading, style, accessibilityLabel, testID, small }: AppButtonProps) {
+  const { hovered, onHoverIn, onHoverOut } = useWebHover();
   const foreground = variant === 'gold' ? colors.navyDark : variant === 'navy' ? colors.white : variant === 'danger' ? colors.dangerDark : colors.navy;
   const blocked = !!(disabled || loading);
   const link = blocked ? null : linkProps(href);
   return (
     <Pressable
       {...(link as object)}
+      onHoverIn={onHoverIn}
+      onHoverOut={onHoverOut}
       onPress={() => { if (href && !link) void openUrl(href); else onPress?.(); }}
       disabled={blocked}
       accessibilityRole={link ? 'link' : 'button'}
@@ -253,6 +266,7 @@ export function AppButton({ label, onPress, href, variant = 'navy', icon, disabl
         variant === 'navy' && styles.buttonNavy,
         variant === 'outline' && styles.buttonOutline,
         variant === 'danger' && styles.buttonDanger,
+        isWeb && hovered && !blocked && BUTTON_HOVER[variant],
         pressed && styles.pressed,
         blocked && styles.disabled,
         style,
@@ -268,16 +282,19 @@ export function AppButton({ label, onPress, href, variant = 'navy', icon, disabl
 export function IconAction({ icon, label, onPress, href, tone = 'navy', active, testID }: {
   icon: IconName; label: string; onPress?: () => void; href?: string; tone?: 'navy' | 'gold'; active?: boolean; testID?: string;
 }) {
+  const { hovered, onHoverIn, onHoverOut } = useWebHover();
   const link = linkProps(href);
   return (
     <Pressable
       {...(link as object)}
+      onHoverIn={onHoverIn}
+      onHoverOut={onHoverOut}
       onPress={() => { if (href && !link) void openUrl(href); else onPress?.(); }}
       accessibilityRole={link ? 'link' : 'button'}
       accessibilityLabel={label}
       accessibilityState={active === undefined ? undefined : a11yState({ selected: active })}
       testID={testID}
-      style={({ pressed }) => [styles.iconAction, tone === 'gold' && styles.iconActionGold, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.iconAction, tone === 'gold' && styles.iconActionGold, isWeb && hovered && styles.hovered, pressed && styles.pressed]}
     >
       <Icon name={icon} size={22} color={tone === 'gold' ? colors.goldDark : colors.navy} />
     </Pressable>
@@ -291,16 +308,19 @@ const WRAP_ANYWHERE = { overflowWrap: 'anywhere' } as unknown as TextStyle;
 export function LinkText({ label, href, onPress, variant = 'bodySmall', icon, testID, color = colors.navy }: {
   label: string; href?: string; onPress?: () => void; variant?: TextVariant; icon?: IconName; testID?: string; color?: string;
 }) {
+  const { hovered, onHoverIn, onHoverOut } = useWebHover();
   const link = linkProps(href);
   return (
     <Pressable
       {...(link as object)}
+      onHoverIn={onHoverIn}
+      onHoverOut={onHoverOut}
       onPress={() => { if (href && !link) void openUrl(href); else onPress?.(); }}
       accessibilityRole={href ? 'link' : 'button'}
       accessibilityLabel={label}
       hitSlop={8}
       testID={testID}
-      style={styles.link}
+      style={({ pressed }) => [styles.link, isWeb && hovered && styles.linkHovered, pressed && styles.pressed]}
     >
       {icon && <Icon name={icon} size={16} color={color} />}
       <AppText variant={variant} color={color} style={[styles.linkText, isWeb && WRAP_ANYWHERE]}>{label}</AppText>
@@ -312,16 +332,19 @@ export function LinkText({ label, href, onPress, variant = 'bodySmall', icon, te
 export function Chip({ label, selected, onPress, icon, testID, role = 'button' }: {
   label: string; selected?: boolean; onPress: () => void; icon?: IconName; testID?: string; role?: 'button' | 'radio';
 }) {
+  const { hovered, onHoverIn, onHoverOut } = useWebHover();
   return (
     <Pressable
       onPress={onPress}
+      onHoverIn={onHoverIn}
+      onHoverOut={onHoverOut}
       role={role}
       aria-pressed={role === 'button' ? !!selected : undefined}
       aria-checked={role === 'radio' ? !!selected : undefined}
       accessibilityState={a11yState({ selected: !!selected })}
       accessibilityLabel={label}
       testID={testID}
-      style={({ pressed }) => [styles.chip, selected && styles.chipOn, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.chip, selected && styles.chipOn, isWeb && hovered && (selected ? styles.chipOnHovered : styles.chipHovered), pressed && styles.pressed]}
     >
       {icon && <Icon name={icon} size={16} color={selected ? colors.white : colors.navy} />}
       <AppText variant="label" color={selected ? colors.white : colors.text} numberOfLines={1}>{label}</AppText>
@@ -402,16 +425,19 @@ export function Field({ label, value, onChangeText, error, hint, placeholder, mu
 
 /** Checkbox with its label. Starts unchecked wherever it is used: consent is never pre-ticked. */
 export function Checkbox({ checked, onChange, label, error, testID }: { checked: boolean; onChange: (next: boolean) => void; label: string; error?: string | null; testID?: string }) {
+  const { hovered, onHoverIn, onHoverOut } = useWebHover();
   return (
     <View style={styles.stackSmall}>
       <Pressable
         onPress={() => onChange(!checked)}
+        onHoverIn={onHoverIn}
+        onHoverOut={onHoverOut}
         role="checkbox"
         aria-checked={checked}
         accessibilityState={a11yState({ checked })}
         accessibilityLabel={label}
         testID={testID}
-        style={styles.checkRow}
+        style={({ pressed }) => [styles.checkRow, isWeb && hovered && styles.hovered, pressed && styles.pressed]}
       >
         <View style={[styles.checkBox, checked && styles.checkBoxOn, !!error && styles.inputError]}>
           {checked && <Icon name="check-bold" size={16} color={colors.white} />}
@@ -426,8 +452,9 @@ export function Checkbox({ checked, onChange, label, error, testID }: { checked:
 /** On/off switch with a visible label. The state is shown by position and a word, not color. */
 export function Toggle({ value, onChange, label, description, testID }: { value: boolean; onChange: (next: boolean) => void; label: string; description?: string; testID?: string }) {
   const { t } = useTranslation();
+  const { hovered, onHoverIn, onHoverOut } = useWebHover();
   return (
-    <Pressable onPress={() => onChange(!value)} role="switch" aria-checked={value} accessibilityState={a11yState({ checked: value })} accessibilityLabel={label} testID={testID} style={styles.toggleRow}>
+    <Pressable onPress={() => onChange(!value)} onHoverIn={onHoverIn} onHoverOut={onHoverOut} role="switch" aria-checked={value} accessibilityState={a11yState({ checked: value })} accessibilityLabel={label} testID={testID} style={({ pressed }) => [styles.toggleRow, isWeb && hovered && styles.hovered, pressed && styles.pressed]}>
       <View style={styles.flex}>
         <AppText variant="label">{label}</AppText>
         {!!description && <AppText variant="caption">{description}</AppText>}
@@ -516,6 +543,7 @@ export function SourceLine({ title, url, retrieved, sample }: { title?: string |
 
 /** Two or three exclusive options shown side by side. */
 export function Segmented<T extends string>({ options, value, onChange, label }: { options: { value: T; label: string }[]; value: T; onChange: (next: T) => void; label: string }) {
+  const [hovered, setHovered] = useState<T | null>(null);
   return (
     <View style={styles.segmented} role="radiogroup" accessibilityLabel={label}>
       {options.map((option) => {
@@ -524,12 +552,14 @@ export function Segmented<T extends string>({ options, value, onChange, label }:
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
+            onHoverIn={isWeb ? () => setHovered(option.value) : undefined}
+            onHoverOut={isWeb ? () => setHovered(null) : undefined}
             role="radio"
             aria-checked={active}
             accessibilityState={a11yState({ selected: active })}
             accessibilityLabel={option.label}
             testID={`segment-${option.value}`}
-            style={[styles.segment, active && styles.segmentOn]}
+            style={({ pressed }) => [styles.segment, active && styles.segmentOn, isWeb && hovered === option.value && !active && styles.segmentHovered, pressed && styles.pressed]}
           >
             <AppText variant="label" color={active ? colors.white : colors.text} numberOfLines={1}>{option.label}</AppText>
           </Pressable>
@@ -558,6 +588,8 @@ const styles = StyleSheet.create({
   buttonDanger: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.dangerDark },
   buttonText: { fontSize: 15, flexShrink: 1, textAlign: 'center' },
   pressed: { opacity: 0.8 },
+  hovered: { opacity: 0.85 },
+  linkHovered: { opacity: 0.72 },
   disabled: { opacity: 0.5 },
   iconAction: { width: MIN_TOUCH, height: MIN_TOUCH, borderRadius: radius.md, backgroundColor: colors.navyLight, alignItems: 'center', justifyContent: 'center' },
   iconActionGold: { backgroundColor: colors.goldLight },
@@ -565,6 +597,8 @@ const styles = StyleSheet.create({
   linkText: { textDecorationLine: 'underline', flexShrink: 1 },
   chip: { minHeight: MIN_TOUCH, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong, flexDirection: 'row', alignItems: 'center', gap: 6 },
   chipOn: { backgroundColor: colors.navy, borderColor: colors.navy },
+  chipHovered: { backgroundColor: colors.navyLight, borderColor: colors.navy },
+  chipOnHovered: { backgroundColor: colors.navyDark, borderColor: colors.navyDark },
   field: { gap: 6 },
   input: { minHeight: 48, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontFamily: fonts.regular, color: colors.text },
   inputMultiline: { minHeight: 120, textAlignVertical: 'top' },
@@ -592,4 +626,13 @@ const styles = StyleSheet.create({
   segmented: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, padding: 3, alignSelf: 'flex-start' },
   segment: { minHeight: 38, paddingHorizontal: spacing.lg, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   segmentOn: { backgroundColor: colors.navy },
+  segmentHovered: { backgroundColor: colors.navyLight },
 });
+
+/** Hover on the web shifts each button one shade, so the mouse visibly lands on it. */
+const BUTTON_HOVER: Record<ButtonVariant, ViewStyle> = {
+  gold: { opacity: 0.88 },
+  navy: { backgroundColor: colors.navyDark },
+  outline: { backgroundColor: colors.navyLight },
+  danger: { backgroundColor: colors.dangerLight },
+};

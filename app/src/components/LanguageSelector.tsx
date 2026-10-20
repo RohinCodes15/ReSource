@@ -49,7 +49,7 @@ export function LanguageSelector({ light = false }: { light?: boolean }) {
         accessibilityRole="button"
         accessibilityLabel={`${t('language.select')}: ${current.label}`}
         testID="language-button"
-        style={[styles.button, light ? styles.buttonLight : styles.buttonDark]}
+        style={({ pressed }) => [styles.button, light ? styles.buttonLight : styles.buttonDark, pressed && styles.pressed]}
       >
         <Icon name="translate" size={18} color={color} />
         <AppText variant="label" color={color}>{current.label}</AppText>
@@ -69,4 +69,5 @@ const styles = StyleSheet.create({
   button: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: MIN_TOUCH, paddingHorizontal: spacing.md, borderRadius: radius.pill },
   buttonLight: { backgroundColor: 'rgba(255,255,255,0.16)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.5)' },
   buttonDark: { backgroundColor: colors.navyLight },
+  pressed: { opacity: 0.8 },
 });
