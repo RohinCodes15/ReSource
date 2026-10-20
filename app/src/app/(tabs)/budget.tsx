@@ -3,7 +3,7 @@ import type { Budget, BudgetTable } from '../../../../shared/types';
 import { BarList, ChartCard, DataTable, LedgerRow, ShareBar } from '../../components/Charts';
 import { Illustration } from '../../components/illustrations';
 import { Screen } from '../../components/Page';
-import { AppText, Banner, ErrorState, Eyebrow, LoadingList, Rule, Section, SourceLine } from '../../components/ui';
+import { AppText, Banner, ErrorState, Eyebrow, Rule, Section, SourceLine } from '../../components/ui';
 import { bundledBudget } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getBudget } from '../../lib/api';
@@ -19,11 +19,11 @@ export default function BudgetScreen() {
   const { width } = useWindowDimensions();
   // Mission Peak keeps its own 4:1 shape: the full column on a phone, at most 360px wide.
   const peakWidth = Math.min(360, Math.min(width, MAX_CONTENT_WIDTH) - SCREEN_PADDING * 2);
-  const { data, loading, error, reload } = useApi(getBudget, () => bundledBudget);
+  const { data, error, reload } = useApi(getBudget, () => bundledBudget);
 
-  if (loading) return <Screen title={t('titles.budget')}><LoadingList /></Screen>;
-  if (error || !data) return <Screen title={t('titles.budget')}><ErrorState onRetry={reload} /></Screen>;
-  const budget: Budget = data;
+  if (error) return <Screen title={t('titles.budget')}><ErrorState onRetry={reload} /></Screen>;
+  // Match Home's first-paint behavior: render bundled data immediately, then swap in the API copy.
+  const budget: Budget = data ?? bundledBudget;
 
   /** The document a figure came from, as a link, with its page number where we have one. */
   const source = (id: string, page?: number | null, key?: string) => {

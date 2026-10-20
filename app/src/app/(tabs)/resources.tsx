@@ -4,7 +4,7 @@ import { FlatList, Pressable, ScrollView, StyleSheet, TextInput, View } from 're
 import type { Resource } from '../../../../shared/types';
 import { LocationChip } from '../../components/LocationChip';
 import { Footer, Screen } from '../../components/Page';
-import { Icon, AppText, Banner, Chip, EmptyState, ErrorState, IconAction, LinkText, LoadingList, Pill, Segmented, SourceLine } from '../../components/ui';
+import { Icon, AppText, Banner, Chip, EmptyState, ErrorState, IconAction, LinkText, Pill, Segmented, SourceLine } from '../../components/ui';
 import { bundledResources, RESOURCE_ICONS } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { getResources } from '../../lib/api';
@@ -72,10 +72,11 @@ export default function ResourcesScreen() {
   const { t, tx } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ categories?: string; from?: string; at?: string }>();
-  const { data, loading, error, reload } = useApi(getResources, () => bundledResources);
+  const { data, error, reload } = useApi(getResources, () => bundledResources);
   const { origin } = useOrigin();
   const favorites = favoritesStore.use();
   const [query, setQuery] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
   const [savedOnly, setSavedOnly] = useState(false);
   const [sort, setSort] = useState<'near' | 'name'>('near');
@@ -90,17 +91,20 @@ export default function ResourcesScreen() {
     setSelected(params.categories ? params.categories.split(',').filter(Boolean) : []);
   }
 
-  const categories = useMemo(() => Array.from(new Set((data ?? []).map((r) => r.category))).sort(), [data]);
+  // Show the bundled catalog immediately, like Home does with the bundled budget. When the API
+  // responds it replaces these rows without moving the footer down after first paint.
+  const catalog = data ?? bundledResources;
+  const categories = useMemo(() => Array.from(new Set(catalog.map((r) => r.category))).sort(), [catalog]);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const filtered = (data ?? []).filter((r) =>
+    const filtered = catalog.filter((r) =>
       (selected.length === 0 || selected.includes(r.category)) &&
       (!savedOnly || favorites.includes(r.id)) &&
       (!q || [r.name, r.description, r.address, tx('resourceCategory', r.category), ...r.languages].some((v) => v.toLowerCase().includes(q))));
     const withDistance = sortByDistance(filtered, origin);
     return sort === 'near' ? withDistance : [...withDistance].sort((a, b) => a.name.localeCompare(b.name));
-  }, [data, query, selected, savedOnly, favorites, origin, sort, tx]);
+  }, [catalog, query, selected, savedOnly, favorites, origin, sort, tx]);
 
   const toggle = (category: string) => setSelected((current) => (current.includes(category) ? current.filter((c) => c !== category) : [...current, category]));
   const clearFilters = () => { setQuery(''); setSelected([]); setSavedOnly(false); router.setParams({ categories: '', from: '' } as never); };
@@ -112,11 +116,13 @@ export default function ResourcesScreen() {
           <LinkText label={t('resources.showAll')} onPress={clearFilters} testID="clear-alternatives" />
         </Banner>
       )}
-      <View style={styles.search}>
+      <View style={[styles.search, searchFocused && styles.searchFocused]}>
         <Icon name="magnify" size={22} color={colors.muted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           placeholder={t('resources.searchPlaceholder')}
           placeholderTextColor={colors.muted}
           accessibilityLabel={t('resources.searchLabel')}
@@ -125,7 +131,7 @@ export default function ResourcesScreen() {
           style={styles.searchInput}
         />
         {!!query && (
-          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} style={styles.clear} testID="resource-search-clear">
+          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} style={({ pressed }) => [styles.clear, pressed && styles.clearPressed]} testID="resource-search-clear">
             <Icon name="close-circle" size={20} color={colors.muted} />
           </Pressable>
         )}
@@ -149,15 +155,14 @@ export default function ResourcesScreen() {
   return (
     <Screen title={t('titles.resources')} scroll={false} testID="resources-screen">
       <FlatList
-        data={loading || error ? [] : rows}
+        data={error ? [] : rows}
         keyExtractor={(r) => r.id}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.list}
         ListHeaderComponent={header}
         ListEmptyComponent={
-          loading ? <View style={styles.pad}><LoadingList /></View>
-            : error ? <ErrorState onRetry={reload} />
-              : <EmptyState art="niles" icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
+          error ? <ErrorState onRetry={reload} />
+            : <EmptyState art="niles" icon="map-search-outline" title={t('resources.emptyTitle')} body={t('resources.emptyBody')} action={<LinkText label={t('resources.showAll')} onPress={clearFilters} />} />
         }
         ListFooterComponent={<View style={styles.pad}><Footer /></View>}
         renderItem={({ item }) => <ResourceCard item={item} saved={favorites.includes(item.id)} onShared={setNotice} />}
@@ -173,8 +178,10 @@ const styles = StyleSheet.create({
   list: { paddingBottom: spacing.xxl },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.md, gap: spacing.md },
   search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },
+  searchFocused: { borderColor: colors.navy },
   searchInput: { flex: 1, minHeight: MIN_TOUCH, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
   clear: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
+  clearPressed: { opacity: 0.8 },
   chips: { gap: spacing.sm, paddingVertical: 2 },
   sortRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md },
   // Each place is a ruled entry, not a box: a hairline above, room around it.

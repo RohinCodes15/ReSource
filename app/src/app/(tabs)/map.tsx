@@ -130,6 +130,7 @@ export default function MapScreen() {
   const loading = servicesLoading || resourcesLoading;
   const { origin, location } = useOrigin();
   const [view, setView] = useState<'map' | 'list'>(MAP_AVAILABLE ? 'map' : 'list');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [query, setQuery] = useState('');
   const [layer, setLayer] = useState<Layer>('all');
   const [status, setStatus] = useState<'all' | ServiceStatus>('all');
@@ -190,11 +191,13 @@ export default function MapScreen() {
 
   const controls = (
     <View style={styles.controls}>
-      <View style={styles.search}>
+      <View style={[styles.search, searchFocused && styles.searchFocused]}>
         <Icon name="magnify" size={22} color={colors.muted} />
         <TextInput
           value={query}
           onChangeText={setQuery}
+          onFocus={() => setSearchFocused(true)}
+          onBlur={() => setSearchFocused(false)}
           placeholder={t('map.searchPlaceholder')}
           placeholderTextColor={colors.muted}
           accessibilityLabel={t('map.searchLabel')}
@@ -203,7 +206,7 @@ export default function MapScreen() {
           style={styles.searchInput}
         />
         {!!query && (
-          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} style={styles.clear} testID="map-search-clear">
+          <Pressable onPress={() => setQuery('')} accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} style={({ pressed }) => [styles.clear, pressed && styles.clearPressed]} testID="map-search-clear">
             <Icon name="close-circle" size={20} color={colors.muted} />
           </Pressable>
         )}
@@ -304,8 +307,10 @@ const styles = StyleSheet.create({
   pad: { padding: spacing.lg },
   controls: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.sm, gap: spacing.sm },
   search: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },
+  searchFocused: { borderColor: colors.navy },
   searchInput: { flex: 1, minHeight: MIN_TOUCH, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
   clear: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
+  clearPressed: { opacity: 0.8 },
   chips: { gap: spacing.sm, paddingVertical: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   mapWrap: { flex: 1, minHeight: 260, backgroundColor: colors.navyLight, overflow: 'hidden' },

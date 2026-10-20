@@ -1,12 +1,12 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { AREA_CODES } from '../../../../shared/constants';
 import type { AreaCode, ImpactLevel } from '../../../../shared/types';
 import { BrowseOnly, ConsentFields, useConsent } from '../../components/ConsentFields';
 import { Screen } from '../../components/Page';
-import { Icon, a11yState, AppButton, AppText, Banner, Card, Chip, Field, type IconName, LoadingList, Pill } from '../../components/ui';
+import { Icon, a11yState, AppButton, AppText, Banner, Card, Chip, Field, type IconName, Pill } from '../../components/ui';
 import { bundledServices } from '../../data';
 import { useApi } from '../../hooks/useData';
 import { ApiError, createReport, getMyReports, getServices, type ReportReceipt, uploadReportPhoto } from '../../lib/api';
@@ -136,6 +136,12 @@ export default function ReportScreen() {
       ))}
     </View>
   );
+  // Use the bundled choices while the API request is in flight. Sort both copies the same way so
+  // arriving live data does not reorder the long list and move the footer on first load.
+  const availableServices = useMemo(
+    () => [...(services.data ?? bundledServices)].sort((a, b) => a.name.localeCompare(b.name)),
+    [services.data],
+  );
 
   if (age === 'under13') return <Screen title={t('titles.report')}><BrowseOnly /></Screen>;
 
@@ -173,19 +179,17 @@ export default function ReportScreen() {
       {step === 0 && (
         <View style={styles.block}>
           <AppText variant="bodySmall" color={colors.text}>{t('report.step1Help')}</AppText>
-          {services.loading ? <LoadingList count={2} /> : (
-            <View role="radiogroup" accessibilityLabel={steps[0]} style={styles.options}>
-              {[...(services.data ?? []).map((s) => ({ id: s.id, name: s.name })), { id: OTHER, name: t('report.other') }].map((option) => {
-                const active = serviceId === option.id;
-                return (
-                  <Pressable key={option.id} onPress={() => setServiceId(option.id)} role="radio" aria-checked={active} accessibilityState={a11yState({ selected: active })} accessibilityLabel={option.name} testID={`service-option-${option.id}`} style={[styles.option, active && styles.optionOn]}>
-                    <Icon name={active ? 'radiobox-marked' : 'radiobox-blank'} size={22} color={active ? colors.navy : colors.borderStrong} />
-                    <AppText style={styles.flex}>{option.name}</AppText>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
+          <View role="radiogroup" accessibilityLabel={steps[0]} style={styles.options}>
+            {[...availableServices.map((s) => ({ id: s.id, name: s.name })), { id: OTHER, name: t('report.other') }].map((option) => {
+              const active = serviceId === option.id;
+              return (
+                <Pressable key={option.id} onPress={() => setServiceId(option.id)} role="radio" aria-checked={active} accessibilityState={a11yState({ selected: active })} accessibilityLabel={option.name} testID={`service-option-${option.id}`} style={({ pressed }) => [styles.option, active && styles.optionOn, pressed && styles.optionPressed]}>
+                  <Icon name={active ? 'radiobox-marked' : 'radiobox-blank'} size={22} color={active ? colors.navy : colors.borderStrong} />
+                  <AppText style={styles.flex}>{option.name}</AppText>
+                </Pressable>
+              );
+            })}
+          </View>
           {serviceId === OTHER && <Field label={t('report.otherLabel')} value={otherName} onChangeText={setOtherName} maxLength={160} required error={touched ? serviceError : null} testID="other-service" />}
           {touched && serviceError && serviceId !== OTHER && <AppText variant="caption" color={colors.dangerDark} live="polite" testID="step-error">{serviceError}</AppText>}
         </View>
@@ -217,7 +221,7 @@ export default function ReportScreen() {
             {IMPACTS.map(({ level, icon }) => {
               const active = impact === level;
               return (
-                <Pressable key={level} onPress={() => setImpact(level)} role="radio" aria-checked={active} accessibilityState={a11yState({ selected: active })} accessibilityLabel={`${tx('impact', level)}. ${t(`report.impact_${level}`)}`} testID={`impact-${level}`} style={[styles.option, active && styles.optionOn]}>
+                <Pressable key={level} onPress={() => setImpact(level)} role="radio" aria-checked={active} accessibilityState={a11yState({ selected: active })} accessibilityLabel={`${tx('impact', level)}. ${t(`report.impact_${level}`)}`} testID={`impact-${level}`} style={({ pressed }) => [styles.option, active && styles.optionOn, pressed && styles.optionPressed]}>
                   <Icon name={active ? 'radiobox-marked' : 'radiobox-blank'} size={22} color={active ? colors.navy : colors.borderStrong} />
                   <Icon name={icon} size={26} color={colors.navy} />
                   <View style={styles.flex}>
@@ -258,6 +262,7 @@ const styles = StyleSheet.create({
   options: { gap: spacing.sm },
   option: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH + 8, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.borderStrong, backgroundColor: colors.surface },
   optionOn: { borderColor: colors.navy, borderWidth: 2, backgroundColor: colors.navyLight },
+  optionPressed: { opacity: 0.8 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   photo: { width: '100%', height: 200, borderRadius: radius.md },
   nav: { flexDirection: 'row', gap: spacing.md },
