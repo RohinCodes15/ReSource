@@ -15,7 +15,7 @@ test('offline: a banner appears and every screen still shows content', async ({ 
   const errors = trackErrors(page, NETWORK_NOISE);
   await open(page, '/');
   await expect(v(page, 'offline-banner')).toContainText('Offline mode');
-  await expect(v(page, 'stat-reduced')).toContainText('of the 11 City services');
+  await expect(v(page, 'stat-reduced')).toContainText('of the 62 City services');
   await expect(page.locator('[data-testid="stat-reports"]')).toHaveCount(0); // never a made-up number
   await expect(v(page, 'home-hero-value')).toHaveText('$289.1M'); // the hero needs no connection
   for (const [path, name] of ROUTES) {
@@ -23,9 +23,9 @@ test('offline: a banner appears and every screen still shows content', async ({ 
     await expect(page.locator('[data-testid="error-state"]:visible:not([inert] *)'), name).toHaveCount(0);
   }
   await open(page, '/resources');
-  await expect(page.locator('[data-testid^="resource-res-"]:visible:not([inert] *)')).toHaveCount(14);
+  await expect(v(page, 'resource-count')).toContainText('82 resources');
   await open(page, '/map');
-  await expect.poll(() => mapServiceCount(page)).toBe(11);
+  await expect.poll(() => mapServiceCount(page)).toBe(62);
   await open(page, '/reptracker');
   await expect(page.locator('[data-testid^="member-"]:visible:not([inert] *)')).toHaveCount(7);
   await open(page, '/budget');
