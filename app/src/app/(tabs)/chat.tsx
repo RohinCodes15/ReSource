@@ -147,12 +147,12 @@ export default function ChatScreen() {
           testID="chat-input"
         />
         {busy ? (
-          <Pressable onPress={() => abortRef.current?.abort()} accessibilityRole="button" accessibilityLabel={t('chat.stop')} testID="chat-stop" style={[styles.send, styles.stop]}>
+          <Pressable onPress={() => abortRef.current?.abort()} accessibilityRole="button" accessibilityLabel={t('chat.stop')} testID="chat-stop" style={({ pressed }) => [styles.send, styles.stop, pressed && styles.pressed]}>
             <Icon name="stop" size={22} color={colors.white} />
           </Pressable>
         ) : (
-          <Pressable onPress={() => send(input)} disabled={!canSend} accessibilityRole="button" accessibilityLabel={t('chat.send')} accessibilityState={{ disabled: !canSend }} testID="chat-send" style={[styles.send, !canSend && styles.sendDisabled]}>
-            <Icon name="arrow-up" size={22} color={colors.white} />
+          <Pressable onPress={() => send(input)} disabled={!canSend} accessibilityRole="button" accessibilityLabel={t('chat.send')} accessibilityState={{ disabled: !canSend }} testID="chat-send" style={({ pressed }) => [styles.send, !canSend && styles.sendDisabled, pressed && styles.pressed]}>
+            <Icon name="arrow-up" size={22} color={canSend ? colors.navyDark : colors.goldDark} />
           </Pressable>
         )}
       </View>
@@ -231,7 +231,8 @@ const styles = StyleSheet.create({
   chips: { gap: spacing.sm },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   input: { flex: 1, minHeight: 48, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.borderStrong, paddingHorizontal: spacing.lg, fontFamily: fonts.regular, fontSize: 16, color: colors.text },
-  send: { width: 48, height: 48, minWidth: MIN_TOUCH, borderRadius: 24, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
-  sendDisabled: { backgroundColor: colors.borderStrong },
+  send: { width: 48, height: 48, minWidth: MIN_TOUCH, borderRadius: 24, backgroundColor: colors.gold, alignItems: 'center', justifyContent: 'center' },
+  sendDisabled: { backgroundColor: colors.goldLight, borderWidth: 1.5, borderColor: colors.goldDark },
+  pressed: { opacity: 0.8 },
   stop: { backgroundColor: colors.dangerDark },
 });
