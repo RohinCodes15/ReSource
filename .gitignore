@@ -59,3 +59,5 @@ Thumbs.db
 
 # Browser-automation scratch files
 .playwright-mcp/
+.vercel
+.env.local

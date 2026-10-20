@@ -20,11 +20,11 @@ Fremont cut services to balance its budget, but the details sit in long PDFs. I 
 
 Give every resident a sourced, plain-language summary of budget changes that affect them, nearby places to get help, and a way to tell the City how a change affects them.
 
-## A technical challenge and how you solved it (1,500 characters at most): 1458
+## A technical challenge and how you solved it (1,500 characters at most): 1454
 
-The hardest problem was deciding what the chat could promise. My first version gave the model the app's services, resources, budget and council data and told it to answer only from those sources. That kept answers tied to our civic dataset, but the model refused most questions residents actually asked. I changed the primary path to general-purpose Claude Sonnet 5 so residents can ask beyond the app's data. We gave up the dataset-based factual-accuracy guarantee: Claude may be wrong about Fremont. A visible disclaimer now says AI answers can be wrong and asks residents to check Fremont-specific facts in the app's sourced Budget and Resources tabs.
+The hardest problem was deciding what the chat could promise. My first version gave the model the app's services, resources, budget and council data and told it to answer only from those sources. That kept answers tied to our civic dataset, but the model refused most questions residents actually asked. I changed the primary path to general-purpose Claude Sonnet 5 so residents can ask beyond the app's data. We gave up the dataset-based factual-accuracy promise: Claude may be wrong about Fremont. A visible disclaimer now says AI answers can be wrong and asks residents to check Fremont-specific facts in the app's sourced Budget and Resources tabs.
 
-I added guardrails, not a guarantee. Claude is prompted to flag local claims and direct people to official sources; when a Fremont answer contains a phone number or address not in ReSource's data, the server replaces it with a keyword-search answer. Basic search is also used when there is no API key, Claude's call fails, or the daily token budget is spent. It is labeled "Basic search" and uses ReSource's data.
+I added guardrails, not a promise. Claude is prompted to flag local claims and direct people to official sources; when a Fremont answer contains a phone number or address not in ReSource's data, the server replaces it with a keyword-search answer. Basic search is also used when there is no API key, Claude's call fails, or the daily token budget is spent. It is labeled "Basic search" and uses ReSource's data.
 
 That matcher is the fallback path, not the primary assistant, and covers five languages. B1 exposed a bug: "Which services were cut?" matched Abode Services because "services" counted as a distinctive name word. I fixed the matcher to ignore generic words and require distinctive whole-word matches, then tested every suggestion in every language. A daily token budget limits model cost.
 

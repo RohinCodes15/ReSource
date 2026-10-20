@@ -129,6 +129,7 @@ export default function HomeScreen() {
             {sharesSource && <SourceLine title={t('budget.sourcePage', { title: sharesSource.title, page: shares.page })} url={sharesSource.url} retrieved={budget.retrieved} />}
           </View>
         </View>
+        {(budgetState.bundled || alerts.bundled) && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
 
         {/* The main thing the app is for, and the one gold button on this screen. */}
         <View ref={forMeTarget} style={styles.forMe} testID="home-for-me">

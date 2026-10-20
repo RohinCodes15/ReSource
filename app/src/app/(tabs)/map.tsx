@@ -125,8 +125,8 @@ type ListRow = { kind: 'service'; item: Service } | { kind: 'resource'; item: Re
 export default function MapScreen() {
   const { t, tx } = useTranslation();
   const params = useLocalSearchParams<{ service?: string }>();
-  const { data, loading: servicesLoading, error, reload } = useApi(getServices, () => bundledServices);
-  const { data: resourceData, loading: resourcesLoading } = useApi(getResources, () => bundledResources);
+  const { data, loading: servicesLoading, error, reload, bundled: servicesBundled } = useApi(getServices, () => bundledServices);
+  const { data: resourceData, loading: resourcesLoading, bundled: resourcesBundled } = useApi(getResources, () => bundledResources);
   const loading = servicesLoading || resourcesLoading;
   const { origin, location } = useOrigin();
   const [view, setView] = useState<'map' | 'list'>(MAP_AVAILABLE ? 'map' : 'list');
@@ -230,6 +230,7 @@ export default function MapScreen() {
       </View>
       <LocationChip compact />
       <AppText variant="caption" live="polite" testID="map-count">{countText}</AppText>
+      {(servicesBundled || resourcesBundled) && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
     </View>
   );
 

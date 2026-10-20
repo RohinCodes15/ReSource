@@ -137,7 +137,7 @@ export default function ReportScreen() {
     </View>
   );
   // Use the bundled choices while the API request is in flight. Sort both copies the same way so
-  // arriving live data does not reorder the long list and move the footer on first load.
+  // arriving API data does not reorder the long list and move the footer on first load.
   const availableServices = useMemo(
     () => [...(services.data ?? bundledServices)].sort((a, b) => a.name.localeCompare(b.name)),
     [services.data],

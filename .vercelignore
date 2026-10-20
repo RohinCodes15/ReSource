@@ -1,0 +1,17 @@
+# Vercel CLI uploads from the repository root (Root Directory is app/, which imports ../shared).
+# Keep local env files out: app/.env would turn sign-in on in the deployed site.
+**/.env*
+**/node_modules
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.expo
+app/dist
+app/test-results
+app/playwright-report
+backend
+scraper
+review
+submission
+.git

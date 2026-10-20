@@ -1,0 +1,34 @@
+# Render Blueprint for the API: New > Blueprint in the Render dashboard, pick this repository.
+# Builds the Dockerfile at the repository root on the free plan. Render asks for the two
+# `sync: false` secrets when the Blueprint is first applied, and generates ADMIN_TOKEN and
+# OWNER_HASH_SALT itself (read them under the service's Environment tab). Never change
+# OWNER_HASH_SALT afterwards: every resident's data is tied to it.
+services:
+  - type: web
+    name: resource-fremont-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: SUPABASE_URL
+        value: https://ichpaccsvhnztuazhsfa.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: ADMIN_TOKEN
+        generateValue: true
+      - key: OWNER_HASH_SALT
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://resource-fremont.vercel.app
+      # Render puts a proxy in front of the service (see S4 in docs/SECURITY.md).
+      - key: TRUST_PROXY
+        value: "1"

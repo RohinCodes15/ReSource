@@ -72,7 +72,7 @@ export default function ResourcesScreen() {
   const { t, tx } = useTranslation();
   const router = useRouter();
   const params = useLocalSearchParams<{ categories?: string; from?: string; at?: string }>();
-  const { data, error, reload } = useApi(getResources, () => bundledResources);
+  const { data, error, reload, bundled } = useApi(getResources, () => bundledResources);
   const { origin } = useOrigin();
   const favorites = favoritesStore.use();
   const [query, setQuery] = useState('');
@@ -148,6 +148,7 @@ export default function ResourcesScreen() {
         <Segmented label={t('resources.sortLabel')} value={sort} onChange={setSort} options={[{ value: 'near', label: t('resources.sortNear') }, { value: 'name', label: t('resources.sortName') }]} />
         <AppText variant="caption" live="polite" style={styles.flex} testID="resource-count">{t('resources.count', { count: rows.length })}</AppText>
       </View>
+      {bundled && <AppText variant="caption">{t('offline.savedCopy')}</AppText>}
       {!!notice && <Banner tone="success" body={notice} live testID="resource-notice" />}
     </View>
   );
