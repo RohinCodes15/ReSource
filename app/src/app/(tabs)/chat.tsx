@@ -6,8 +6,10 @@ import { HelpfulPrompt } from '../../components/HelpfulPrompt';
 import { LocationChip } from '../../components/LocationChip';
 import { Screen } from '../../components/Page';
 import { Icon, AppButton, AppText, Banner, Chip, LinkText, Pill } from '../../components/ui';
+import { bundledResources, bundledServices } from '../../data';
 import { ApiError, sendChat } from '../../lib/api';
 import { useTranslation } from '../../lib/i18n';
+import { telUrl } from '../../lib/platform';
 import { ageStore, type ChatMessage, chatStore, locationStore } from '../../state/stores';
 import { colors, fonts, MIN_TOUCH, radius, SCREEN_PADDING, spacing } from '../../theme';
 
@@ -15,6 +17,35 @@ import { colors, fonts, MIN_TOUCH, radius, SCREEN_PADDING, spacing } from '../..
 const SUGGESTIONS = ['chat.s1', 'chat.s2', 'chat.s3', 'chat.s4'];
 const MAX_HISTORY_TURNS = 20;
 const MAX_LENGTH = 1000;
+/** Places an answer can name, by name: what is needed to call one or show it on the map. */
+const PLACES = new Map<string, { id: string; phone: string | null; mappable: boolean }>([
+  ...bundledServices.map((s) => [s.name, { id: s.id, phone: s.phone, mappable: s.lat != null }] as const),
+  ...bundledResources.map((r) => [r.name, { id: r.id, phone: r.phone || null, mappable: r.lat != null }] as const),
+]);
+const MAX_PLACE_ACTIONS = 3;
+
+/** Call and Map buttons for the first few places an answer names, so a resident can act on it. */
+function PlaceActions({ sources }: { sources: string[] }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const places = sources.flatMap((name) => {
+    const place = PLACES.get(name);
+    return place && (place.phone || place.mappable) ? [{ name, ...place }] : [];
+  }).slice(0, MAX_PLACE_ACTIONS);
+  if (!places.length) return null;
+  return (
+    <View style={styles.places} testID="chat-places">
+      {places.map((place) => (
+        <View key={place.id} style={styles.place}>
+          <AppText variant="caption" color={colors.text} style={styles.placeName}>{place.name}</AppText>
+          {!!place.phone && <AppButton variant="outline" small icon="phone" label={place.phone} accessibilityLabel={t('chat.callPlace', { name: place.name, phone: place.phone })} href={telUrl(place.phone)} testID={`chat-call-${place.id}`} />}
+          {place.mappable && <AppButton variant="outline" small icon="map-marker" label={t('chat.map')} accessibilityLabel={t('chat.mapPlace', { name: place.name })} onPress={() => router.push({ pathname: '/map', params: { service: place.id } } as never)} testID={`chat-map-${place.id}`} />}
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const newId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 export default function ChatScreen() {
@@ -166,6 +197,7 @@ export default function ChatScreen() {
                 {!mine && !!item.mode && (
                   <View style={styles.meta}>
                     <Pill label={t(item.mode === 'ai' ? 'chat.modeAi' : 'chat.modeBasic')} icon={item.mode === 'ai' ? 'robot-outline' : 'database-search'} color={colors.navy} bg={colors.navyLight} />
+                    {!!item.sources?.length && <PlaceActions sources={item.sources} />}
                     <AppText variant="caption" testID="chat-sources">{t('chat.sources')}: {item.sources?.length ? item.sources.join(' · ') : t('chat.noSources')}</AppText>
                   </View>
                 )}
@@ -192,6 +224,9 @@ const styles = StyleSheet.create({
   assistant: { alignSelf: 'flex-start', borderRadius: 0, paddingVertical: spacing.xs, paddingHorizontal: spacing.lg, borderStartWidth: 3, borderStartColor: colors.navy },
   failed: { borderStartColor: colors.dangerDark, backgroundColor: colors.dangerLight, borderRadius: radius.sm },
   meta: { gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+  places: { gap: spacing.sm },
+  place: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
+  placeName: { flexBasis: '100%' },
   composer: { backgroundColor: colors.background, borderTopWidth: 1, borderTopColor: colors.border, paddingHorizontal: SCREEN_PADDING, paddingVertical: spacing.md, gap: spacing.sm },
   chips: { gap: spacing.sm },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

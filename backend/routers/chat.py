@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from collections.abc import Iterator
 from typing import Any, Literal
 
@@ -127,10 +128,40 @@ class AnthropicLLM:
                 raise Refused()
 
 
+class AiPause:
+    """A key with no credit, a revoked key or an unknown model fails every request the same way.
+    After one such failure Claude is skipped for a while, so each message is not first slowed
+    by a request that is bound to fail."""
+
+    SECONDS = 600
+
+    def __init__(self) -> None:
+        self.until = 0.0
+
+    def active(self) -> bool:
+        return time.monotonic() < self.until
+
+    def start(self) -> None:
+        self.until = time.monotonic() + self.SECONDS
+
+    def reset(self) -> None:
+        self.until = 0.0
+
+
+ai_pause = AiPause()
+
+
+def _lasting(exc: Exception) -> bool:
+    """True for failures that the next request would repeat (bad key, no credit, wrong model)."""
+    if isinstance(exc, (anthropic.AuthenticationError, anthropic.PermissionDeniedError, anthropic.NotFoundError)):
+        return True
+    return isinstance(exc, anthropic.BadRequestError) and "credit balance" in str(exc).lower()
+
+
 def get_llm() -> AnthropicLLM | None:
-    """The Claude client, or None when chat should use basic search (no key, or budget spent)."""
+    """The Claude client, or None when chat should use basic search (no key, budget spent, or paused)."""
     settings = get_settings()
-    if not settings.ai_enabled:
+    if not settings.ai_enabled or ai_pause.active():
         return None
     if not budget.available():
         logger.warning("Daily chat token budget spent; answering in basic search mode")
@@ -143,7 +174,9 @@ def _charge(llm: Any) -> None:
 
 
 def _basic(request: ChatIn) -> ChatOut:
-    reply, sources = grounding.local_answer(request.messages[-1].content, request.language, request.latitude, request.longitude)
+    # The question before this one, so a follow-up like "what about on Sunday?" keeps its topic.
+    previous = next((m.content for m in reversed(request.messages[:-1]) if m.role == "user"), None)
+    reply, sources = grounding.local_answer(request.messages[-1].content, request.language, request.latitude, request.longitude, previous)
     return ChatOut(reply=reply, sources=sources, mode="basic", language=request.language)
 
 
@@ -152,6 +185,9 @@ def _refusal(request: ChatIn) -> ChatOut:
 
 
 def _log_failure(exc: Exception) -> None:
+    if _lasting(exc):
+        ai_pause.start()
+        logger.warning("Claude is unavailable until the key, credit or model is fixed; using basic search for %s s", AiPause.SECONDS)
     if isinstance(exc, anthropic.AuthenticationError):
         logger.error("The ANTHROPIC_API_KEY on the server was rejected")
     elif isinstance(exc, anthropic.NotFoundError):
@@ -248,6 +284,6 @@ def chat_stream(request: ChatIn, http_request: Request) -> StreamingResponse:
 
 @router.get("/chat/status")
 def chat_status() -> dict[str, Any]:
-    if not get_settings().ai_enabled or not budget.available():
+    if not get_settings().ai_enabled or not budget.available() or ai_pause.active():
         return {"mode": "basic"}
     return {"mode": "ai", "model": get_settings().claude_model}

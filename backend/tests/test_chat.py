@@ -60,7 +60,9 @@ def sse(response):
 def test_basic_mode_answers_from_the_data_and_names_its_source(client):
     answer = ask(client, "Where can I get free food?").json()
     assert answer["mode"] == "basic" and answer["sources"] == ["TCV Food Bank + Mobile Pantry"]
-    assert "(510) 793-4583" in answer["reply"] and "Basic search mode" in answer["reply"]
+    assert "(510) 793-4583" in answer["reply"]
+    # The app shows the mode and the sources under the answer, so the reply does not repeat them.
+    assert "Basic search mode" not in answer["reply"] and "Sources:" not in answer["reply"]
 
 
 def test_basic_mode_says_it_does_not_know(client):
@@ -70,7 +72,7 @@ def test_basic_mode_says_it_does_not_know(client):
 
 def test_basic_mode_replies_in_the_selected_language_and_understands_it(client):
     spanish = ask(client, "¿Dónde hay comida gratis?", language="es").json()
-    assert "TCV Food Bank" in spanish["reply"] and "Fuentes:" in spanish["reply"]
+    assert "TCV Food Bank" in spanish["reply"] and spanish["reply"].startswith("Esto es lo que dicen")
     assert "TCV Food Bank" in ask(client, "哪里可以领取免费食物？", language="zh").json()["reply"]
     assert "نمی‌دانم" in ask(client, "آب و هوا چطور است؟", language="fa").json()["reply"]
 
@@ -297,3 +299,106 @@ def test_basic_mode_does_not_match_on_word_fragments(client):
     assert local_answer("I was fired", "en", None, None)[1] == []
     assert local_answer("where is the police station", "en", None, None)[1] == ["Fremont Detention Facility staffing", "Police Department administrative staffing"]
     assert local_answer("Tell me about Abode", "en", None, None)[1] == ["Abode Services"]
+
+
+# ---- Basic mode: safety, understanding and follow-ups -------------------------------------------
+
+@pytest.mark.parametrize(("question", "language"), [
+    ("I feel like hurting myself", "en"), ("i want to die", "en"), ("I don’t want to live anymore", "en"),
+    ("thinking about suicide", "en"), ("i might cut myself tonight", "en"), ("Quiero morir", "es"),
+    ("我不想活了", "zh"), ("می‌خواهم بمیرم", "fa"), ("tôi muốn chết", "vi"),
+])
+def test_basic_mode_answers_self_harm_with_988_first(client, question, language):
+    from grounding import BASIC_TEXT, local_answer
+
+    reply, sources = local_answer(question, language, None, None)
+    assert reply.startswith(BASIC_TEXT[language]["crisis"]), question
+    crisis = BASIC_TEXT[language]["crisis"]
+    assert "988" in reply and ("911" in crisis or "۹۱۱" in crisis)
+    assert sources == ["988 Suicide & Crisis Lifeline"]
+
+
+def test_basic_mode_points_abuse_to_911_and_211(client):
+    from grounding import local_answer
+
+    reply, sources = local_answer("my partner hits me and I'm not safe at home", "en", None, None)
+    assert reply.startswith("If you are in danger right now, call 911") and "211" in reply and sources
+
+
+@pytest.mark.parametrize("question", ["hi", "Hello!", "hey there", "what can you do", "help", "hola"])
+def test_basic_mode_greets_instead_of_saying_it_does_not_know(client, question):
+    from grounding import local_answer
+
+    reply, sources = local_answer(question, "es" if question == "hola" else "en", None, None)
+    assert sources == [] and "know" not in reply and ("Hi!" in reply or "¡Hola!" in reply)
+
+
+def test_basic_mode_understands_everyday_wording(client):
+    from grounding import local_answer
+
+    lonely = local_answer("my mom is 70 and lonely, any programs?", "en", None, None)[1]
+    assert any("Age Well" in name for name in lonely)
+    doctor = local_answer("I need a doctor but I don't have insurance", "en", None, None)[1]
+    assert "Clinic" in doctor[0]
+    evicted = local_answer("I'm about to be evicted", "en", None, None)[1]
+    assert "Abode Services" in evicted or "Project Sentinel" in evicted
+
+
+def test_basic_mode_lists_parks_to_visit_and_keeps_budget_questions_about_cuts(client):
+    from grounding import local_answer
+
+    reply, sources = local_answer("parks near me", "en", 37.5485, -121.9886)
+    assert reply.startswith("City parks:") and len(sources) == 5 and "mi" in reply
+    assert "Park and street-median capital replacement" not in sources
+    cut = local_answer("were park budgets cut?", "en", None, None)[1]
+    assert cut == ["Park and street-median capital replacement"]
+
+
+def test_basic_mode_says_when_hours_are_missing_and_how_to_report_a_pothole(client):
+    from grounding import local_answer
+
+    library = local_answer("is the library open on sunday", "en", None, None)[0]
+    assert "hours not listed, call first" in library
+    pothole = local_answer("how do I report a pothole", "en", None, None)[0]
+    assert "https://www.fremont.gov/residents/report-issues" in pothole
+
+
+def test_basic_mode_reads_a_follow_up_with_the_question_before_it(client):
+    turns = [{"role": "user", "content": "Where can I get free food?"},
+             {"role": "assistant", "content": "TCV Food Bank + Mobile Pantry"},
+             {"role": "user", "content": "what about on friday?"}]
+    answer = client.post("/chat", json={"messages": turns}).json()
+    assert answer["sources"] == ["TCV Food Bank + Mobile Pantry"] and "Fri" in answer["reply"]
+
+
+def test_basic_mode_does_not_repeat_the_last_answer_for_a_new_unrelated_question(client):
+    turns = [{"role": "user", "content": "Where can I get free food?"},
+             {"role": "assistant", "content": "TCV Food Bank + Mobile Pantry"},
+             {"role": "user", "content": "What is the weather on Mars?"}]
+    answer = client.post("/chat", json={"messages": turns}).json()
+    assert answer["sources"] == [] and "I don't know" in answer["reply"]
+
+
+def test_a_key_without_credit_switches_to_basic_search_without_retrying_claude(client, env, monkeypatch):
+    import anthropic
+    import httpx
+    from routers import chat
+    from settings import get_settings
+
+    env.setenv("ANTHROPIC_API_KEY", "test-key")
+    get_settings.cache_clear()
+    calls = []
+
+    class NoCredit:
+        last_usage = 0
+
+        def complete(self, system, messages):
+            calls.append(1)
+            response = httpx.Response(400, request=httpx.Request("POST", "https://api.anthropic.com/v1/messages"))
+            raise anthropic.BadRequestError("Your credit balance is too low to access the Anthropic API.", response=response, body=None)
+
+    monkeypatch.setattr(chat, "AnthropicLLM", lambda api_key, model: NoCredit())
+    assert ask(client, "Where can I get free food?").json()["mode"] == "basic"
+    assert ask(client, "Where can I get free food?").json()["mode"] == "basic"
+    assert calls == [1] and chat.get_llm() is None
+    assert client.get("/chat/status").json() == {"mode": "basic"}

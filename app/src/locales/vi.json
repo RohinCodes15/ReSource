@@ -466,7 +466,10 @@
     "s1": "Những dịch vụ nào đã bị cắt giảm?",
     "s2": "Tôi có thể nhận thực phẩm miễn phí ở đâu?",
     "s3": "Có phòng khám chi phí thấp không?",
-    "s4": "Làm sao liên hệ với nghị viên hội đồng của tôi?"
+    "s4": "Làm sao liên hệ với nghị viên hội đồng của tôi?",
+    "callPlace": "Gọi {{name}} theo số {{phone}}",
+    "map": "Bản đồ",
+    "mapPlace": "Xem {{name}} trên bản đồ"
   },
   "reps": {
     "intro": "Fremont có một thị trưởng do toàn thành phố bầu và sáu nghị viên hội đồng, mỗi khu một người. Hội đồng thông qua ngân sách thành phố.",

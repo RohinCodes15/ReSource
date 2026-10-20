@@ -47,6 +47,9 @@ def client(env):
     from chat_budget import budget
 
     budget.reset()
+    from routers.chat import ai_pause
+
+    ai_pause.reset()
     import main
 
     with TestClient(main.app) as test_client:
@@ -70,6 +73,9 @@ def restart():
     from chat_budget import budget
 
     budget.reset()
+    from routers.chat import ai_pause
+
+    ai_pause.reset()
 
 
 def report_body(**overrides):

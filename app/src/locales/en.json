@@ -466,7 +466,10 @@
     "s1": "Which services were cut?",
     "s2": "Where can I get free food?",
     "s3": "Is there a low-cost clinic?",
-    "s4": "How do I contact my council member?"
+    "s4": "How do I contact my council member?",
+    "callPlace": "Call {{name}} at {{phone}}",
+    "map": "Map",
+    "mapPlace": "Show {{name}} on the map"
   },
   "reps": {
     "intro": "Fremont has a mayor elected citywide and six council members, one per district. The Council adopts the city budget.",

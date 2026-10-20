@@ -466,7 +466,10 @@
     "s1": "¿Qué servicios se recortaron?",
     "s2": "¿Dónde puedo conseguir comida gratis?",
     "s3": "¿Hay una clínica de bajo costo?",
-    "s4": "¿Cómo me comunico con mi concejal?"
+    "s4": "¿Cómo me comunico con mi concejal?",
+    "callPlace": "Llamar a {{name}} al {{phone}}",
+    "map": "Mapa",
+    "mapPlace": "Ver {{name}} en el mapa"
   },
   "reps": {
     "intro": "Fremont tiene un alcalde elegido por toda la ciudad y seis concejales, uno por distrito. El Concejo adopta el presupuesto de la ciudad.",
