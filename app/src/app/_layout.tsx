@@ -22,8 +22,9 @@ const WEB_CSS = `
 html, body, #root { height: 100%; }
 body { background: ${colors.background}; }
 :focus { outline: none; }
-:focus-visible { outline: 3px solid ${colors.gold} !important; outline-offset: 2px !important; box-shadow: 0 0 0 2px ${colors.navyDark} !important; }
+:focus-visible:not([role="dialog"]) { outline: 3px solid ${colors.gold} !important; outline-offset: 2px !important; box-shadow: 0 0 0 2px ${colors.navyDark} !important; }
 input:focus-visible, textarea:focus-visible { outline-offset: 0 !important; }
+input[data-testid="map-search"]:focus-visible, input[data-testid="resource-search"]:focus-visible { outline: none !important; box-shadow: none !important; }
 .leaflet-container { font-family: inherit; }
 .leaflet-container.leaflet-container { background: #ECE6D8; }
 /* A calmer map: OpenStreetMap's colors turned to warm greys, so the pins carry the color. */

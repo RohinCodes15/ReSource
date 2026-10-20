@@ -168,49 +168,54 @@ export function Tour({ targets, onFinish }: { targets?: TourTargets; onFinish?: 
           style={[styles.callout, { width: calloutWidth }, placement && { position: 'absolute', ...placement }]}
         >
           <Card style={styles.card}>
-            <FadeIn key={step.key} style={styles.content}>
+            {/* Only the step's words fade in; the header and buttons stay put, so the card never goes blank. */}
+            <View style={styles.content}>
               <View style={styles.header}>
                 <Eyebrow>{progress}</Eyebrow>
                 <LinkText label={t('tour.skip')} variant="label" onPress={finish} testID="tour-skip" />
               </View>
-              <View ref={textBlock} {...groupText} style={styles.text}>
-                <AppText variant="h3" heading={2} nativeID={titleId}>{title}</AppText>
-                <AppText nativeID={bodyId}>{body}</AppText>
-              </View>
-              <View style={styles.guide}>
-                <View style={styles.guideRow}>
-                  <AppText variant="label" color={colors.navy}>{t('tour.whereLabel')}</AppText>
-                  <AppText variant="bodySmall" nativeID={whereId}>{where}</AppText>
+              <FadeIn key={step.key} style={styles.words}>
+                <View ref={textBlock} {...groupText} style={styles.text}>
+                  <AppText variant="h3" heading={2} nativeID={titleId}>{title}</AppText>
+                  <AppText nativeID={bodyId}>{body}</AppText>
                 </View>
-                <View style={styles.guideRow}>
-                  <AppText variant="label" color={colors.navy}>{t('tour.doLabel')}</AppText>
-                  <AppText variant="bodySmall" nativeID={doId}>{doThis}</AppText>
+                <View style={styles.guide}>
+                  <View style={styles.guideRow}>
+                    <AppText variant="label" color={colors.navy}>{t('tour.whereLabel')}</AppText>
+                    <AppText variant="bodySmall" nativeID={whereId}>{where}</AppText>
+                  </View>
+                  <View style={styles.guideRow}>
+                    <AppText variant="label" color={colors.navy}>{t('tour.doLabel')}</AppText>
+                    <AppText variant="bodySmall" nativeID={doId}>{doThis}</AppText>
+                  </View>
                 </View>
-              </View>
-              {step.route && (
-                <AppButton
-                  label={t('tour.openScreen', { screen: title })}
-                  variant="outline"
-                  small
-                  onPress={openCurrentScreen}
-                  testID={`tour-open-${step.key}`}
-                  style={styles.openAction}
-                />
-              )}
-              <View style={styles.actions}>
-                {index > 0 && (
-                  <AppButton label={t('common.back')} variant="outline" small onPress={() => setIndex(index - 1)} testID="tour-back" style={styles.action} />
+              </FadeIn>
+              <View style={styles.footer}>
+                {step.route && (
+                  <AppButton
+                    label={t('tour.openScreen', { screen: title })}
+                    variant="outline"
+                    small
+                    onPress={openCurrentScreen}
+                    testID={`tour-open-${step.key}`}
+                    style={styles.openAction}
+                  />
                 )}
-                <AppButton
-                  label={last ? t('tour.done') : t('common.next')}
-                  variant={last ? 'gold' : 'navy'}
-                  small
-                  onPress={() => (last ? finish() : setIndex(index + 1))}
-                  testID={last ? 'tour-done' : 'tour-next'}
-                  style={styles.action}
-                />
+                <View style={styles.actions}>
+                  {index > 0 && (
+                    <AppButton label={t('common.back')} variant="outline" small onPress={() => setIndex(index - 1)} testID="tour-back" style={styles.action} />
+                  )}
+                  <AppButton
+                    label={last ? t('tour.done') : t('common.next')}
+                    variant={last ? 'gold' : 'navy'}
+                    small
+                    onPress={() => (last ? finish() : setIndex(index + 1))}
+                    testID={last ? 'tour-done' : 'tour-next'}
+                    style={styles.action}
+                  />
+                </View>
               </View>
-            </FadeIn>
+            </View>
           </Card>
         </View>
       </View>
@@ -224,8 +229,12 @@ const styles = StyleSheet.create({
   shade: { position: 'absolute', backgroundColor: colors.overlay },
   ring: { position: 'absolute', borderWidth: 2, borderColor: colors.gold, borderRadius: radius.md },
   callout: { maxWidth: CALLOUT_MAX_WIDTH },
-  card: { ...shadow },
-  content: { gap: spacing.md },
+  // One height for every step (the longest fits), so the card does not resize or move on Next and Back.
+  card: { minHeight: 520, ...shadow },
+  content: { flexGrow: 1, gap: spacing.md },
+  words: { gap: spacing.md },
+  // The buttons sit at the bottom of the card, in the same place on every step.
+  footer: { marginTop: 'auto', gap: spacing.md },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, minHeight: MIN_TOUCH },
   text: { gap: spacing.sm },
   guide: { gap: spacing.md, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
