@@ -58,7 +58,7 @@ Any host that runs a container works the same way: build the `Dockerfile`, set t
 
 ### 2b. API on Render instead (free plan, no card)
 
-`render.yaml` describes the API as a free Render web service. In the Render dashboard choose New, Blueprint, and pick this repository. Render asks for `SUPABASE_SERVICE_ROLE_KEY` and `SUPABASE_JWT_SECRET`, sets the other variables from the file, and generates `ADMIN_TOKEN` and `OWNER_HASH_SALT` itself (read them under the service's Environment tab and keep a copy in a password manager). Edit `CORS_ORIGINS` in `render.yaml` if the web app's address differs; a push re-applies it.
+`render.yaml` describes the API as a free Render web service. In the Render dashboard choose New, Blueprint, and pick this repository. Render asks for `SUPABASE_SERVICE_ROLE_KEY`, sets the other variables from the file, and generates `ADMIN_TOKEN` and `OWNER_HASH_SALT` itself (read them under the service's Environment tab and keep a copy in a password manager). `SUPABASE_JWT_SECRET` holds the public half of the project's ES256 signing key as PEM, with `SUPABASE_JWT_ALGORITHM=ES256`. Edit `CORS_ORIGINS` in `render.yaml` if the web app's address differs; a push re-applies it.
 
 A free Render service sleeps after 15 minutes without traffic and takes about a minute to wake. The app gives up on a request after 10 seconds and shows the offline banner, so open `https://<api>/health` and wait for it to answer before showing the app to anyone.
 

@@ -1,6 +1,6 @@
 # Render Blueprint for the API: New > Blueprint in the Render dashboard, pick this repository.
-# Builds the Dockerfile at the repository root on the free plan. Render asks for the two
-# `sync: false` secrets when the Blueprint is first applied, and generates ADMIN_TOKEN and
+# Builds the Dockerfile at the repository root on the free plan. Render asks for the one
+# `sync: false` secret when the Blueprint is first applied, and generates ADMIN_TOKEN and
 # OWNER_HASH_SALT itself (read them under the service's Environment tab). Never change
 # OWNER_HASH_SALT afterwards: every resident's data is tied to it.
 services:
@@ -21,8 +21,13 @@ services:
         value: https://ichpaccsvhnztuazhsfa.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
+      # The project signs sessions with an ECC P-256 key, so the backend gets that key's public
+      # half as PEM (from <SUPABASE_URL>/auth/v1/.well-known/jwks.json, kid 7b93e715-...). It is
+      # public, not a secret. Update both lines if the signing key is rotated.
+      - key: SUPABASE_JWT_ALGORITHM
+        value: ES256
       - key: SUPABASE_JWT_SECRET
-        sync: false
+        value: "-----BEGIN PUBLIC KEY-----\\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEODXij2eJjoy7cf0q2hAWTskvSMOq\\nn81tvvyK2oo3EyR8mXSvZ4bbpEY622liqFedl0GXl/BW9ew/bFVndJGy0g==\\n-----END PUBLIC KEY-----"
       - key: ADMIN_TOKEN
         generateValue: true
       - key: OWNER_HASH_SALT
