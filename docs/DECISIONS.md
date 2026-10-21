@@ -54,7 +54,7 @@ The choices that shaped ReSource and the reasoning behind each, so that the crea
 
 **Local mode with no accounts.** `uvicorn main:app` with no environment file serves the bundled data and keeps submissions in a local folder, so anyone can run and judge the project without signing up for anything.
 
-**Checks that fail the build.** Translations in step, contrast, alt text, a single storage module, no unsupported claims. Each exists because the review in `review/` found that mistake once.
+**Checks that fail the build.** Translations in step, contrast, alt text, a single storage module, no unsupported claims.
 
 **Per-screen scripts and few, small web fonts.** The web build loads each screen when it is opened. It uses three font files of about 21 KB each, declared in `app/public/index.html` with `font-display: swap`, so the page never waits for them. Load time on a slow phone is still the weakest measurement (`docs/ACCESSIBILITY.md`).
 
@@ -78,4 +78,4 @@ The choices that shaped ReSource and the reasoning behind each, so that the crea
 
 ## Decisions left for the creator
 
-Listed in `docs/HUMAN_TODO.md`: the license, the governing-law sentence, the age-gate wording, whether to translate service names, and whether to add an undo for "I am under 13".
+The license, the governing-law sentence, the age-gate wording, whether to translate service names, and whether to add an undo for "I am under 13".

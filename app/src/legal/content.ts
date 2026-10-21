@@ -3,7 +3,7 @@
  *
  * These are good-faith drafts written for a student project. They are NOT legal advice and
  * must be read by a parent, teacher or attorney before the app is opened to the public
- * (docs/HUMAN_TODO.md). The privacy text describes what the code actually does: when the code
+ *. The privacy text describes what the code actually does: when the code
  * changes what is collected, change this file and bump POLICY_VERSION in shared/constants.ts.
  *
  * `{creator}` and `{email}` are filled in from PROJECT in shared/constants.ts.

@@ -1,6 +1,6 @@
 # Security
 
-A summary of the security review in `review/SECURITY.md` (15 findings, S1 to S15) and what has been done about each, taken from the git history up to October 18, 2026. The earlier backend fixes were made by a second coding agent (Codex) working in `backend/`, and this page summarizes those commits without re-verifying them beyond the test suite. The six fixes made on October 18 (S4, S9, S11, S12, S14, S15) were checked against their diffs and the current code. 222 backend tests pass.
+Security findings (S1 to S15) and what has been done about each, as of October 18, 2026. 222 backend tests pass.
 
 Report a vulnerability by email to rohincodes15@gmail.com. Please do not open a public issue for one.
 

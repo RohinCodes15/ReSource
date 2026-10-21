@@ -89,7 +89,6 @@ PDF extraction is a best guess, and on the current documents the parser finds no
 | `backend/` | The FastAPI service, its tests and the database schema |
 | `shared/` | Data files and types used by both |
 | `scraper/` | The budget document scripts |
-| `docs/HUMAN_TODO.md` | Steps only the project's creator can take |
 
 ## License
 

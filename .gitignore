@@ -61,3 +61,10 @@ Thumbs.db
 .playwright-mcp/
 .vercel
 .env.local
+
+.claude/
+.serena/
+.playwright-mcp/
+graphify-out/
+AGENTS.md
+CLAUDE.md

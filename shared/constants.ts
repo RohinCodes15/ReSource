@@ -13,7 +13,7 @@ export const BRAND_COLORS = {
 
 /**
  * Details supplied by the project's creator. Nothing here may be invented.
- * repoUrl must not be shown on any screen until the repository is public (docs/HUMAN_TODO.md).
+ * repoUrl must not be shown on any screen until the repository is public.
  */
 export const PROJECT = {
   creator: 'Rohin Pidathala',

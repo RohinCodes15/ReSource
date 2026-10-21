@@ -1,6 +1,6 @@
 # Privacy audit
 
-What the app actually stores and sends, checked against the code on October 13, 2026, and compared with the Privacy Policy people see in the app (`app/src/legal/content.ts`). This is an engineering audit, not legal advice. The policy itself is a draft that an adult must review before public launch (`docs/HUMAN_TODO.md`).
+What the app actually stores and sends, checked against the code on October 13, 2026, and compared with the Privacy Policy people see in the app (`app/src/legal/content.ts`). This is an engineering audit, not legal advice. The policy itself is a draft that an adult must review before public launch.
 
 ## What is stored on the server
 
@@ -73,7 +73,7 @@ Each was exercised by an automated test against the real API in local mode.
 | --- | --- | --- |
 | "Use the unsubscribe link in any alert email" | No alert email is ever sent, and sign-up is refused | Harmless, but the sentence describes a feature that is off. Reword or remove it when the Terms are reviewed. |
 | "Connections are encrypted (HTTPS)" | True only once the API and site are deployed behind HTTPS. Local development uses HTTP. | Follow `deployment/deploy_guide.md`; both recommended hosts provide HTTPS. |
-| "Before any form that sends us something, the app asks you to confirm you are 13 or older" | True. The checkbox sits next to an "I am under 13" button, which may nudge a child to tick the box. A neutral question asked once is the usual pattern. | Open. Needs an adult who knows COPPA (`docs/HUMAN_TODO.md`). |
+| "Before any form that sends us something, the app asks you to confirm you are 13 or older" | True. The checkbox sits next to an "I am under 13" button, which may nudge a child to tick the box. A neutral question asked once is the usual pattern. | Open. Needs an adult who knows COPPA. |
 | Policy version `2026-10-12` | The policy text changed on October 13 (two clarifications, listed in its change log). The version constant lives in `shared/constants.ts` and `backend/settings.py`, outside the folders this pass could edit. | Bump both to `2026-10-13` together. |
 
 ## Not verified

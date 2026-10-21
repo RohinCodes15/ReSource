@@ -66,7 +66,7 @@ What changed that matters for access, and how each was checked:
 - **Pin groups are web only.** On phones, pins that share an address are still drawn in a small ring around it, as before; they were not grouped, and the phone map was not run.
 - **Not tested with a screen reader by a person.** VoiceOver, TalkBack and NVDA were not run. The automated checks find missing names and roles; they cannot tell whether the reading order makes sense.
 - **The phone apps were not audited.** axe and Lighthouse run in a browser. The same components render on iOS and Android with `accessibilityLabel`, `accessibilityRole` and 44-point touch targets, but that was read in the code, not measured on a device.
-- **Translated text was not reviewed by native speakers** (see `docs/HUMAN_TODO.md`), and neither Inter nor Fraunces has Persian or Chinese glyphs, so those languages use the device's own font.
+- **Translated text was not reviewed by native speakers**, and neither Inter nor Fraunces has Persian or Chinese glyphs, so those languages use the device's own font.
 - **Budget figures, service descriptions and the full legal text are in English** in every language. Each such screen says so.
 
 ## Run the checks yourself
